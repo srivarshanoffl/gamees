@@ -28,11 +28,9 @@ class DoctorStrangeGame extends GameEngine {
     };
 
     this.gravity = 500;
-
-    // Portals
-    this.portalOrange = null; // { x, y, dir: 'UP'|'RIGHT'|'DOWN'|'LEFT' }
+    this.portalOrange = null;
     this.portalBlue = null;
-    this.nextPortalColor = 'ORANGE'; // Alternates on click
+    this.nextPortalColor = 'ORANGE';
     this.cooldown = 0;
 
     this.initStage(this.stage);
@@ -47,19 +45,30 @@ class DoctorStrangeGame extends GameEngine {
     this.player.vy = 0;
     this.portalOrange = null;
     this.portalBlue = null;
+    this.nextPortalColor = 'ORANGE';
+    this.cooldown = 0;
 
-    this.platforms = [
-      { x: 40, y: 160, w: 140, h: 20 },
-      { x: 300, y: 260, w: 140, h: 20 },
-      { x: 600, y: 380, w: 140, h: 20 },
-      { x: 780, y: 180, w: 140, h: 20 }
-    ];
-
-    if (st === 2) {
-      this.platforms.push({ x: 200, y: 440, w: 120, h: 20 });
-      this.platforms.push({ x: 500, y: 140, w: 100, h: 20 });
-    } else if (st === 3) {
-      this.platforms.push({ x: 400, y: 480, w: 180, h: 20 });
+    // Clean reset of platforms array on every stage
+    if (st === 1) {
+      this.platforms = [
+        { x: 40, y: 160, w: 140, h: 20 },
+        { x: 300, y: 260, w: 140, h: 20 },
+        { x: 600, y: 380, w: 140, h: 20 },
+        { x: 780, y: 180, w: 140, h: 20 }
+      ];
+    } else if (st === 2) {
+      this.platforms = [
+        { x: 40, y: 160, w: 140, h: 20 },
+        { x: 200, y: 440, w: 120, h: 20 },
+        { x: 500, y: 140, w: 100, h: 20 },
+        { x: 780, y: 180, w: 140, h: 20 }
+      ];
+    } else {
+      this.platforms = [
+        { x: 40, y: 160, w: 140, h: 20 },
+        { x: 400, y: 480, w: 180, h: 20 },
+        { x: 780, y: 180, w: 140, h: 20 }
+      ];
     }
 
     // Book Pages
@@ -91,16 +100,13 @@ class DoctorStrangeGame extends GameEngine {
   }
 
   update(dt) {
-    // Air control (A/D or Arrows)
     if (this.keys['KeyA'] || this.keys['ArrowLeft']) this.player.vx -= 400 * dt;
     if (this.keys['KeyD'] || this.keys['ArrowRight']) this.player.vx += 400 * dt;
 
-    // Gravity
     this.player.vy += this.gravity * dt;
     this.player.x += this.player.vx * dt;
     this.player.y += this.player.vy * dt;
 
-    // Platform collisions
     for (const p of this.platforms) {
       if (
         this.player.x + this.player.radius > p.x &&
@@ -110,12 +116,11 @@ class DoctorStrangeGame extends GameEngine {
       ) {
         if (this.player.vy > 0 && this.player.y < p.y + 15) {
           this.player.y = p.y - this.player.radius;
-          this.player.vy = -180; // bounce lightly
+          this.player.vy = -180;
         }
       }
     }
 
-    // Portal Teleportation
     if (this.cooldown > 0) {
       this.cooldown -= dt;
     } else if (this.portalOrange && this.portalBlue) {
@@ -123,7 +128,6 @@ class DoctorStrangeGame extends GameEngine {
       const dBlue = Math.hypot(this.player.x - this.portalBlue.x, this.player.y - this.portalBlue.y);
 
       if (dOrange < this.portalOrange.radius + this.player.radius) {
-        // Teleport Orange -> Blue with upward momentum boost
         this.player.x = this.portalBlue.x;
         this.player.y = this.portalBlue.y - 30;
         this.player.vy = -Math.abs(this.player.vy) - 150;
@@ -131,7 +135,6 @@ class DoctorStrangeGame extends GameEngine {
         if (window.soundFX) window.soundFX.portal();
         this.spawnComicText('TELEPORT!', this.player.x, this.player.y - 20, '#00f0ff');
       } else if (dBlue < this.portalBlue.radius + this.player.radius) {
-        // Teleport Blue -> Orange
         this.player.x = this.portalOrange.x;
         this.player.y = this.portalOrange.y - 30;
         this.player.vy = -Math.abs(this.player.vy) - 150;
@@ -141,7 +144,6 @@ class DoctorStrangeGame extends GameEngine {
       }
     }
 
-    // Collect Book Pages
     for (const pg of this.pages) {
       if (!pg.collected && Math.hypot(this.player.x - pg.x, this.player.y - pg.y) < 30) {
         pg.collected = true;
@@ -151,13 +153,11 @@ class DoctorStrangeGame extends GameEngine {
       }
     }
 
-    // Check all pages collected
     const allCollected = this.pages.every(p => p.collected);
     if (allCollected) {
       this.sanctumGate.open = true;
     }
 
-    // Fall out of bounds / Abyss check
     if (this.player.y > this.vHeight + 20) {
       this.health -= 35;
       this.player.x = 80;
@@ -173,7 +173,6 @@ class DoctorStrangeGame extends GameEngine {
       }
     }
 
-    // Win Stage Check
     if (this.sanctumGate.open && Math.hypot(this.player.x - this.sanctumGate.x, this.player.y - this.sanctumGate.y) < 40) {
       if (this.stage < this.maxStages) {
         this.score += 750;
@@ -186,11 +185,9 @@ class DoctorStrangeGame extends GameEngine {
   }
 
   render(ctx) {
-    // Kaleidoscopic Shattered Background
     ctx.fillStyle = '#0a0d18';
     ctx.fillRect(0, 0, this.vWidth, this.vHeight);
 
-    // Shattered mirror triangles
     ctx.strokeStyle = 'rgba(155, 81, 224, 0.15)';
     ctx.lineWidth = 1.5;
     for (let i = 0; i < 14; i++) {
@@ -203,7 +200,6 @@ class DoctorStrangeGame extends GameEngine {
       ctx.stroke();
     }
 
-    // Render Platforms
     ctx.fillStyle = '#1c2438';
     for (const p of this.platforms) {
       ctx.fillRect(p.x, p.y, p.w, p.h);
@@ -212,7 +208,6 @@ class DoctorStrangeGame extends GameEngine {
       ctx.strokeRect(p.x, p.y, p.w, p.h);
     }
 
-    // Render Book Pages
     for (const pg of this.pages) {
       if (!pg.collected) {
         ctx.save();
@@ -227,7 +222,6 @@ class DoctorStrangeGame extends GameEngine {
       }
     }
 
-    // Render Sanctum Gate
     ctx.save();
     ctx.strokeStyle = this.sanctumGate.open ? '#00e676' : '#757575';
     ctx.lineWidth = 4;
@@ -241,7 +235,6 @@ class DoctorStrangeGame extends GameEngine {
     ctx.fillText(this.sanctumGate.open ? 'EXIT' : 'LOCKED', this.sanctumGate.x - 14, this.sanctumGate.y + 4);
     ctx.restore();
 
-    // Render Portals
     if (this.portalOrange) {
       ctx.save();
       ctx.strokeStyle = '#ff9100';
@@ -266,11 +259,9 @@ class DoctorStrangeGame extends GameEngine {
       ctx.restore();
     }
 
-    // Render Doctor Strange
     ctx.save();
     ctx.translate(this.player.x, this.player.y);
 
-    // Crimson Cloak of Levitation
     ctx.fillStyle = '#b71c1c';
     ctx.beginPath();
     ctx.moveTo(-12, -8);
@@ -280,7 +271,6 @@ class DoctorStrangeGame extends GameEngine {
     ctx.closePath();
     ctx.fill();
 
-    // Blue Robes
     ctx.fillStyle = '#1565c0';
     ctx.beginPath();
     ctx.arc(0, 0, this.player.radius, 0, Math.PI * 2);
@@ -289,7 +279,6 @@ class DoctorStrangeGame extends GameEngine {
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // Eye of Agamotto amulet
     ctx.fillStyle = '#ffd200';
     ctx.beginPath();
     ctx.arc(0, 4, 4, 0, Math.PI * 2);
@@ -297,7 +286,6 @@ class DoctorStrangeGame extends GameEngine {
 
     ctx.restore();
 
-    // Current Portal Placer Hint
     ctx.save();
     ctx.fillStyle = this.nextPortalColor === 'ORANGE' ? '#ff9100' : '#00e5ff';
     ctx.font = "bold 14px 'Bangers', cursive";

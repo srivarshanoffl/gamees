@@ -2,7 +2,7 @@
  * hub.js
  * Main Marvel Mini-Games Hub Controller.
  * Manages game catalogs, category filters, localStorage scores,
- * modal launching/closing, and dynamic game instantiation.
+ * modal launching/closing, and links to dedicated standalone websites.
  */
 
 const GAMES_CATALOG = [
@@ -17,6 +17,7 @@ const GAMES_CATALOG = [
     desc: 'Hold to anchor webs to construction cranes, build swinging speed, and fling across the Queens & Midtown skyline to stop the Oscorp heist.',
     controls: 'Hold Click / Tap to attach web; Release to slingshot forward.',
     className: 'SpiderManGame',
+    pageUrl: 'games/spider-man.html',
     accentColor: '#e23636',
     badge: 'Physics'
   },
@@ -30,6 +31,7 @@ const GAMES_CATALOG = [
     desc: 'Calculate precise reflection angles to bounce the Vibranium Shield around titanium blast doors, eliminating Hydra sentries and shattering the Tesseract.',
     controls: 'Drag mouse/touch to aim bounce line; Release to throw shield.',
     className: 'CaptainAmericaGame',
+    pageUrl: 'games/captain-america.html',
     accentColor: '#1565c0',
     badge: 'Puzzle'
   },
@@ -43,6 +45,7 @@ const GAMES_CATALOG = [
     desc: 'Route Arc Reactor power between Thrusters, Repulsors, and Shields in real-time to evade EMP missiles and defeat Ultron Prime over Stark Tower.',
     controls: 'WASD/Arrows/Drag to fly; [1] Thrust, [2] Blast, [3] Shield.',
     className: 'IronManGame',
+    pageUrl: 'games/iron-man.html',
     accentColor: '#ffd200',
     badge: 'Defense'
   },
@@ -56,6 +59,7 @@ const GAMES_CATALOG = [
     desc: 'Channel atmospheric lightning into Mjolnir. Release at the exact green sweet spot to strike Frost Giant waves with cascading chain electricity.',
     controls: 'Hold [Space] or Tap to charge; Release inside green crest.',
     className: 'ThorGame',
+    pageUrl: 'games/thor.html',
     accentColor: '#00f0ff',
     badge: 'Timing'
   },
@@ -69,6 +73,7 @@ const GAMES_CATALOG = [
     desc: 'Instantly toggle between Micro (slip under lasers & through vents) and Giant (crush security bots & press heavy switches) to breach Yellowjacket’s vault.',
     controls: 'WASD/Arrows to walk & jump; [Q] / Tap Screen to switch scale.',
     className: 'AntManGame',
+    pageUrl: 'games/ant-man.html',
     accentColor: '#d32f2f',
     badge: 'Platformer'
   },
@@ -84,6 +89,7 @@ const GAMES_CATALOG = [
     desc: 'Place linked Orange and Blue sling ring portals to fling Strange across shattered Mirror Dimension voids, recovering pages of the Darkhold.',
     controls: 'Click/Tap anywhere to place linked Orange and Blue portals.',
     className: 'DoctorStrangeGame',
+    pageUrl: 'games/doctor-strange.html',
     accentColor: '#ff9100',
     badge: 'Spatial'
   },
@@ -97,6 +103,7 @@ const GAMES_CATALOG = [
     desc: 'Swap between Earth-616 (Red) and Hex Reality (Purple) mid-air to turn intangible obstacles into solid platforms and reach the Darkhold altar.',
     controls: 'WASD/Arrows to run & jump; [F] or Tap right screen to swap polarity.',
     className: 'ScarletWitchGame',
+    pageUrl: 'games/scarlet-witch.html',
     accentColor: '#d500f9',
     badge: 'Phase Swap'
   },
@@ -110,6 +117,7 @@ const GAMES_CATALOG = [
     desc: 'Step on security pressure plates, then rewind time with your TemPad so your recorded variant clone holds the gates open while you advance.',
     controls: 'WASD/Arrows to move; Press [R] or Tap Rewind to time-slip.',
     className: 'TVALokiGame',
+    pageUrl: 'games/tva-loki.html',
     accentColor: '#ffab00',
     badge: 'Time-Loop'
   },
@@ -123,6 +131,7 @@ const GAMES_CATALOG = [
     desc: 'Inspect parallel timelines side-by-side. Spot and quarantine foreign multiverse incursions before the universe collapse countdown hits zero.',
     controls: 'Click/Tap directly on anomalous multiverse glitches in right panel.',
     className: 'WatcherNexusGame',
+    pageUrl: 'games/watcher-nexus.html',
     accentColor: '#00e5ff',
     badge: 'Pattern'
   },
@@ -136,6 +145,7 @@ const GAMES_CATALOG = [
     desc: 'Pull back Deadpool’s multiversal slingshot cannon to launch chaotic explosive ordnance, toppling Kingpin’s dimensional portal spires into the Void.',
     controls: 'Drag back on slingshot to adjust angle and force; Release to fire.',
     className: 'DeadpoolGame',
+    pageUrl: 'games/deadpool.html',
     accentColor: '#ff1744',
     badge: 'Demolition'
   }
@@ -216,10 +226,18 @@ class MarvelHub {
           <p class="card-desc">${game.desc}</p>
           <div class="card-footer">
             <span class="card-score">BEST: <b>${hiScore.toLocaleString()}</b></span>
-            <button class="play-btn" data-game-id="${game.id}">PLAY MISSION</button>
+            <div style="display:flex; gap:8px;">
+              <a href="${game.pageUrl}" class="play-btn" style="background:#222634; text-decoration:none; padding:6px 12px; font-size:14px;" target="_blank">🌐 STANDALONE</a>
+              <button class="play-btn arena-launch-btn" data-game-id="${game.id}">PLAY ARENA</button>
+            </div>
           </div>
         </div>
       `;
+
+      card.querySelector('.arena-launch-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.launchGame(game.id);
+      });
 
       card.addEventListener('click', () => this.launchGame(game.id));
       grid.appendChild(card);
@@ -227,7 +245,6 @@ class MarvelHub {
   }
 
   bindEvents() {
-    // Category tabs
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -237,7 +254,6 @@ class MarvelHub {
       });
     });
 
-    // Audio Mute toggle
     const audioBtn = document.getElementById('audioToggleBtn');
     if (audioBtn) {
       audioBtn.addEventListener('click', () => {
@@ -249,13 +265,11 @@ class MarvelHub {
       });
     }
 
-    // Arena Modal Close
     const closeBtn = document.getElementById('closeArenaBtn');
     if (closeBtn) {
       closeBtn.addEventListener('click', () => this.closeGame());
     }
 
-    // Modal Action Buttons
     const startBtn = document.getElementById('startMissionBtn');
     if (startBtn) {
       startBtn.addEventListener('click', () => {
@@ -300,7 +314,6 @@ class MarvelHub {
     if (!meta) return;
     this.activeGameMeta = meta;
 
-    // Set modal headers
     const nameEl = document.getElementById('arenaGameName');
     const heroEl = document.getElementById('arenaHeroBadge');
     const controlsEl = document.getElementById('arenaControlsHint');
@@ -308,7 +321,6 @@ class MarvelHub {
     if (heroEl) heroEl.textContent = meta.hero;
     if (controlsEl) controlsEl.textContent = meta.controls;
 
-    // Configure Ready Overlay Instructions
     const readyTitle = document.getElementById('readyTitle');
     const readyDesc = document.getElementById('readyInstructions');
     const readyControls = document.getElementById('readyControls');
@@ -316,17 +328,14 @@ class MarvelHub {
     if (readyDesc) readyDesc.textContent = meta.desc;
     if (readyControls) readyControls.innerHTML = `<span>🎮 CONTROLS:</span> ${meta.controls}`;
 
-    // Hide GameOver / Victory overlays
     document.getElementById('gameOverOverlay').classList.add('hidden');
     document.getElementById('victoryOverlay').classList.add('hidden');
     document.getElementById('pauseOverlay').classList.add('hidden');
     document.getElementById('readyOverlay').classList.remove('hidden');
 
-    // Show Modal
     const modal = document.getElementById('gameModal');
     if (modal) modal.classList.add('active');
 
-    // Instantiate specific game class
     if (this.activeGame) {
       this.activeGame.stop();
       this.activeGame = null;

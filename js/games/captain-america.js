@@ -45,9 +45,8 @@ class CaptainAmericaGame extends GameEngine {
     this.shield.bounces = 0;
     this.shield.trail = [];
 
-    // Walls and obstacles
+    // Outer boundary walls cleanly reset every stage
     this.walls = [
-      // Outer boundary
       { x: 20, y: 20, w: 920, h: 16 },
       { x: 20, y: 504, w: 920, h: 16 },
       { x: 20, y: 20, w: 16, h: 500 },
@@ -128,7 +127,6 @@ class CaptainAmericaGame extends GameEngine {
       // Check wall bounce
       for (const w of this.walls) {
         if (px >= w.x && px <= w.x + w.w && py >= w.y && py <= w.y + w.h) {
-          // Horizontal or vertical face
           const fromLeft = Math.abs(px - w.x);
           const fromRight = Math.abs(px - (w.x + w.w));
           const fromTop = Math.abs(py - w.y);
@@ -151,7 +149,6 @@ class CaptainAmericaGame extends GameEngine {
 
   update(dt) {
     if (this.shield.isFlying) {
-      // Store trail
       this.shield.trail.unshift({ x: this.shield.x, y: this.shield.y });
       if (this.shield.trail.length > 12) this.shield.trail.pop();
 
@@ -214,7 +211,7 @@ class CaptainAmericaGame extends GameEngine {
         }
       }
 
-      // Return or stop after max bounces
+      // Return after max bounces
       if (this.shield.bounces >= this.shield.maxBounces) {
         this.shield.isFlying = false;
         this.shield.x = 100;
@@ -243,7 +240,6 @@ class CaptainAmericaGame extends GameEngine {
   }
 
   render(ctx) {
-    // Room background
     ctx.fillStyle = '#0e111a';
     ctx.fillRect(0, 0, this.vWidth, this.vHeight);
 
@@ -276,7 +272,6 @@ class CaptainAmericaGame extends GameEngine {
     for (const tg of this.targets) {
       ctx.save();
       if (tg.type === 'guard') {
-        // Hydra Soldier
         ctx.fillStyle = '#1b5e20';
         ctx.beginPath();
         ctx.arc(tg.x, tg.y, tg.radius, 0, Math.PI * 2);
@@ -290,14 +285,12 @@ class CaptainAmericaGame extends GameEngine {
         ctx.textAlign = 'center';
         ctx.fillText('H', tg.x, tg.y + 4);
       } else if (tg.type === 'console') {
-        // Security Console
         ctx.fillStyle = '#b71c1c';
         ctx.fillRect(tg.x - tg.radius, tg.y - tg.radius, tg.radius * 2, tg.radius * 2);
         ctx.strokeStyle = '#ff5252';
         ctx.lineWidth = 3;
         ctx.strokeRect(tg.x - tg.radius, tg.y - tg.radius, tg.radius * 2, tg.radius * 2);
       } else if (tg.type === 'tesseract') {
-        // Glowing Tesseract Core
         ctx.fillStyle = '#00f0ff';
         ctx.shadowColor = '#00f0ff';
         ctx.shadowBlur = 15;
@@ -389,14 +382,13 @@ class CaptainAmericaGame extends GameEngine {
     ctx.font = 'bold 8px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('★', 0, 3);
-
     ctx.restore();
 
     // Throws Left Display
     ctx.save();
     ctx.fillStyle = '#ffd200';
     ctx.font = "bold 18px 'Bangers', cursive";
-    ctx.fillText(`THROWS: ${this.throwsLeft}`, 40, 485);
+    ctx.fillText(`THROWS LEFT: ${this.throwsLeft}`, 40, 485);
     ctx.restore();
   }
 }

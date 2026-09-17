@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thor: Thunder Surge | Marvel Mini-Games</title>
+  <link rel="stylesheet" href="../css/hub.css">
+  <link rel="stylesheet" href="../css/game.css">
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 16px;
+    }
+    .standalone-nav {
+      width: 100%;
+      max-width: 960px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .back-btn {
+      background: #222634;
+      color: #fff;
+      text-decoration: none;
+      font-family: var(--comic-font);
+      font-size: 18px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid #383f54;
+      transition: all 0.2s;
+    }
+    .back-btn:hover {
+      background: var(--marvel-cyan);
+      color: #000;
+      border-color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div class="standalone-nav">
+    <a href="../index.html" class="back-btn">&larr; BACK TO MULTIVERSE HUB</a>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <span class="arena-hero-badge" style="background:#00f0ff; color:#000;">THOR</span>
+      <h2 class="arena-game-name" style="margin:0;">THUNDER SURGE</h2>
+    </div>
+    <button class="audio-toggle-btn" id="audioToggleBtn">🔊 AUDIO: ON</button>
+  </div>
+
+  <div class="canvas-wrapper" id="canvasWrapper">
+    <canvas id="gameCanvas" width="960" height="540"></canvas>
+
+    <div class="game-hud">
+      <div class="hud-top-bar">
+        <div class="hud-stat-box">
+          <span class="hud-label">SCORE</span>
+          <span class="hud-value" id="hudScore">0</span>
+        </div>
+        <div class="hud-stat-box">
+          <span class="hud-label">STAGE</span>
+          <span class="hud-value" id="hudStage">1/3</span>
+        </div>
+        <div class="hud-stat-box">
+          <span class="hud-label">BIFROST GATE INTEGRITY</span>
+          <div class="hud-bar-container">
+            <div class="hud-bar-fill" id="hudHealthFill"></div>
+          </div>
+        </div>
+      </div>
+      <div class="hud-center-alert" id="hudCenterAlert">ALERT</div>
+      <div></div>
+    </div>
+
+    <div class="canvas-screen-overlay" id="readyOverlay">
+      <div class="overlay-badge">ASGARDIAN SUMMONS</div>
+      <h2 class="overlay-title">THOR: THUNDER SURGE</h2>
+      <p class="overlay-instructions">
+        Defend the Rainbow Bridge against Frost Giant hordes! Hold [Space] or Tap to charge atmospheric storm lightning into Mjolnir. Release when the gauge hits the green sweet spot to strike with chain electricity! Avoid overholding.
+      </p>
+      <div class="overlay-controls-card">
+        <span>🎮 CONTROLS:</span> Hold [Space] / Tap Screen to Charge &bull; Release on Green Crest
+      </div>
+      <div class="overlay-btn-group">
+        <button class="overlay-btn" id="startMissionBtn">START MISSION</button>
+      </div>
+    </div>
+
+    <div class="canvas-screen-overlay hidden" id="victoryOverlay">
+      <div class="overlay-badge" style="background:#ffd200; color:#000;">VICTORY</div>
+      <h2 class="overlay-title victory">ASGARD IS SAVED!</h2>
+      <p class="overlay-instructions" id="victoryMessage">The Kursed Beast has been shattered!</p>
+      <div class="hud-value" id="victoryScore" style="font-size: 32px; margin-bottom: 24px;">Score: 0</div>
+      <div class="overlay-btn-group">
+        <button class="overlay-btn" id="victoryClaimBtn">RESTART MISSION</button>
+        <a href="../index.html" class="overlay-btn secondary" style="text-decoration:none;">HUB MENU</a>
+      </div>
+    </div>
+
+    <div class="canvas-screen-overlay hidden" id="gameOverOverlay">
+      <div class="overlay-badge" style="background:#d50000;">DEFEAT</div>
+      <h2 class="overlay-title defeat">BIFROST GATE BREACHED</h2>
+      <p class="overlay-instructions" id="gameOverReason">The Frost Giants invaded the realm!</p>
+      <div class="hud-value" id="gameOverScore" style="font-size: 26px; color:#aaa; margin-bottom: 24px;">Score: 0</div>
+      <div class="overlay-btn-group">
+        <button class="overlay-btn" id="retryMissionBtn">TRY AGAIN</button>
+      </div>
+    </div>
+
+    <div class="canvas-screen-overlay hidden" id="pauseOverlay">
+      <div class="overlay-badge">TACTICAL PAUSE</div>
+      <h2 class="overlay-title">GAME PAUSED</h2>
+      <p class="overlay-instructions">Press [P] or click Resume to continue.</p>
+      <div class="overlay-btn-group">
+        <button class="overlay-btn" id="resumeGameBtn">RESUME</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/engine/SoundFX.js"></script>
+  <script src="../js/engine/GameEngine.js"></script>
+  <script src="../js/games/thor.js"></script>
+
+  <script>
+    let game;
+    document.addEventListener('DOMContentLoaded', () => {
+      game = new ThorGame();
+      game.start();
+
+      document.getElementById('audioToggleBtn').addEventListener('click', () => {
+        window.soundFX.init();
+        const muted = window.soundFX.toggleMute();
+        document.getElementById('audioToggleBtn').textContent = muted ? '🔇 AUDIO: OFF' : '🔊 AUDIO: ON';
+      });
+
+      document.getElementById('startMissionBtn').addEventListener('click', () => {
+        window.soundFX.init();
+        document.getElementById('readyOverlay').classList.add('hidden');
+        game.state = 'PLAYING';
+      });
+
+      document.getElementById('retryMissionBtn').addEventListener('click', () => {
+        document.getElementById('gameOverOverlay').classList.add('hidden');
+        game.reset();
+        game.state = 'PLAYING';
+      });
+
+      document.getElementById('victoryClaimBtn').addEventListener('click', () => {
+        document.getElementById('victoryOverlay').classList.add('hidden');
+        game.reset();
+        game.state = 'PLAYING';
+      });
+
+      document.getElementById('resumeGameBtn').addEventListener('click', () => {
+        game.togglePause();
+      });
+    });
+  </script>
+</body>
+</html>
