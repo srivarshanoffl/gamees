@@ -9,7 +9,7 @@
   background: rgba(7, 8, 12, 0.95);
   backdrop-filter: blur(8px);
   z-index: 1000;
-  display: flex;
+  display: none;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -19,6 +19,7 @@
 }
 
 .game-modal.active {
+  display: flex;
   opacity: 1;
   pointer-events: auto;
 }

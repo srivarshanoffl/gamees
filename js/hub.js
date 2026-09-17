@@ -234,6 +234,13 @@ class MarvelHub {
         </div>
       `;
 
+      const standaloneLink = card.querySelector('a');
+      if (standaloneLink) {
+        standaloneLink.addEventListener('click', (e) => {
+          e.stopPropagation();
+        });
+      }
+
       card.querySelector('.arena-launch-btn').addEventListener('click', (e) => {
         e.stopPropagation();
         this.launchGame(game.id);
@@ -360,6 +367,14 @@ class MarvelHub {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  window.hub = new MarvelHub();
-});
+function initHub() {
+  if (!window.hub) {
+    window.hub = new MarvelHub();
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initHub);
+} else {
+  initHub();
+}
