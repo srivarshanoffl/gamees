@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marvel Mini-Games: Character & Multiverse Missions</title>
+  <meta name="description" content="A dynamic collection of 10 single-player Marvel web mini-games featuring Spider-Man, Captain America, Iron Man, Thor, Ant-Man, and Multiverse Missions.">
+  <link rel="stylesheet" href="css/hub.css">
+  <link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+
+  <!-- HERO BANNER & PORTAL HEADER -->
+  <header class="hero-header">
+    <div class="marvel-logo-badge">MARVEL</div>
+    <h1 class="hero-title">MINI-GAME MULTIVERSE</h1>
+    <p class="hero-subtitle">
+      10 unique single-player arcade mini-games powered by iconic Marvel abilities, cosmic dimensional rifts, and high-performance physics.
+    </p>
+
+    <!-- Project Generated Hero Banner Artwork -->
+    <div style="max-width: 960px; margin: 16px auto; border-radius: 12px; overflow: hidden; border: 2px solid #2a3144; box-shadow: 0 10px 30px rgba(0,0,0,0.7);">
+      <img src="assets/hero_banner.jpg" alt="Marvel Superheroes Comic Art" style="width: 100%; height: auto; display: block; object-fit: cover; max-height: 260px;">
+    </div>
+
+    <div class="hero-stats">
+      <div class="stat-pill">MISSIONS PLAYED: <span id="statMissionsPlayed">0/10</span></div>
+      <div class="stat-pill">TOTAL MULTIVERSE SCORE: <span id="statTotalScore">0</span></div>
+      <div class="stat-pill">PERFORMANCE: <span>60 FPS</span></div>
+    </div>
+  </header>
+
+  <!-- CATEGORY FILTER & AUDIO CONTROLS -->
+  <div class="filter-bar">
+    <div class="category-tabs">
+      <button class="tab-btn active" data-filter="all">ALL MISSIONS (10)</button>
+      <button class="tab-btn" data-filter="character">CHARACTER MISSIONS (5)</button>
+      <button class="tab-btn" data-filter="multiverse">MULTIVERSE MISSIONS (5)</button>
+    </div>
+    <button class="audio-toggle-btn" id="audioToggleBtn">🔊 AUDIO: ON</button>
+  </div>
+
+  <!-- GAMES GRID -->
+  <main class="games-container">
+    <div class="games-grid" id="gamesGrid">
+      <!-- Game Cards dynamically injected by hub.js -->
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="hub-footer">
+    <p>Marvel Mini-Game Multiverse &copy; 2026. Built with Vanilla JS &amp; Canvas 2D.</p>
+    <p>Single-player &bull; 10 Unique Mechanics &bull; 0 Dependencies &bull; 60 FPS Browser Ready</p>
+  </footer>
+
+  <!-- FULLSCREEN GAME ARENA MODAL -->
+  <div class="game-modal" id="gameModal">
+    <!-- Header -->
+    <div class="arena-header">
+      <div class="arena-title-area">
+        <span class="arena-hero-badge" id="arenaHeroBadge">HERO</span>
+        <div>
+          <div class="arena-game-name" id="arenaGameName">GAME TITLE</div>
+          <div class="arena-controls-hint" id="arenaControlsHint">Controls guide</div>
+        </div>
+      </div>
+      <button class="arena-close-btn" id="closeArenaBtn">&times; EXIT</button>
+    </div>
+
+    <!-- Canvas Wrapper -->
+    <div class="canvas-wrapper" id="canvasWrapper">
+      <canvas id="gameCanvas" width="960" height="540"></canvas>
+
+      <!-- HUD Overlay -->
+      <div class="game-hud">
+        <div class="hud-top-bar">
+          <div class="hud-stat-box">
+            <span class="hud-label">SCORE</span>
+            <span class="hud-value" id="hudScore">0</span>
+          </div>
+
+          <div class="hud-stat-box">
+            <span class="hud-label">STAGE</span>
+            <span class="hud-value" id="hudStage">1/3</span>
+          </div>
+
+          <div class="hud-stat-box">
+            <span class="hud-label">VITAL INTEGRITY</span>
+            <div class="hud-bar-container">
+              <div class="hud-bar-fill" id="hudHealthFill"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hud-center-alert" id="hudCenterAlert">ALERT</div>
+
+        <div><!-- Spacer for bottom flex --></div>
+      </div>
+
+      <!-- Ready / Tutorial Overlay -->
+      <div class="canvas-screen-overlay" id="readyOverlay">
+        <div class="overlay-badge">BRIEFING</div>
+        <h2 class="overlay-title" id="readyTitle">MISSION TITLE</h2>
+        <p class="overlay-instructions" id="readyInstructions">Instructions details...</p>
+        <div class="overlay-controls-card" id="readyControls">Controls info</div>
+        <div class="overlay-btn-group">
+          <button class="overlay-btn" id="startMissionBtn">START MISSION</button>
+        </div>
+      </div>
+
+      <!-- Victory Overlay -->
+      <div class="canvas-screen-overlay hidden" id="victoryOverlay">
+        <div class="overlay-badge" style="background:#ffd200; color:#000;">VICTORY</div>
+        <h2 class="overlay-title victory">MISSION ACCOMPLISHED!</h2>
+        <p class="overlay-instructions" id="victoryMessage">The sector has been secured!</p>
+        <div class="hud-value" id="victoryScore" style="font-size: 32px; margin-bottom: 24px;">Score: 0</div>
+        <div class="overlay-btn-group">
+          <button class="overlay-btn" id="victoryClaimBtn">CLAIM VICTORY</button>
+        </div>
+      </div>
+
+      <!-- Game Over Overlay -->
+      <div class="canvas-screen-overlay hidden" id="gameOverOverlay">
+        <div class="overlay-badge" style="background:#d50000;">DEFEAT</div>
+        <h2 class="overlay-title defeat">MISSION FAILED</h2>
+        <p class="overlay-instructions" id="gameOverReason">Critical failure...</p>
+        <div class="hud-value" id="gameOverScore" style="font-size: 26px; color:#aaa; margin-bottom: 24px;">Score: 0</div>
+        <div class="overlay-btn-group">
+          <button class="overlay-btn" id="retryMissionBtn">TRY AGAIN</button>
+        </div>
+      </div>
+
+      <!-- Pause Overlay -->
+      <div class="canvas-screen-overlay hidden" id="pauseOverlay">
+        <div class="overlay-badge">TACTICAL PAUSE</div>
+        <h2 class="overlay-title">GAME PAUSED</h2>
+        <p class="overlay-instructions">Press [P] or click Resume to continue the mission.</p>
+        <div class="overlay-btn-group">
+          <button class="overlay-btn" id="resumeGameBtn">RESUME</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPT INCLUDES -->
+  <!-- Audio & Base Engine -->
+  <script src="js/engine/SoundFX.js"></script>
+  <script src="js/engine/GameEngine.js"></script>
+
+  <!-- Part A: Character Games -->
+  <script src="js/games/spider-man.js"></script>
+  <script src="js/games/captain-america.js"></script>
+  <script src="js/games/iron-man.js"></script>
+  <script src="js/games/thor.js"></script>
+  <script src="js/games/ant-man.js"></script>
+
+  <!-- Part B: Multiverse Games -->
+  <script src="js/games/doctor-strange.js"></script>
+  <script src="js/games/scarlet-witch.js"></script>
+  <script src="js/games/tva-loki.js"></script>
+  <script src="js/games/watcher-nexus.js"></script>
+  <script src="js/games/deadpool.js"></script>
+
+  <!-- Main Hub Controller -->
+  <script src="js/hub.js"></script>
+</body>
+</html>
