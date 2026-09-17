@@ -165,7 +165,7 @@ class IronManGame extends GameEngine {
     }
     this.ironMan.isBlocking = isBlocking;
     const btn = document.getElementById('btnActionBlock');
-    if (btn) {
+    if (btn && btn.classList) {
       if (isBlocking) btn.classList.add('active-block');
       else btn.classList.remove('active-block');
     }
@@ -686,8 +686,9 @@ class IronManGame extends GameEngine {
     if (window.soundFX) window.soundFX.victory();
 
     const victoryOverlay = document.getElementById('victoryOverlay');
-    if (victoryOverlay) {
-      document.getElementById('victoryScore').textContent = `Final Battle Score: ${this.score}`;
+    if (victoryOverlay && victoryOverlay.classList) {
+      const scoreEl = document.getElementById('victoryScore');
+      if (scoreEl) scoreEl.textContent = `Final Battle Score: ${this.score}`;
       victoryOverlay.classList.remove('hidden');
     }
   }
@@ -697,23 +698,31 @@ class IronManGame extends GameEngine {
     if (window.soundFX) window.soundFX.gameOver();
 
     const gameOverOverlay = document.getElementById('gameOverOverlay');
-    if (gameOverOverlay) {
-      document.getElementById('gameOverScore').textContent = `Battle Score: ${this.score}`;
+    if (gameOverOverlay && gameOverOverlay.classList) {
+      const scoreEl = document.getElementById('gameOverScore');
+      if (scoreEl) scoreEl.textContent = `Battle Score: ${this.score}`;
       gameOverOverlay.classList.remove('hidden');
     }
   }
 
   updateHUD() {
-    // Iron Man Health
+    // Standalone Iron Man Health
     const imHealthEl = document.getElementById('ironManHealthFill');
-    if (imHealthEl) {
+    if (imHealthEl && imHealthEl.style) {
       const pct = Math.max(0, (this.ironMan.hp / this.ironMan.maxHp) * 100);
       imHealthEl.style.width = `${pct}%`;
     }
 
-    // Thanos Health
+    // Hub modal Vital Integrity
+    const hubHealthEl = document.getElementById('hudHealthFill');
+    if (hubHealthEl && hubHealthEl.style) {
+      const pct = Math.max(0, (this.ironMan.hp / this.ironMan.maxHp) * 100);
+      hubHealthEl.style.width = `${pct}%`;
+    }
+
+    // Standalone Thanos Health
     const thanosHealthEl = document.getElementById('thanosHealthFill');
-    if (thanosHealthEl) {
+    if (thanosHealthEl && thanosHealthEl.style) {
       const pct = Math.max(0, (this.thanos.hp / this.thanos.maxHp) * 100);
       thanosHealthEl.style.width = `${pct}%`;
     }
@@ -721,7 +730,7 @@ class IronManGame extends GameEngine {
     // Ultimate Meter
     const ultFill = document.getElementById('unibeamMeterFill');
     const ultText = document.getElementById('unibeamStatusText');
-    if (ultFill && ultText) {
+    if (ultFill && ultFill.style && ultText) {
       const pct = Math.min(100, Math.round((this.ironMan.ultimate / this.ironMan.maxUltimate) * 100));
       ultFill.style.width = `${pct}%`;
       if (pct >= 100) {
@@ -739,24 +748,27 @@ class IronManGame extends GameEngine {
 
     const phaseEl = document.getElementById('hudPhase');
     if (phaseEl) phaseEl.textContent = `PHASE ${this.phase}/3`;
+
+    const hubStageEl = document.getElementById('hudStage');
+    if (hubStageEl) hubStageEl.textContent = `PHASE ${this.phase}/3`;
   }
 
   updateActionButtons() {
     // Update button states & cooldown overlays
     const updateBtn = (btnId, cd, maxCd, disabled = false) => {
       const btn = document.getElementById(btnId);
-      if (!btn) return;
+      if (!btn || !btn.classList) return;
       if (disabled || cd > 0) {
         btn.classList.add('disabled');
-        const overlay = btn.querySelector('.cd-overlay');
-        if (overlay) {
+        const overlay = btn.querySelector ? btn.querySelector('.cd-overlay') : null;
+        if (overlay && overlay.style) {
           const pct = Math.min(100, (cd / maxCd) * 100);
           overlay.style.height = `${pct}%`;
         }
       } else {
         btn.classList.remove('disabled');
-        const overlay = btn.querySelector('.cd-overlay');
-        if (overlay) overlay.style.height = '0%';
+        const overlay = btn.querySelector ? btn.querySelector('.cd-overlay') : null;
+        if (overlay && overlay.style) overlay.style.height = '0%';
       }
     };
 
@@ -765,7 +777,7 @@ class IronManGame extends GameEngine {
     updateBtn('btnActionUnibeam', this.ironMan.cooldowns.unibeam, 3.0, this.ironMan.ultimate < 100);
 
     const ultBtn = document.getElementById('btnActionUnibeam');
-    if (ultBtn) {
+    if (ultBtn && ultBtn.classList) {
       if (this.ironMan.ultimate >= 100) {
         ultBtn.classList.add('unibeam-glow');
       } else {
@@ -775,10 +787,29 @@ class IronManGame extends GameEngine {
   }
 
   // -------------------------------------------------------------
-  // RENDERING PIPELINE
+  // RENDERING PIPELINE (Called automatically by GameEngine loop)
   // -------------------------------------------------------------
-  draw() {
-    const ctx = this.ctx;
+  render(ctx) {
+    // Keep ambient hover & debris moving even during briefing overlay
+    if (this.state === 'READY') {
+      this.ironMan.hoverTime += 0.03;
+      this.thanos.auraPulse += 0.03;
+      this.bgDebris.forEach(p => {
+        p.y += p.speedY * 0.4;
+        p.x += p.speedX * 0.4;
+        if (p.y < 50) {
+          p.y = 450;
+          p.x = Math.random() * 960;
+        }
+      });
+    }
+
+    this.draw(ctx);
+  }
+
+  draw(ctx) {
+    if (!ctx) ctx = this.ctx;
+    if (!ctx) return;
     ctx.save();
 
     // Screen Shake Offset
@@ -1083,7 +1114,11 @@ class IronManGame extends GameEngine {
     // --- HELMET ---
     ctx.fillStyle = '#b71c1c';
     ctx.beginPath();
-    ctx.roundRect(-16, -104, 32, 32, [8, 8, 4, 4]);
+    if (typeof ctx.roundRect === 'function') {
+      ctx.roundRect(-16, -104, 32, 32, [8, 8, 4, 4]);
+    } else {
+      ctx.rect(-16, -104, 32, 32);
+    }
     ctx.fill();
 
     // Gold Faceplate
