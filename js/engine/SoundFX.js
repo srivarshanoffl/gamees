@@ -267,8 +267,12 @@ class SoundFX {
     } catch (e) {}
   }
 
-  // Defeat Tone
+  // Defeat / Game Over Tone
   defeat() {
+    this.gameOver();
+  }
+
+  gameOver() {
     if (this.muted || !this.ctx) return;
     try {
       const notes = [400, 350, 280, 200];
@@ -353,6 +357,136 @@ class SoundFX {
         osc.start(t);
         osc.stop(t + 0.22);
       });
+    } catch (e) {}
+  }
+
+  // Iron Man Unibeam - Powerful sustained energy beam
+  unibeam() {
+    if (this.muted || !this.ctx) return;
+    try {
+      const t = this.ctx.currentTime;
+      // High energy laser charge and blast
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(180, t);
+      osc.frequency.exponentialRampToValueAtTime(800, t + 0.15);
+      osc.frequency.setValueAtTime(450, t + 0.2);
+      osc.frequency.exponentialRampToValueAtTime(120, t + 0.9);
+
+      gain.gain.setValueAtTime(0.4, t);
+      gain.gain.setValueAtTime(0.5, t + 0.2);
+      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.9);
+
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(t);
+      osc.stop(t + 0.9);
+    } catch (e) {}
+  }
+
+  // Power Punch Heavy Impact
+  heavyPunch() {
+    if (this.muted || !this.ctx) return;
+    try {
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(140, t);
+      osc.frequency.exponentialRampToValueAtTime(30, t + 0.2);
+
+      gain.gain.setValueAtTime(0.45, t);
+      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.22);
+
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(t);
+      osc.stop(t + 0.23);
+    } catch (e) {}
+  }
+
+  // Thanos Cosmic Titan Blast
+  titanBlast() {
+    if (this.muted || !this.ctx) return;
+    try {
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(380, t);
+      osc.frequency.exponentialRampToValueAtTime(90, t + 0.35);
+
+      gain.gain.setValueAtTime(0.4, t);
+      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.38);
+
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(t);
+      osc.stop(t + 0.4);
+    } catch (e) {}
+  }
+
+  // Thanos Ground Shockwave / Infinity Wave
+  cosmicWave() {
+    if (this.muted || !this.ctx) return;
+    try {
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(90, t);
+      osc.frequency.exponentialRampToValueAtTime(35, t + 0.45);
+
+      gain.gain.setValueAtTime(0.5, t);
+      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
+
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(t);
+      osc.stop(t + 0.52);
+    } catch (e) {}
+  }
+
+  // Attack Telegraph Warning Chime
+  warningBeep() {
+    if (this.muted || !this.ctx) return;
+    try {
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, t);
+      osc.frequency.setValueAtTime(1100, t + 0.08);
+
+      gain.gain.setValueAtTime(0.22, t);
+      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.18);
+
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(t);
+      osc.stop(t + 0.2);
+    } catch (e) {}
+  }
+
+  // Shield Block Deflect Clink
+  blockDeflect() {
+    if (this.muted || !this.ctx) return;
+    try {
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(1500, t);
+      osc.frequency.exponentialRampToValueAtTime(600, t + 0.12);
+
+      gain.gain.setValueAtTime(0.35, t);
+      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.14);
+
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(t);
+      osc.stop(t + 0.15);
     } catch (e) {}
   }
 }

@@ -39,18 +39,18 @@ const GAMES_CATALOG = [
   },
   {
     id: 'ironman',
-    title: 'Iron Man: Reactor Overdrive',
-    hero: 'Iron Man',
+    title: 'Iron Man vs Thanos: 2D Arcade Battle',
+    hero: 'Iron Man vs Thanos',
     category: 'character',
-    icon: '🚀',
-    mechanic: 'Resource Power Routing',
-    desc: 'Route Arc Reactor power between Thrusters, Repulsors, and Shields in real-time to evade EMP missiles and defeat Ultron Prime.',
-    controls: 'WASD/Arrows/Drag to fly; [1] Thrust, [2] Blast, [3] Shield.',
+    icon: '🥊',
+    mechanic: '2D Arcade Fighting',
+    desc: 'Face off against the Mad Titan in a fast-paced 2D arcade duel! Fire repulsors, unleash power punches, block cosmic attacks, and fire the cinematic Unibeam.',
+    controls: '[A] Repulsor Blast • [S] Power Punch • [D] Unibeam • [SPACE] Block (or touch buttons)',
     className: 'IronManGame',
     pageUrl: 'games/iron-man.html',
-    accentColor: '#ffd200',
-    bannerGradient: 'linear-gradient(135deg, #1a1505 0%, #3d2d0a 40%, #1e1a14 100%)',
-    badge: 'Defense'
+    accentColor: '#d50000',
+    bannerGradient: 'linear-gradient(135deg, #1f0707 0%, #4a0d18 40%, #1e1428 100%)',
+    badge: 'Fighter'
   },
   {
     id: 'thor',
