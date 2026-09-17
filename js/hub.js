@@ -1,8 +1,8 @@
 /**
- * hub.js
+ * hub.js — V2 OVERHAUL
  * Main Marvel Mini-Games Hub Controller.
- * Manages game catalogs, category filters, localStorage scores,
- * modal launching/closing, and links to dedicated standalone websites.
+ * Fixed: click event conflicts, modal visibility logic, card animations.
+ * Added: animated background particles, loading screen, staggered card animations.
  */
 
 const GAMES_CATALOG = [
@@ -19,6 +19,7 @@ const GAMES_CATALOG = [
     className: 'SpiderManGame',
     pageUrl: 'games/spider-man.html',
     accentColor: '#e23636',
+    bannerGradient: 'linear-gradient(135deg, #1a0505 0%, #3d0a0a 40%, #1e1428 100%)',
     badge: 'Physics'
   },
   {
@@ -28,11 +29,12 @@ const GAMES_CATALOG = [
     category: 'character',
     icon: '🛡️',
     mechanic: 'Geometry Ricochet',
-    desc: 'Calculate precise reflection angles to bounce the Vibranium Shield around titanium blast doors, eliminating Hydra sentries and shattering the Tesseract.',
+    desc: 'Calculate precise reflection angles to bounce the Vibranium Shield around titanium blast doors, eliminating Hydra sentries.',
     controls: 'Drag mouse/touch to aim bounce line; Release to throw shield.',
     className: 'CaptainAmericaGame',
     pageUrl: 'games/captain-america.html',
     accentColor: '#1565c0',
+    bannerGradient: 'linear-gradient(135deg, #05101a 0%, #0a2540 40%, #141828 100%)',
     badge: 'Puzzle'
   },
   {
@@ -42,11 +44,12 @@ const GAMES_CATALOG = [
     category: 'character',
     icon: '🚀',
     mechanic: 'Resource Power Routing',
-    desc: 'Route Arc Reactor power between Thrusters, Repulsors, and Shields in real-time to evade EMP missiles and defeat Ultron Prime over Stark Tower.',
+    desc: 'Route Arc Reactor power between Thrusters, Repulsors, and Shields in real-time to evade EMP missiles and defeat Ultron Prime.',
     controls: 'WASD/Arrows/Drag to fly; [1] Thrust, [2] Blast, [3] Shield.',
     className: 'IronManGame',
     pageUrl: 'games/iron-man.html',
     accentColor: '#ffd200',
+    bannerGradient: 'linear-gradient(135deg, #1a1505 0%, #3d2d0a 40%, #1e1a14 100%)',
     badge: 'Defense'
   },
   {
@@ -56,11 +59,12 @@ const GAMES_CATALOG = [
     category: 'character',
     icon: '⚡',
     mechanic: 'Oscillating Charge Timing',
-    desc: 'Channel atmospheric lightning into Mjolnir. Release at the exact green sweet spot to strike Frost Giant waves with cascading chain electricity.',
+    desc: 'Channel atmospheric lightning into Mjolnir. Release at the exact sweet spot to strike Frost Giant waves with cascading chain electricity.',
     controls: 'Hold [Space] or Tap to charge; Release inside green crest.',
     className: 'ThorGame',
     pageUrl: 'games/thor.html',
     accentColor: '#00f0ff',
+    bannerGradient: 'linear-gradient(135deg, #051a1a 0%, #0a3040 40%, #14182e 100%)',
     badge: 'Timing'
   },
   {
@@ -70,11 +74,12 @@ const GAMES_CATALOG = [
     category: 'character',
     icon: '🐜',
     mechanic: 'Dual-Scale Size & Mass',
-    desc: 'Instantly toggle between Micro (slip under lasers & through vents) and Giant (crush security bots & press heavy switches) to breach Yellowjacket’s vault.',
+    desc: 'Toggle between Micro (slip under lasers) and Giant (crush security bots) to breach Yellowjacket\'s vault.',
     controls: 'WASD/Arrows to walk & jump; [Q] / Tap Screen to switch scale.',
     className: 'AntManGame',
     pageUrl: 'games/ant-man.html',
     accentColor: '#d32f2f',
+    bannerGradient: 'linear-gradient(135deg, #1a0808 0%, #3d1515 40%, #281414 100%)',
     badge: 'Platformer'
   },
 
@@ -86,11 +91,12 @@ const GAMES_CATALOG = [
     category: 'multiverse',
     icon: '🌀',
     mechanic: 'Spatial Portal Looping',
-    desc: 'Place linked Orange and Blue sling ring portals to fling Strange across shattered Mirror Dimension voids, recovering pages of the Darkhold.',
+    desc: 'Place linked Orange and Blue sling ring portals to fling Strange across shattered Mirror Dimension voids.',
     controls: 'Click/Tap anywhere to place linked Orange and Blue portals.',
     className: 'DoctorStrangeGame',
     pageUrl: 'games/doctor-strange.html',
     accentColor: '#ff9100',
+    bannerGradient: 'linear-gradient(135deg, #1a1005 0%, #402a0a 40%, #281e14 100%)',
     badge: 'Spatial'
   },
   {
@@ -100,11 +106,12 @@ const GAMES_CATALOG = [
     category: 'multiverse',
     icon: '🔮',
     mechanic: 'Binary Reality Swap',
-    desc: 'Swap between Earth-616 (Red) and Hex Reality (Purple) mid-air to turn intangible obstacles into solid platforms and reach the Darkhold altar.',
+    desc: 'Swap between Earth-616 (Red) and Hex Reality (Purple) mid-air to turn intangible obstacles into solid platforms.',
     controls: 'WASD/Arrows to run & jump; [F] or Tap right screen to swap polarity.',
     className: 'ScarletWitchGame',
     pageUrl: 'games/scarlet-witch.html',
     accentColor: '#d500f9',
+    bannerGradient: 'linear-gradient(135deg, #1a051a 0%, #3d0a3d 40%, #28142e 100%)',
     badge: 'Phase Swap'
   },
   {
@@ -114,11 +121,12 @@ const GAMES_CATALOG = [
     category: 'multiverse',
     icon: '⏳',
     mechanic: 'Time-Rewind Clone Puzzle',
-    desc: 'Step on security pressure plates, then rewind time with your TemPad so your recorded variant clone holds the gates open while you advance.',
+    desc: 'Step on security plates, then rewind time so your recorded variant clone holds gates open while you advance.',
     controls: 'WASD/Arrows to move; Press [R] or Tap Rewind to time-slip.',
     className: 'TVALokiGame',
     pageUrl: 'games/tva-loki.html',
     accentColor: '#ffab00',
+    bannerGradient: 'linear-gradient(135deg, #1a1505 0%, #3d2d0a 40%, #2e2814 100%)',
     badge: 'Time-Loop'
   },
   {
@@ -128,11 +136,12 @@ const GAMES_CATALOG = [
     category: 'multiverse',
     icon: '👁️',
     mechanic: 'Incursion Triage',
-    desc: 'Inspect parallel timelines side-by-side. Spot and quarantine foreign multiverse incursions before the universe collapse countdown hits zero.',
+    desc: 'Inspect parallel timelines side-by-side. Spot and quarantine foreign multiverse incursions before collapse.',
     controls: 'Click/Tap directly on anomalous multiverse glitches in right panel.',
     className: 'WatcherNexusGame',
     pageUrl: 'games/watcher-nexus.html',
     accentColor: '#00e5ff',
+    bannerGradient: 'linear-gradient(135deg, #051a1a 0%, #0a3535 40%, #141e2e 100%)',
     badge: 'Pattern'
   },
   {
@@ -142,15 +151,108 @@ const GAMES_CATALOG = [
     category: 'multiverse',
     icon: '💥',
     mechanic: 'Ballistic Physics Destruction',
-    desc: 'Pull back Deadpool’s multiversal slingshot cannon to launch chaotic explosive ordnance, toppling Kingpin’s dimensional portal spires into the Void.',
+    desc: 'Pull back Deadpool\'s slingshot cannon to launch explosive ordnance, toppling Kingpin\'s portal spires into the Void.',
     controls: 'Drag back on slingshot to adjust angle and force; Release to fire.',
     className: 'DeadpoolGame',
     pageUrl: 'games/deadpool.html',
     accentColor: '#ff1744',
+    bannerGradient: 'linear-gradient(135deg, #1a0505 0%, #3d0a0a 40%, #281414 100%)',
     badge: 'Demolition'
   }
 ];
 
+/* ========================================================================
+   ANIMATED BACKGROUND PARTICLES
+   ======================================================================== */
+class BackgroundParticles {
+  constructor(canvasId) {
+    this.canvas = document.getElementById(canvasId);
+    if (!this.canvas) return;
+    this.ctx = this.canvas.getContext('2d');
+    this.particles = [];
+    this.resize();
+    window.addEventListener('resize', () => this.resize());
+    this.initParticles();
+    this.animate();
+  }
+
+  resize() {
+    this.canvas.width = window.innerWidth;
+    this.canvas.height = window.innerHeight;
+  }
+
+  initParticles() {
+    const count = Math.min(60, Math.floor((window.innerWidth * window.innerHeight) / 18000));
+    const colors = ['#e23636', '#ffd200', '#8a2be2', '#00f0ff', '#0088ff', '#ff007f'];
+    for (let i = 0; i < count; i++) {
+      this.particles.push({
+        x: Math.random() * this.canvas.width,
+        y: Math.random() * this.canvas.height,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.3,
+        radius: Math.random() * 1.8 + 0.4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        alpha: Math.random() * 0.4 + 0.1
+      });
+    }
+  }
+
+  animate() {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    for (const p of this.particles) {
+      p.x += p.vx;
+      p.y += p.vy;
+
+      // Wrap around
+      if (p.x < 0) p.x = this.canvas.width;
+      if (p.x > this.canvas.width) p.x = 0;
+      if (p.y < 0) p.y = this.canvas.height;
+      if (p.y > this.canvas.height) p.y = 0;
+
+      this.ctx.save();
+      this.ctx.globalAlpha = p.alpha;
+      this.ctx.fillStyle = p.color;
+      this.ctx.beginPath();
+      this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Subtle glow
+      this.ctx.globalAlpha = p.alpha * 0.3;
+      this.ctx.beginPath();
+      this.ctx.arc(p.x, p.y, p.radius * 3, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      this.ctx.restore();
+    }
+
+    // Draw faint connection lines between nearby particles
+    for (let i = 0; i < this.particles.length; i++) {
+      for (let j = i + 1; j < this.particles.length; j++) {
+        const dx = this.particles[i].x - this.particles[j].x;
+        const dy = this.particles[i].y - this.particles[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 120) {
+          this.ctx.save();
+          this.ctx.globalAlpha = (1 - dist / 120) * 0.06;
+          this.ctx.strokeStyle = '#fff';
+          this.ctx.lineWidth = 0.5;
+          this.ctx.beginPath();
+          this.ctx.moveTo(this.particles[i].x, this.particles[i].y);
+          this.ctx.lineTo(this.particles[j].x, this.particles[j].y);
+          this.ctx.stroke();
+          this.ctx.restore();
+        }
+      }
+    }
+
+    requestAnimationFrame(() => this.animate());
+  }
+}
+
+/* ========================================================================
+   MARVEL HUB CONTROLLER
+   ======================================================================== */
 class MarvelHub {
   constructor() {
     this.currentFilter = 'all';
@@ -163,6 +265,17 @@ class MarvelHub {
     this.renderCatalog();
     this.bindEvents();
     this.updateStats();
+
+    // Initialize background particles
+    new BackgroundParticles('bgParticles');
+
+    // Dismiss loading screen after content is ready
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        const loader = document.getElementById('loadingScreen');
+        if (loader) loader.classList.add('fade-out');
+      }, 1200);
+    });
   }
 
   getScores() {
@@ -207,15 +320,16 @@ class MarvelHub {
       return true;
     });
 
-    filtered.forEach(game => {
+    filtered.forEach((game, index) => {
       const card = document.createElement('div');
       card.className = `game-card ${game.category === 'multiverse' ? 'multiverse-card' : ''}`;
       card.style.setProperty('--accent-color', game.accentColor);
+      card.style.setProperty('--card-index', index);
 
       const hiScore = scores[game.id] || 0;
 
       card.innerHTML = `
-        <div class="card-banner">
+        <div class="card-banner" style="background: ${game.bannerGradient};">
           <div class="card-character-icon">${game.icon}</div>
           <div class="card-badge">${game.badge}</div>
           <div class="card-category-tag">${game.category === 'character' ? 'CHARACTER MISSION' : 'MULTIVERSE MISSION'}</div>
@@ -226,41 +340,57 @@ class MarvelHub {
           <p class="card-desc">${game.desc}</p>
           <div class="card-footer">
             <span class="card-score">BEST: <b>${hiScore.toLocaleString()}</b></span>
-            <div style="display:flex; gap:8px;">
-              <a href="${game.pageUrl}" class="play-btn" style="background:#222634; text-decoration:none; padding:6px 12px; font-size:14px;" target="_blank">🌐 STANDALONE</a>
-              <button class="play-btn arena-launch-btn" data-game-id="${game.id}">PLAY ARENA</button>
+            <div class="card-buttons">
+              <a href="${game.pageUrl}" class="play-btn standalone-btn" target="_blank" rel="noopener">🌐 SOLO</a>
+              <button class="play-btn arena-launch-btn" data-game-id="${game.id}">▶ PLAY</button>
             </div>
           </div>
         </div>
       `;
 
-      const standaloneLink = card.querySelector('a');
-      if (standaloneLink) {
-        standaloneLink.addEventListener('click', (e) => {
-          e.stopPropagation();
-        });
-      }
+      // FIX: Properly separate click targets
+      // The standalone link should navigate; the arena button launches modal;
+      // clicking the card body (outside buttons) also launches the game
+      const standaloneLink = card.querySelector('.standalone-btn');
+      standaloneLink.addEventListener('click', (e) => {
+        e.stopPropagation(); // Don't trigger card click
+      });
 
-      card.querySelector('.arena-launch-btn').addEventListener('click', (e) => {
-        e.stopPropagation();
+      const arenaBtn = card.querySelector('.arena-launch-btn');
+      arenaBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Don't trigger card click
         this.launchGame(game.id);
       });
 
-      card.addEventListener('click', () => this.launchGame(game.id));
+      // Card-level click — only fires if button/link wasn't the target
+      card.addEventListener('click', (e) => {
+        // Prevent double-launch if a button was clicked
+        if (e.target.closest('.card-buttons')) return;
+        this.launchGame(game.id);
+      });
+
       grid.appendChild(card);
     });
   }
 
   bindEvents() {
+    // Category filter tabs
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         this.currentFilter = btn.dataset.filter;
         this.renderCatalog();
+
+        // Smooth scroll to grid
+        const grid = document.getElementById('gamesGrid');
+        if (grid) {
+          grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
       });
     });
 
+    // Audio Toggle
     const audioBtn = document.getElementById('audioToggleBtn');
     if (audioBtn) {
       audioBtn.addEventListener('click', () => {
@@ -272,14 +402,17 @@ class MarvelHub {
       });
     }
 
+    // Close Arena
     const closeBtn = document.getElementById('closeArenaBtn');
     if (closeBtn) {
       closeBtn.addEventListener('click', () => this.closeGame());
     }
 
+    // Start Mission
     const startBtn = document.getElementById('startMissionBtn');
     if (startBtn) {
       startBtn.addEventListener('click', () => {
+        if (window.soundFX) window.soundFX.init();
         document.getElementById('readyOverlay').classList.add('hidden');
         if (this.activeGame) {
           this.activeGame.state = 'PLAYING';
@@ -287,6 +420,7 @@ class MarvelHub {
       });
     }
 
+    // Retry
     const retryBtn = document.getElementById('retryMissionBtn');
     if (retryBtn) {
       retryBtn.addEventListener('click', () => {
@@ -298,6 +432,7 @@ class MarvelHub {
       });
     }
 
+    // Victory Claim
     const victoryClaimBtn = document.getElementById('victoryClaimBtn');
     if (victoryClaimBtn) {
       victoryClaimBtn.addEventListener('click', () => {
@@ -306,12 +441,23 @@ class MarvelHub {
       });
     }
 
+    // Resume from pause
     const resumeBtn = document.getElementById('resumeGameBtn');
     if (resumeBtn) {
       resumeBtn.addEventListener('click', () => {
         if (this.activeGame) this.activeGame.togglePause();
       });
     }
+
+    // Keyboard shortcut: Escape closes game modal
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.activeGame && document.getElementById('gameModal').classList.contains('active')) {
+        // Only close if not in an active game state
+        if (this.activeGame.state === 'READY' || this.activeGame.state === 'GAME_OVER' || this.activeGame.state === 'VICTORY') {
+          this.closeGame();
+        }
+      }
+    });
   }
 
   launchGame(gameId) {
@@ -321,6 +467,7 @@ class MarvelHub {
     if (!meta) return;
     this.activeGameMeta = meta;
 
+    // Set arena header info
     const nameEl = document.getElementById('arenaGameName');
     const heroEl = document.getElementById('arenaHeroBadge');
     const controlsEl = document.getElementById('arenaControlsHint');
@@ -328,6 +475,7 @@ class MarvelHub {
     if (heroEl) heroEl.textContent = meta.hero;
     if (controlsEl) controlsEl.textContent = meta.controls;
 
+    // Set briefing overlay
     const readyTitle = document.getElementById('readyTitle');
     const readyDesc = document.getElementById('readyInstructions');
     const readyControls = document.getElementById('readyControls');
@@ -335,19 +483,26 @@ class MarvelHub {
     if (readyDesc) readyDesc.textContent = meta.desc;
     if (readyControls) readyControls.innerHTML = `<span>🎮 CONTROLS:</span> ${meta.controls}`;
 
+    // Reset all overlays
     document.getElementById('gameOverOverlay').classList.add('hidden');
     document.getElementById('victoryOverlay').classList.add('hidden');
     document.getElementById('pauseOverlay').classList.add('hidden');
     document.getElementById('readyOverlay').classList.remove('hidden');
 
+    // FIX: Show modal using visibility/opacity (not display toggle)
     const modal = document.getElementById('gameModal');
     if (modal) modal.classList.add('active');
 
+    // Prevent body scroll when modal is open
+    document.body.style.overflow = 'hidden';
+
+    // Stop previous game
     if (this.activeGame) {
       this.activeGame.stop();
       this.activeGame = null;
     }
 
+    // Instantiate new game
     const GameClass = window[meta.className];
     if (GameClass) {
       this.activeGame = new GameClass();
@@ -362,11 +517,18 @@ class MarvelHub {
     }
     const modal = document.getElementById('gameModal');
     if (modal) modal.classList.remove('active');
+
+    // Restore body scroll
+    document.body.style.overflow = '';
+
     this.renderCatalog();
     this.updateStats();
   }
 }
 
+/* ========================================================================
+   INITIALIZATION
+   ======================================================================== */
 function initHub() {
   if (!window.hub) {
     window.hub = new MarvelHub();

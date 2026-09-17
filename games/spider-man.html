@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Spider-Man: Web Sling Velocity | Marvel Mini-Games</title>
+  <meta name="description" content="Swing through Manhattan using web physics! Hold to attach webs, release to slingshot through the skyline.">
+  <meta name="theme-color" content="#e23636">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕷️</text></svg>">
   <link rel="stylesheet" href="../css/hub.css">
   <link rel="stylesheet" href="../css/game.css">
   <style>
@@ -13,6 +16,9 @@
       align-items: center;
       min-height: 100vh;
       padding: 16px;
+      background-image:
+        radial-gradient(ellipse at 20% 30%, rgba(226, 54, 54, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 70%, rgba(25, 118, 210, 0.12) 0%, transparent 50%);
     }
     .standalone-nav {
       width: 100%;
@@ -21,30 +27,48 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 16px;
+      gap: 12px;
+      flex-wrap: wrap;
     }
     .back-btn {
-      background: #222634;
+      background: rgba(255, 255, 255, 0.06);
       color: #fff;
       text-decoration: none;
       font-family: var(--comic-font);
-      font-size: 18px;
+      font-size: 16px;
       padding: 8px 16px;
-      border-radius: 8px;
-      border: 1px solid #383f54;
-      transition: all 0.2s;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.25s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
     .back-btn:hover {
       background: var(--marvel-red);
-      border-color: #fff;
+      border-color: rgba(255, 255, 255, 0.3);
+      box-shadow: 0 4px 16px rgba(226, 54, 54, 0.3);
+    }
+    .game-title-area {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .game-title-area h2 {
+      margin: 0;
+      font-family: var(--comic-font);
+      font-size: 22px;
+      letter-spacing: 1px;
+      color: #fff;
     }
   </style>
 </head>
 <body>
   <div class="standalone-nav">
-    <a href="../index.html" class="back-btn">&larr; BACK TO MULTIVERSE HUB</a>
-    <div style="display: flex; align-items: center; gap: 10px;">
-      <span class="arena-hero-badge">SPIDER-MAN</span>
-      <h2 class="arena-game-name" style="margin:0;">WEB SLING VELOCITY</h2>
+    <a href="../index.html" class="back-btn">&larr; MULTIVERSE HUB</a>
+    <div class="game-title-area">
+      <span class="arena-hero-badge" style="box-shadow: 0 2px 8px rgba(226,54,54,0.3);">SPIDER-MAN</span>
+      <h2>WEB SLING VELOCITY</h2>
     </div>
     <button class="audio-toggle-btn" id="audioToggleBtn">🔊 AUDIO: ON</button>
   </div>
@@ -73,7 +97,6 @@
       <div></div>
     </div>
 
-    <!-- Briefing Overlay -->
     <div class="canvas-screen-overlay" id="readyOverlay">
       <div class="overlay-badge">MISSION BRIEFING</div>
       <h2 class="overlay-title">SPIDER-MAN: WEB SLING VELOCITY</h2>
@@ -88,19 +111,17 @@
       </div>
     </div>
 
-    <!-- Victory Overlay -->
     <div class="canvas-screen-overlay hidden" id="victoryOverlay">
       <div class="overlay-badge" style="background:#ffd200; color:#000;">VICTORY</div>
       <h2 class="overlay-title victory">OSCORP HEIST STOPPED!</h2>
       <p class="overlay-instructions" id="victoryMessage">Spider-Man secured the rooftop helipad!</p>
       <div class="hud-value" id="victoryScore" style="font-size: 32px; margin-bottom: 24px;">Score: 0</div>
       <div class="overlay-btn-group">
-        <button class="overlay-btn" id="victoryClaimBtn">RESTART MISSION</button>
+        <button class="overlay-btn" id="victoryClaimBtn">PLAY AGAIN</button>
         <a href="../index.html" class="overlay-btn secondary" style="text-decoration:none;">HUB MENU</a>
       </div>
     </div>
 
-    <!-- Game Over Overlay -->
     <div class="canvas-screen-overlay hidden" id="gameOverOverlay">
       <div class="overlay-badge" style="background:#d50000;">DEFEAT</div>
       <h2 class="overlay-title defeat">MISSION FAILED</h2>
@@ -111,7 +132,6 @@
       </div>
     </div>
 
-    <!-- Pause Overlay -->
     <div class="canvas-screen-overlay hidden" id="pauseOverlay">
       <div class="overlay-badge">TACTICAL PAUSE</div>
       <h2 class="overlay-title">GAME PAUSED</h2>
@@ -132,35 +152,30 @@
       game = new SpiderManGame();
       game.start();
 
-      // Audio Toggle
       document.getElementById('audioToggleBtn').addEventListener('click', () => {
         window.soundFX.init();
         const muted = window.soundFX.toggleMute();
         document.getElementById('audioToggleBtn').textContent = muted ? '🔇 AUDIO: OFF' : '🔊 AUDIO: ON';
       });
 
-      // Start Button
       document.getElementById('startMissionBtn').addEventListener('click', () => {
         window.soundFX.init();
         document.getElementById('readyOverlay').classList.add('hidden');
         game.state = 'PLAYING';
       });
 
-      // Retry Button
       document.getElementById('retryMissionBtn').addEventListener('click', () => {
         document.getElementById('gameOverOverlay').classList.add('hidden');
         game.reset();
         game.state = 'PLAYING';
       });
 
-      // Victory Claim Button
       document.getElementById('victoryClaimBtn').addEventListener('click', () => {
         document.getElementById('victoryOverlay').classList.add('hidden');
         game.reset();
         game.state = 'PLAYING';
       });
 
-      // Resume Button
       document.getElementById('resumeGameBtn').addEventListener('click', () => {
         game.togglePause();
       });

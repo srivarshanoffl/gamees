@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MARVEL MINI-GAMES HUB STYLES
+   MARVEL MINI-GAMES HUB STYLES — V2 OVERHAUL
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Bangers&family=Outfit:wght@400;600;800;900&display=swap');
@@ -12,14 +12,18 @@
   --marvel-cyan: #00f0ff;
   --multiverse-purple: #8a2be2;
   --multiverse-pink: #ff007f;
-  --bg-dark: #0b0c10;
-  --bg-card: #151821;
-  --bg-card-hover: #1f2330;
+  --bg-dark: #08090d;
+  --bg-card: rgba(18, 21, 32, 0.85);
+  --bg-card-hover: rgba(28, 33, 48, 0.95);
+  --bg-glass: rgba(255, 255, 255, 0.04);
   --text-main: #f0f2f5;
   --text-muted: #9ba1b0;
+  --border-subtle: rgba(255, 255, 255, 0.08);
   --border-glow: rgba(226, 54, 54, 0.4);
   --comic-font: 'Bangers', cursive, sans-serif;
   --body-font: 'Outfit', sans-serif;
+  --card-radius: 18px;
+  --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 * {
@@ -28,17 +32,97 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background-color: var(--bg-dark);
-  background-image: 
-    radial-gradient(circle at 15% 20%, rgba(226, 54, 54, 0.12) 0%, transparent 40%),
-    radial-gradient(circle at 85% 75%, rgba(138, 43, 226, 0.15) 0%, transparent 45%),
-    radial-gradient(#1e2230 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 24px 24px;
+  background-image:
+    radial-gradient(ellipse at 10% 15%, rgba(226, 54, 54, 0.10) 0%, transparent 50%),
+    radial-gradient(ellipse at 90% 80%, rgba(138, 43, 226, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(0, 136, 255, 0.05) 0%, transparent 60%);
   color: var(--text-main);
   font-family: var(--body-font);
   min-height: 100vh;
   overflow-x: hidden;
+  position: relative;
+}
+
+/* Animated dot grid background */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Loading splash screen */
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--bg-dark);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+
+.loading-screen.fade-out {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.loading-logo {
+  font-family: var(--comic-font);
+  font-size: 48px;
+  color: var(--marvel-red);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  animation: loadPulse 1.2s ease-in-out infinite alternate;
+  text-shadow: 0 0 30px rgba(226, 54, 54, 0.6);
+}
+
+.loading-bar-track {
+  width: 200px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  margin-top: 24px;
+  overflow: hidden;
+}
+
+.loading-bar-fill {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--marvel-red), var(--marvel-gold));
+  border-radius: 4px;
+  animation: loadBar 1.8s ease forwards;
+}
+
+@keyframes loadPulse {
+  from { transform: scale(1); opacity: 0.8; }
+  to { transform: scale(1.06); opacity: 1; }
+}
+
+@keyframes loadBar {
+  0% { width: 0%; }
+  60% { width: 75%; }
+  100% { width: 100%; }
+}
+
+/* Animated background particle canvas */
+#bgParticles {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
 }
 
 /* ==========================================================================
@@ -46,21 +130,59 @@ body {
    ========================================================================== */
 .hero-header {
   position: relative;
-  padding: 40px 20px 24px;
+  padding: 48px 20px 28px;
   text-align: center;
-  border-bottom: 3px solid #222634;
-  background: linear-gradient(180deg, rgba(226, 54, 54, 0.15) 0%, rgba(11, 12, 16, 0.9) 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg,
+    rgba(226, 54, 54, 0.12) 0%,
+    rgba(138, 43, 226, 0.06) 40%,
+    rgba(8, 9, 13, 0.98) 100%);
   overflow: hidden;
+  z-index: 1;
 }
 
+/* Animated top gradient stripe */
 .hero-header::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, var(--marvel-red), var(--marvel-gold), var(--multiverse-purple), var(--marvel-cyan));
+  height: 3px;
+  background: linear-gradient(90deg,
+    var(--marvel-red),
+    var(--marvel-gold),
+    var(--multiverse-purple),
+    var(--marvel-cyan),
+    var(--marvel-red));
+  background-size: 200% 100%;
+  animation: gradientShift 4s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 100% 0%; }
+  100% { background-position: 0% 0%; }
+}
+
+/* Floating cosmic particles in hero */
+.hero-header::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(2px 2px at 15% 35%, rgba(255, 210, 0, 0.3), transparent),
+    radial-gradient(2px 2px at 75% 20%, rgba(0, 240, 255, 0.3), transparent),
+    radial-gradient(2px 2px at 45% 70%, rgba(138, 43, 226, 0.3), transparent),
+    radial-gradient(1px 1px at 85% 60%, rgba(226, 54, 54, 0.4), transparent),
+    radial-gradient(1px 1px at 25% 80%, rgba(0, 136, 255, 0.3), transparent);
+  animation: floatStars 6s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes floatStars {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-8px); }
 }
 
 .marvel-logo-badge {
@@ -68,62 +190,80 @@ body {
   background: var(--marvel-red);
   color: #fff;
   font-family: var(--comic-font);
-  font-size: 26px;
-  letter-spacing: 2px;
-  padding: 4px 18px;
+  font-size: 28px;
+  letter-spacing: 3px;
+  padding: 5px 22px;
   text-transform: uppercase;
   transform: skewX(-10deg);
-  box-shadow: 4px 4px 0 #000;
-  margin-bottom: 12px;
-  border: 2px solid #fff;
+  box-shadow: 4px 4px 0 #000, 0 0 20px rgba(226, 54, 54, 0.4);
+  margin-bottom: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  position: relative;
+  z-index: 2;
 }
 
 .hero-title {
   font-family: var(--comic-font);
-  font-size: clamp(38px, 6vw, 64px);
-  letter-spacing: 2px;
+  font-size: clamp(40px, 6.5vw, 68px);
+  letter-spacing: 3px;
   text-transform: uppercase;
-  background: linear-gradient(180deg, #ffffff 20%, var(--marvel-gold) 100%);
+  background: linear-gradient(180deg, #ffffff 10%, var(--marvel-gold) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 4px 16px rgba(255, 210, 0, 0.3);
-  margin-bottom: 8px;
+  background-clip: text;
+  margin-bottom: 10px;
   line-height: 1.1;
+  position: relative;
+  z-index: 2;
+  filter: drop-shadow(0 4px 12px rgba(255, 210, 0, 0.25));
 }
 
 .hero-subtitle {
   font-size: 16px;
   color: var(--text-muted);
-  max-width: 680px;
-  margin: 0 auto 20px;
-  line-height: 1.5;
+  max-width: 660px;
+  margin: 0 auto 22px;
+  line-height: 1.6;
+  position: relative;
+  z-index: 2;
 }
 
 .hero-stats {
   display: flex;
   justify-content: center;
-  gap: 24px;
-  margin-top: 10px;
+  gap: 16px;
+  margin-top: 12px;
   flex-wrap: wrap;
+  position: relative;
+  z-index: 2;
 }
 
 .stat-pill {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 6px 16px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-subtle);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 7px 18px;
+  border-radius: 24px;
+  font-size: 12px;
+  font-weight: 700;
   color: var(--text-main);
   display: flex;
   align-items: center;
   gap: 6px;
+  letter-spacing: 0.3px;
+  transition: all 0.3s var(--transition-smooth);
+}
+
+.stat-pill:hover {
+  border-color: rgba(255, 210, 0, 0.3);
+  background: rgba(255, 210, 0, 0.06);
 }
 
 .stat-pill span {
   color: var(--marvel-gold);
   font-family: var(--comic-font);
-  font-size: 17px;
+  font-size: 18px;
 }
 
 /* ==========================================================================
@@ -131,22 +271,26 @@ body {
    ========================================================================== */
 .filter-bar {
   max-width: 1200px;
-  margin: 30px auto 20px;
+  margin: 28px auto 22px;
   padding: 0 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 14px;
+  position: relative;
+  z-index: 2;
 }
 
 .category-tabs {
   display: flex;
-  gap: 10px;
-  background: #151821;
-  padding: 6px;
-  border-radius: 12px;
-  border: 1px solid #222736;
+  gap: 6px;
+  background: var(--bg-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 5px;
+  border-radius: 14px;
+  border: 1px solid var(--border-subtle);
 }
 
 .tab-btn {
@@ -154,28 +298,50 @@ body {
   border: none;
   color: var(--text-muted);
   font-family: var(--body-font);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
-  padding: 8px 18px;
-  border-radius: 8px;
+  padding: 9px 20px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s var(--transition-smooth);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  position: relative;
+  overflow: hidden;
+}
+
+.tab-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--marvel-red);
+  opacity: 0;
+  border-radius: inherit;
+  transition: opacity 0.25s ease;
+}
+
+.tab-btn.active::before, .tab-btn:hover::before {
+  opacity: 1;
 }
 
 .tab-btn.active, .tab-btn:hover {
-  background: var(--marvel-red);
   color: #fff;
-  box-shadow: 0 4px 12px rgba(226, 54, 54, 0.4);
+  box-shadow: 0 4px 16px rgba(226, 54, 54, 0.35);
+}
+
+.tab-btn span, .tab-btn {
+  position: relative;
+  z-index: 1;
 }
 
 .audio-toggle-btn {
-  background: #151821;
-  border: 1px solid #262c3d;
+  background: var(--bg-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
   color: var(--text-main);
-  padding: 8px 16px;
-  border-radius: 10px;
+  padding: 9px 18px;
+  border-radius: 12px;
   font-family: var(--body-font);
   font-weight: 700;
   font-size: 13px;
@@ -183,12 +349,13 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: all 0.2s;
+  transition: all 0.25s var(--transition-smooth);
 }
 
 .audio-toggle-btn:hover {
   border-color: var(--marvel-cyan);
   color: var(--marvel-cyan);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.15);
 }
 
 /* ==========================================================================
@@ -197,87 +364,113 @@ body {
 .games-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 10px 20px 60px;
-}
-
-.section-label {
-  font-family: var(--comic-font);
-  font-size: 28px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  margin: 24px 0 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: var(--text-main);
-}
-
-.section-label::after {
-  content: '';
-  flex: 1;
-  height: 2px;
-  background: linear-gradient(90deg, #2a3144, transparent);
+  padding: 10px 20px 70px;
+  position: relative;
+  z-index: 2;
 }
 
 .games-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
   gap: 24px;
 }
 
 /* ==========================================================================
-   GAME CARDS
+   GAME CARDS — Premium Glassmorphism + Glow
    ========================================================================== */
 .game-card {
+  --accent: var(--accent-color, var(--marvel-red));
   position: relative;
   background: var(--bg-card);
-  border: 2px solid #23293a;
-  border-radius: 16px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: var(--card-radius);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
   cursor: pointer;
+  transition:
+    transform 0.35s var(--transition-smooth),
+    border-color 0.35s ease,
+    box-shadow 0.35s ease;
+  animation: cardEntrance 0.5s ease backwards;
+}
+
+/* Staggered entrance: JS will set --card-index */
+.game-card { animation-delay: calc(var(--card-index, 0) * 0.07s); }
+
+@keyframes cardEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Accent glow border on hover */
+.game-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: var(--card-radius);
+  background: linear-gradient(135deg, var(--accent), transparent 60%);
+  opacity: 0;
+  z-index: -1;
+  transition: opacity 0.35s ease;
 }
 
 .game-card:hover {
-  transform: translateY(-6px);
-  border-color: var(--accent-color, var(--marvel-red));
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6), 0 0 18px var(--glow-color, rgba(226, 54, 54, 0.3));
+  transform: translateY(-8px) scale(1.015);
+  border-color: var(--accent);
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.5),
+    0 0 24px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.game-card:hover::before {
+  opacity: 0.15;
 }
 
 .card-banner {
   position: relative;
-  height: 140px;
-  background: #1b202d;
+  height: 150px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  /* Character-themed gradient — set via inline style or JS */
+  background: linear-gradient(135deg, rgba(30, 34, 48, 1) 0%, rgba(18, 21, 32, 1) 100%);
 }
 
-.card-banner-bg {
+/* Animated shimmer on card banner */
+.card-banner::after {
+  content: '';
   position: absolute;
-  inset: 0;
-  opacity: 0.25;
-  background-size: cover;
-  background-position: center;
-  transition: transform 0.3s ease;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.04), transparent);
+  transition: left 0.6s ease;
 }
 
-.game-card:hover .card-banner-bg {
-  transform: scale(1.08);
+.game-card:hover .card-banner::after {
+  left: 120%;
 }
 
 .card-character-icon {
-  font-size: 54px;
+  font-size: 58px;
   z-index: 2;
-  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.6));
-  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.7));
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .game-card:hover .card-character-icon {
-  transform: scale(1.15) rotate(-3deg);
+  transform: scale(1.2) rotate(-5deg);
 }
 
 .card-badge {
@@ -286,30 +479,32 @@ body {
   right: 12px;
   padding: 3px 10px;
   border-radius: 6px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  letter-spacing: 0.8px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   color: #fff;
   z-index: 3;
 }
 
 .card-category-tag {
   position: absolute;
-  bottom: 8px;
-  left: 12px;
-  font-size: 11px;
+  bottom: 10px;
+  left: 14px;
+  font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
+  letter-spacing: 0.8px;
   color: var(--marvel-gold);
   z-index: 3;
+  opacity: 0.8;
 }
 
 .card-body {
-  padding: 18px;
+  padding: 18px 20px;
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -317,11 +512,11 @@ body {
 
 .card-title {
   font-family: var(--comic-font);
-  font-size: 24px;
+  font-size: 23px;
   letter-spacing: 1px;
-  line-height: 1.1;
+  line-height: 1.15;
   color: #fff;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
 }
 
 .card-mechanic-tag {
@@ -331,12 +526,13 @@ body {
   color: var(--marvel-cyan);
   text-transform: uppercase;
   margin-bottom: 8px;
+  letter-spacing: 0.5px;
 }
 
 .card-desc {
   font-size: 13px;
   color: var(--text-muted);
-  line-height: 1.45;
+  line-height: 1.5;
   margin-bottom: 16px;
   flex: 1;
 }
@@ -345,8 +541,8 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 12px;
-  border-top: 1px solid #222736;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .card-score {
@@ -357,6 +553,13 @@ body {
 
 .card-score b {
   color: var(--marvel-gold);
+  font-family: var(--comic-font);
+  font-size: 16px;
+}
+
+.card-buttons {
+  display: flex;
+  gap: 8px;
 }
 
 .play-btn {
@@ -364,24 +567,51 @@ body {
   color: #fff;
   border: none;
   font-family: var(--comic-font);
-  font-size: 17px;
+  font-size: 16px;
   letter-spacing: 1px;
-  padding: 6px 18px;
+  padding: 7px 16px;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 2px 2px 0 #000;
+  transition: all 0.2s var(--transition-smooth);
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+  position: relative;
+  overflow: hidden;
+  z-index: 5;
 }
 
-.game-card:hover .play-btn {
-  background: var(--accent-color, var(--marvel-red));
-  transform: scale(1.05);
+.play-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 2px 4px 0 rgba(0,0,0,0.5);
+}
+
+.play-btn:active {
+  transform: translateY(0);
+  box-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+}
+
+.play-btn.standalone-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  text-decoration: none;
+  font-size: 13px;
+  padding: 7px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.play-btn.standalone-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.game-card:hover .play-btn.arena-launch-btn {
+  background: var(--accent);
 }
 
 /* Multiverse Card Tint */
 .game-card.multiverse-card {
   --accent-color: var(--multiverse-purple);
-  --glow-color: rgba(138, 43, 226, 0.4);
 }
 
 /* ==========================================================================
@@ -389,20 +619,34 @@ body {
    ========================================================================== */
 .hub-footer {
   text-align: center;
-  padding: 30px 20px;
-  border-top: 1px solid #1e2330;
+  padding: 36px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
   color: var(--text-muted);
   font-size: 13px;
+  position: relative;
+  z-index: 2;
 }
 
 .hub-footer p {
   margin-bottom: 6px;
 }
 
-/* Responsive adjustments */
+.hub-footer a {
+  color: var(--marvel-cyan);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.hub-footer a:hover {
+  color: var(--marvel-gold);
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
 @media (max-width: 768px) {
   .hero-header {
-    padding: 24px 16px;
+    padding: 28px 16px 20px;
   }
   .filter-bar {
     flex-direction: column;
@@ -410,8 +654,33 @@ body {
   }
   .category-tabs {
     justify-content: center;
+    flex-wrap: wrap;
   }
   .audio-toggle-btn {
     justify-content: center;
+  }
+  .games-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .card-banner {
+    height: 120px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-title {
+    font-size: 32px;
+  }
+  .hero-subtitle {
+    font-size: 14px;
+  }
+  .stat-pill {
+    font-size: 11px;
+    padding: 5px 12px;
+  }
+  .tab-btn {
+    font-size: 11px;
+    padding: 7px 12px;
   }
 }

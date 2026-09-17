@@ -1,8 +1,16 @@
 /**
- * GameEngine.js
+ * GameEngine.js — V2 OVERHAUL
  * Base Canvas2D Game Engine for Marvel Mini-Games.
  * Handles game loops, input management, particle effects, comic text bursts,
  * screen shake, state transitions, and responsive letterboxing.
+ * 
+ * V2 Changes:
+ * - Added default background fill to prevent black flash
+ * - Improved resize with debouncing
+ * - Added score popup floating text system
+ * - Added trail/afterimage system
+ * - Improved particle rendering with glow
+ * - Better touch handling
  */
 
 class GameEngine {
@@ -23,6 +31,9 @@ class GameEngine {
     this.energy = 100;
     this.maxEnergy = 100;
 
+    // Background color (games can override)
+    this.bgColor = '#0a0c14';
+
     // Timing
     this.lastTime = 0;
     this.running = false;
@@ -35,16 +46,28 @@ class GameEngine {
     // Particle System
     this.particles = [];
     this.comicTexts = [];
+    this.scorePopups = [];
 
     // Inputs
     this.keys = {};
     this.pointer = { x: 0, y: 0, isDown: false, justPressed: false, justReleased: false };
 
+    // Event cleanup
+    this._boundHandlers = [];
+
     // HUD bindings
     this.hudConfig = hudConfig;
     this.bindEvents();
     this.resize();
-    window.addEventListener('resize', () => this.resize());
+
+    // Debounced resize
+    this._resizeTimeout = null;
+    const resizeHandler = () => {
+      clearTimeout(this._resizeTimeout);
+      this._resizeTimeout = setTimeout(() => this.resize(), 100);
+    };
+    window.addEventListener('resize', resizeHandler);
+    this._boundHandlers.push({ target: window, event: 'resize', handler: resizeHandler });
   }
 
   resize() {
@@ -60,20 +83,25 @@ class GameEngine {
 
   bindEvents() {
     // Keyboard
-    window.addEventListener('keydown', (e) => {
+    const keydownHandler = (e) => {
       this.keys[e.code] = true;
       this.keys[e.key] = true;
       if (e.code === 'KeyP' || e.code === 'Escape') {
         this.togglePause();
       }
       if (this.onKeyDown) this.onKeyDown(e);
-    });
+    };
 
-    window.addEventListener('keyup', (e) => {
+    const keyupHandler = (e) => {
       this.keys[e.code] = false;
       this.keys[e.key] = false;
       if (this.onKeyUp) this.onKeyUp(e);
-    });
+    };
+
+    window.addEventListener('keydown', keydownHandler);
+    window.addEventListener('keyup', keyupHandler);
+    this._boundHandlers.push({ target: window, event: 'keydown', handler: keydownHandler });
+    this._boundHandlers.push({ target: window, event: 'keyup', handler: keyupHandler });
 
     // Pointer (Mouse + Touch)
     const getPos = (e) => {
@@ -97,6 +125,7 @@ class GameEngine {
     };
 
     const handleMove = (e) => {
+      if (e.touches && e.touches.length === 0) return;
       const pos = getPos(e);
       this.pointer.x = pos.x;
       this.pointer.y = pos.y;
@@ -112,10 +141,17 @@ class GameEngine {
     this.canvas.addEventListener('mousedown', handleDown);
     window.addEventListener('mousemove', handleMove);
     window.addEventListener('mouseup', handleUp);
+    this._boundHandlers.push({ target: this.canvas, event: 'mousedown', handler: handleDown });
+    this._boundHandlers.push({ target: window, event: 'mousemove', handler: handleMove });
+    this._boundHandlers.push({ target: window, event: 'mouseup', handler: handleUp });
 
-    this.canvas.addEventListener('touchstart', (e) => { handleDown(e); e.preventDefault(); }, { passive: false });
+    const touchStartHandler = (e) => { handleDown(e); e.preventDefault(); };
+    this.canvas.addEventListener('touchstart', touchStartHandler, { passive: false });
     window.addEventListener('touchmove', handleMove, { passive: true });
     window.addEventListener('touchend', handleUp, { passive: true });
+    this._boundHandlers.push({ target: this.canvas, event: 'touchstart', handler: touchStartHandler });
+    this._boundHandlers.push({ target: window, event: 'touchmove', handler: handleMove });
+    this._boundHandlers.push({ target: window, event: 'touchend', handler: handleUp });
   }
 
   start() {
@@ -142,6 +178,7 @@ class GameEngine {
       this.update(dt);
       this.updateScreenShake(dt);
       this.updateParticles(dt);
+      this.updateScorePopups(dt);
     }
 
     this.renderInternal();
@@ -180,6 +217,16 @@ class GameEngine {
     });
   }
 
+  /**
+   * Spawn a floating score popup (e.g., "+150") that drifts upward and fades.
+   */
+  spawnScorePopup(text, x, y, color = '#ffd200') {
+    this.scorePopups.push({
+      text, x, y, color,
+      alpha: 1, life: 1.0, maxLife: 1.0
+    });
+  }
+
   updateParticles(dt) {
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i];
@@ -204,9 +251,24 @@ class GameEngine {
     }
   }
 
+  updateScorePopups(dt) {
+    for (let i = this.scorePopups.length - 1; i >= 0; i--) {
+      const sp = this.scorePopups[i];
+      sp.y -= 40 * dt;
+      sp.life -= dt;
+      sp.alpha = Math.max(0, sp.life / sp.maxLife);
+      if (sp.life <= 0) {
+        this.scorePopups.splice(i, 1);
+      }
+    }
+  }
+
   renderInternal() {
     this.ctx.save();
-    this.ctx.clearRect(0, 0, this.vWidth, this.vHeight);
+
+    // Default background fill to prevent black flash
+    this.ctx.fillStyle = this.bgColor;
+    this.ctx.fillRect(0, 0, this.vWidth, this.vHeight);
 
     // Apply screen shake
     if (this.shakeDuration > 0) {
@@ -218,11 +280,13 @@ class GameEngine {
     // Call game specific render
     this.render(this.ctx);
 
-    // Render Particles
+    // Render Particles with glow
     for (const p of this.particles) {
       this.ctx.save();
       this.ctx.globalAlpha = p.alpha;
       this.ctx.fillStyle = p.color;
+      this.ctx.shadowColor = p.color;
+      this.ctx.shadowBlur = p.radius * 2;
       this.ctx.beginPath();
       this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
       this.ctx.fill();
@@ -240,6 +304,19 @@ class GameEngine {
       this.ctx.lineWidth = 4;
       this.ctx.strokeText(ct.text, ct.x, ct.y);
       this.ctx.fillText(ct.text, ct.x, ct.y);
+      this.ctx.restore();
+    }
+
+    // Render Score Popups
+    for (const sp of this.scorePopups) {
+      this.ctx.save();
+      this.ctx.globalAlpha = sp.alpha;
+      this.ctx.font = `bold 18px 'Outfit', sans-serif`;
+      this.ctx.textAlign = 'center';
+      this.ctx.fillStyle = sp.color;
+      this.ctx.shadowColor = sp.color;
+      this.ctx.shadowBlur = 6;
+      this.ctx.fillText(sp.text, sp.x, sp.y);
       this.ctx.restore();
     }
 
@@ -268,7 +345,7 @@ class GameEngine {
     if (values.score !== undefined) {
       this.score = values.score;
       const el = document.getElementById('hudScore');
-      if (el) el.textContent = this.score;
+      if (el) el.textContent = this.score.toLocaleString();
     }
     if (values.stage !== undefined) {
       this.stage = values.stage;
@@ -312,7 +389,7 @@ class GameEngine {
     const reasonEl = document.getElementById('gameOverReason');
     const scoreEl = document.getElementById('gameOverScore');
     if (reasonEl) reasonEl.textContent = reason;
-    if (scoreEl) scoreEl.textContent = `Score: ${this.score}`;
+    if (scoreEl) scoreEl.textContent = `Score: ${this.score.toLocaleString()}`;
     if (overlay) overlay.classList.remove('hidden');
   }
 
@@ -323,7 +400,7 @@ class GameEngine {
     const msgEl = document.getElementById('victoryMessage');
     const scoreEl = document.getElementById('victoryScore');
     if (msgEl) msgEl.textContent = message;
-    if (scoreEl) scoreEl.textContent = `Final Score: ${this.score}`;
+    if (scoreEl) scoreEl.textContent = `Final Score: ${this.score.toLocaleString()}`;
     if (overlay) overlay.classList.remove('hidden');
 
     // Save high score

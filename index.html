@@ -5,10 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Marvel Mini-Games: Character & Multiverse Missions</title>
   <meta name="description" content="A dynamic collection of 10 single-player Marvel web mini-games featuring Spider-Man, Captain America, Iron Man, Thor, Ant-Man, and Multiverse Missions.">
+  <meta name="theme-color" content="#e23636">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦸</text></svg>">
   <link rel="stylesheet" href="css/hub.css">
   <link rel="stylesheet" href="css/game.css">
 </head>
 <body>
+
+  <!-- LOADING SPLASH SCREEN -->
+  <div class="loading-screen" id="loadingScreen">
+    <div class="loading-logo">MARVEL</div>
+    <div class="loading-bar-track">
+      <div class="loading-bar-fill"></div>
+    </div>
+  </div>
+
+  <!-- ANIMATED BACKGROUND PARTICLE CANVAS -->
+  <canvas id="bgParticles"></canvas>
 
   <!-- HERO BANNER & PORTAL HEADER -->
   <header class="hero-header">
@@ -19,7 +32,7 @@
     </p>
 
     <!-- Project Generated Hero Banner Artwork -->
-    <div style="max-width: 960px; margin: 16px auto; border-radius: 12px; overflow: hidden; border: 2px solid #2a3144; box-shadow: 0 10px 30px rgba(0,0,0,0.7);">
+    <div style="max-width: 960px; margin: 16px auto; border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 12px 36px rgba(0,0,0,0.6);">
       <img src="assets/hero_banner.jpg" alt="Marvel Superheroes Comic Art" style="width: 100%; height: auto; display: block; object-fit: cover; max-height: 260px;">
     </div>
 
@@ -54,6 +67,7 @@
   </footer>
 
   <!-- FULLSCREEN GAME ARENA MODAL -->
+  <!-- Uses visibility+opacity (not display:none) to prevent click-blocking bugs -->
   <div class="game-modal" id="gameModal">
     <!-- Header -->
     <div class="arena-header">
