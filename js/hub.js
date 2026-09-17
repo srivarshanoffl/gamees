@@ -68,6 +68,21 @@ const GAMES_CATALOG = [
     badge: 'Timing'
   },
   {
+    id: 'thorhammer',
+    title: 'Mjolnir Return',
+    hero: 'Thor Odinson',
+    category: 'character',
+    icon: '🔨',
+    mechanic: 'Physics & Pathing',
+    desc: 'Throw Mjolnir through enemies and breakable obstacles. Control your power and aim to hit targets on both the outgoing and returning paths.',
+    controls: 'Hold Click/Touch to charge power, drag to aim, release to throw.',
+    className: 'ThorHammerGame',
+    pageUrl: 'games/thor-hammer.html',
+    accentColor: '#ffd200',
+    bannerGradient: 'linear-gradient(135deg, #0a101a 0%, #1a3040 40%, #14182e 100%)',
+    badge: 'Physics'
+  },
+  {
     id: 'antman',
     title: 'Ant-Man: Quantum Heist',
     hero: 'Ant-Man',
@@ -158,6 +173,162 @@ const GAMES_CATALOG = [
     accentColor: '#ff1744',
     bannerGradient: 'linear-gradient(135deg, #1a0505 0%, #3d0a0a 40%, #281414 100%)',
     badge: 'Demolition'
+  },
+
+  // NEW CHARACTER MISSIONS
+  {
+    id: 'blackpanther',
+    title: 'Black Panther: Kinetic Burst',
+    hero: "Black Panther (T'Challa)",
+    category: 'character',
+    icon: '🐾',
+    mechanic: 'Kinetic Absorption & Shockwaves',
+    desc: 'Absorb plasma projectiles into the Vibranium weave suit, then discharge directional shockwave blasts to liberate the Wakandan Great Mound.',
+    controls: 'Move to absorb blasts into suit; Drag / Tap to aim & unleash directional shockwave bursts.',
+    className: 'BlackPantherGame',
+    pageUrl: 'games/black-panther.html',
+    accentColor: '#a855f7',
+    bannerGradient: 'linear-gradient(135deg, #1e1b4b 0%, #3b0764 40%, #0f172a 100%)',
+    badge: 'Vibranium'
+  },
+  {
+    id: 'wolverine',
+    title: 'Wolverine: Adamantium Rush',
+    hero: 'Wolverine (Logan)',
+    category: 'character',
+    icon: '🐺',
+    mechanic: 'Vector Claw Slashes & Rage',
+    desc: 'Launch high-velocity Adamantium claw dashes through Sentinel drones, build Berserker Fury, and regenerate with mutant healing.',
+    controls: 'Drag/Swipe or Click to dash & shred enemies; Avoid damage to trigger Healing Factor.',
+    className: 'WolverineGame',
+    pageUrl: 'games/wolverine.html',
+    accentColor: '#eab308',
+    bannerGradient: 'linear-gradient(135deg, #1e1b4b 0%, #854d0e 40%, #090d16 100%)',
+    badge: 'Berserker'
+  },
+  {
+    id: 'hawkeye',
+    title: 'Hawkeye: Arrow Trace',
+    hero: 'Hawkeye (Clint Barton)',
+    category: 'character',
+    icon: '🎯',
+    mechanic: 'Ballistic Crosswind Archery',
+    desc: 'Compensate for dynamic crosswind gusts from Manhattan rooftops and fire Standard, Explosive, or EMP trick arrows against Chitauri invaders.',
+    controls: 'Click & Drag bow to aim/power; Keys 1-3 to swap Trick Arrows.',
+    className: 'HawkeyeGame',
+    pageUrl: 'games/hawkeye.html',
+    accentColor: '#a855f7',
+    bannerGradient: 'linear-gradient(135deg, #1e1b4b 0%, #581c87 40%, #090d16 100%)',
+    badge: 'Archery'
+  },
+  {
+    id: 'groot',
+    title: 'Groot: Root Weaver',
+    hero: 'Groot & Rocket',
+    category: 'character',
+    icon: '🌳',
+    mechanic: 'Branch Drawing & Deflection',
+    desc: 'Draw living Flora Colossus root branches to channel blue energy cells into Rocket’s reactor hopper while bouncing bombs into waste chutes.',
+    controls: 'Click & Drag to draw living branches; Funnel energy cells to center hopper.',
+    className: 'GrootGame',
+    pageUrl: 'games/groot.html',
+    accentColor: '#22c55e',
+    bannerGradient: 'linear-gradient(135deg, #064e3b 0%, #14532d 40%, #022c22 100%)',
+    badge: 'Drawing'
+  },
+
+  // NEW MULTIVERSE / TIMELINE MISSIONS
+  {
+    id: 'chronobranch',
+    title: 'Chrono-Branch Pruner',
+    hero: 'TVA Hunter / Minutemen',
+    category: 'multiverse',
+    icon: '🌿',
+    mechanic: 'Timeline Stream Pruning',
+    desc: 'Jump between 3 parallel timeline strands to deploy TVA Reset Charges onto divergent nexus events before branches breach the fatal Red Line.',
+    controls: 'Click strand or W/S/Arrows to shift; Click or Space to deploy Reset Charges.',
+    className: 'ChronoBranchGame',
+    pageUrl: 'games/chrono-branch.html',
+    accentColor: '#f97316',
+    bannerGradient: 'linear-gradient(135deg, #1c1917 0%, #7c2d12 40%, #172554 100%)',
+    badge: 'Timeline'
+  },
+  {
+    id: 'temporalecho',
+    title: 'Temporal Echo: Dual Era',
+    hero: 'Kang Citadel Variants',
+    category: 'multiverse',
+    icon: '⏳',
+    mechanic: 'Split-Screen Cause & Effect',
+    desc: 'Guide two temporal variants simultaneously in 1942 (Past) and 2099 (Future). Flipping switches in the past unlocks high-tech gates in the future.',
+    controls: 'Mouse/Touch screen halves to steer; A/D or Arrow Keys to navigate both eras.',
+    className: 'TemporalEchoGame',
+    pageUrl: 'games/temporal-echo.html',
+    accentColor: '#38bdf8',
+    bannerGradient: 'linear-gradient(135deg, #292524 0%, #0369a1 50%, #090d16 100%)',
+    badge: 'Dual-Era'
+  },
+  {
+    id: 'canonstabilizer',
+    title: 'Canon Stabilizer: Quantum Shutter',
+    hero: "Spider-Man 2099 (Miguel O'Hara)",
+    category: 'multiverse',
+    icon: '🕸️',
+    mechanic: 'Tri-State Reality Superposition',
+    desc: 'Switch the Spider-Society Loom shutter between Alpha (Cyan), Beta (Pink), and Gamma (Gold) to stabilize convergent canon fragments and purge decoherence.',
+    controls: 'Keys 1, 2, 3 or Click Pods to switch Frequency; Spacebar for Overdrive purge.',
+    className: 'CanonStabilizerGame',
+    pageUrl: 'games/canon-stabilizer.html',
+    accentColor: '#ec4899',
+    bannerGradient: 'linear-gradient(135deg, #1e1b4b 0%, #831843 40%, #020617 100%)',
+    badge: 'Quantum'
+  },
+  {
+    id: 'incursionpoint',
+    title: 'Incursion Point: Orbital Collision',
+    hero: 'Illuminati Planetary Defense',
+    category: 'multiverse',
+    icon: '🪐',
+    mechanic: 'Orbital Graviton Deflection',
+    desc: 'Earth-616 and Earth-1610 are collapsing into mutual incursion! Fire Graviton Repulsors and shoot down antimatter missiles to keep worlds outside the Roche Limit.',
+    controls: 'Move mouse to position Satellite; Click/Tap to fire Graviton Repulsor pulses.',
+    className: 'IncursionPointGame',
+    pageUrl: 'games/incursion-point.html',
+    accentColor: '#8b5cf6',
+    bannerGradient: 'linear-gradient(135deg, #0c1a2e 0%, #450a0a 50%, #1e1138 100%)',
+    badge: 'Incursion'
+  },
+
+  // NEW DOOMSDAY EVENTS
+  {
+    id: 'heraldsexodus',
+    title: "Herald's Exodus: Galactus Devours",
+    hero: 'Silver Surfer (Norrin Radd)',
+    category: 'doomsday',
+    icon: '🌌',
+    mechanic: 'Gravity Slingshot Escort',
+    desc: 'Galactus is consuming the star system from behind! Tether around celestial gravity wells for slingshot bursts and blast asteroids to escort refugee arks to safety.',
+    controls: 'Click Moons to Tether/Slingshot; Click space to fire Cosmic Blasts; Mouse moves Surfer.',
+    className: 'HeraldsExodusGame',
+    pageUrl: 'games/heralds-exodus.html',
+    accentColor: '#c084fc',
+    bannerGradient: 'linear-gradient(135deg, #581c87 0%, #3b0764 40%, #020617 100%)',
+    badge: 'Doomsday'
+  },
+  {
+    id: 'beyondercore',
+    title: 'Secret Wars: Beyonder Core',
+    hero: 'God Emperor Doom',
+    category: 'doomsday',
+    icon: '👑',
+    mechanic: 'Omniversal Conduit Routing',
+    desc: 'Channel the omnipotent energy of the Beyonders across 4 Battleworld reactor quadrants. Vent thermal pressure and siphon cosmic sparks to avert reality meltdown.',
+    controls: 'Keys Q, W, A, S or Click Pods to vent heat; Click Golden Sparks to siphon energy.',
+    className: 'BeyonderCoreGame',
+    pageUrl: 'games/beyonder-core.html',
+    accentColor: '#10b981',
+    bannerGradient: 'linear-gradient(135deg, #022c22 0%, #064e3b 40%, #0f172a 100%)',
+    badge: 'Doomsday'
   }
 ];
 
@@ -251,11 +422,28 @@ class BackgroundParticles {
 }
 
 /* ========================================================================
+   MULTIVERSE ACHIEVEMENTS & TROPHIES DEFINITION
+   ======================================================================== */
+const TROPHIES = [
+  { id: 'first_strike', name: 'First Strike', icon: '🛡️', desc: 'Deploy on your first Multiverse mission.', check: (scores, played) => played >= 1 },
+  { id: 'titan_fall', name: 'Titan Fall', icon: '🥊', desc: 'Score 2,000+ PTS in Iron Man vs Thanos.', check: (scores) => (scores['ironman'] || 0) >= 2000 },
+  { id: 'god_of_thunder', name: 'God of Thunder', icon: '⚡', desc: 'Score 1,500+ PTS in Mjolnir Return.', check: (scores) => (scores['thorhammer'] || 0) >= 1500 || (scores['thor'] || 0) >= 1500 },
+  { id: 'master_of_mystic', name: 'Mystic Master', icon: '🌀', desc: 'Score 1,500+ PTS in Doctor Strange.', check: (scores) => (scores['doctorstrange'] || 0) >= 1500 },
+  { id: 'maximum_effort', name: 'Maximum Effort', icon: '💥', desc: 'Score 2,000+ PTS in Deadpool Demolition.', check: (scores) => (scores['deadpool'] || 0) >= 2000 },
+  { id: 'chaos_queen', name: 'Chaos Unleashed', icon: '🔮', desc: 'Score 1,500+ PTS in Scarlet Witch.', check: (scores) => (scores['scarletwitch'] || 0) >= 1500 },
+  { id: 'god_of_stories', name: 'God of Stories', icon: '⏳', desc: 'Score 1,500+ PTS in TVA Loki.', check: (scores) => (scores['tvaloki'] || 0) >= 1500 },
+  { id: 'world_eater', name: "Herald's Flight", icon: '🪐', desc: 'Score 1,500+ PTS in Herald’s Exodus.', check: (scores) => (scores['heraldsexodus'] || 0) >= 1500 },
+  { id: 'beyonder_core', name: 'Secret Wars Champion', icon: '🌌', desc: 'Score 1,500+ PTS in Beyonder Core.', check: (scores) => (scores['beyondercore'] || 0) >= 1500 },
+  { id: 'multiverse_legend', name: 'Multiverse Legend', icon: '👑', desc: 'Deploy and score in at least 8 different missions.', check: (scores, played) => played >= 8 }
+];
+
+/* ========================================================================
    MARVEL HUB CONTROLLER
    ======================================================================== */
 class MarvelHub {
   constructor() {
     this.currentFilter = 'all';
+    this.searchQuery = '';
     this.activeGame = null;
     this.activeGameMeta = null;
     this.init();
@@ -265,6 +453,7 @@ class MarvelHub {
     this.renderCatalog();
     this.bindEvents();
     this.updateStats();
+    this.updateTrophyUI();
 
     // Initialize background particles
     new BackgroundParticles('bgParticles');
@@ -292,7 +481,76 @@ class MarvelHub {
       scores[gameId] = score;
       localStorage.setItem('marvel_mini_scores', JSON.stringify(scores));
       this.updateStats();
+      this.updateTrophyUI();
       this.renderCatalog();
+    }
+  }
+
+  getUnlockedTrophies() {
+    const scores = this.getScores();
+    const played = Object.keys(scores).length;
+    return TROPHIES.filter(t => t.check(scores, played));
+  }
+
+  updateTrophyUI() {
+    const unlocked = this.getUnlockedTrophies();
+    const countEl = document.getElementById('trophyCount');
+    if (countEl) countEl.textContent = `${unlocked.length}/${TROPHIES.length}`;
+  }
+
+  openTrophiesModal() {
+    const modal = document.getElementById('trophyModal');
+    const grid = document.getElementById('trophyGrid');
+    if (!modal || !grid) return;
+
+    const scores = this.getScores();
+    const played = Object.keys(scores).length;
+
+    grid.innerHTML = '';
+    TROPHIES.forEach(t => {
+      const isUnlocked = t.check(scores, played);
+      const card = document.createElement('div');
+      card.className = `trophy-card ${isUnlocked ? 'unlocked' : 'locked'}`;
+      card.innerHTML = `
+        <div class="trophy-icon">${isUnlocked ? t.icon : '🔒'}</div>
+        <div class="trophy-info">
+          <h4>${t.name} ${isUnlocked ? '✓' : ''}</h4>
+          <p>${t.desc}</p>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+
+    modal.classList.remove('hidden');
+    if (window.soundFX) window.soundFX.shieldBounce();
+  }
+
+  closeTrophiesModal() {
+    const modal = document.getElementById('trophyModal');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  triggerRandomMission() {
+    if (window.soundFX) {
+      window.soundFX.init();
+      if (window.soundFX.clusterBurst) window.soundFX.clusterBurst();
+      else window.soundFX.thwip();
+    }
+
+    // Pick random game
+    const randomGame = GAMES_CATALOG[Math.floor(Math.random() * GAMES_CATALOG.length)];
+    this.launchGame(randomGame.id);
+  }
+
+  toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+      const btn = document.getElementById('fullscreenBtn');
+      if (btn) btn.textContent = '✕ EXIT FULL';
+    } else {
+      document.exitFullscreen().catch(() => {});
+      const btn = document.getElementById('fullscreenBtn');
+      if (btn) btn.textContent = '⛶ FULLSCREEN';
     }
   }
 
@@ -303,7 +561,7 @@ class MarvelHub {
 
     const playedEl = document.getElementById('statMissionsPlayed');
     const scoreEl = document.getElementById('statTotalScore');
-    if (playedEl) playedEl.textContent = `${played}/10`;
+    if (playedEl) playedEl.textContent = `${played}/${GAMES_CATALOG.length}`;
     if (scoreEl) scoreEl.textContent = totalScore.toLocaleString();
   }
 
@@ -313,26 +571,53 @@ class MarvelHub {
     grid.innerHTML = '';
 
     const scores = this.getScores();
+    const q = this.searchQuery.toLowerCase().trim();
 
     const filtered = GAMES_CATALOG.filter(g => {
-      if (this.currentFilter === 'character') return g.category === 'character';
-      if (this.currentFilter === 'multiverse') return g.category === 'multiverse';
+      // Category filter
+      if (this.currentFilter === 'character' && g.category !== 'character') return false;
+      if (this.currentFilter === 'multiverse' && g.category !== 'multiverse') return false;
+      if (this.currentFilter === 'doomsday' && g.category !== 'doomsday') return false;
+
+      // Search query filter
+      if (q) {
+        const match = g.title.toLowerCase().includes(q) ||
+                      g.hero.toLowerCase().includes(q) ||
+                      g.mechanic.toLowerCase().includes(q) ||
+                      g.desc.toLowerCase().includes(q) ||
+                      g.badge.toLowerCase().includes(q);
+        if (!match) return false;
+      }
       return true;
     });
 
+    if (filtered.length === 0) {
+      grid.innerHTML = `
+        <div style="grid-column: 1/-1; text-align: center; padding: 48px 20px; color: #9ba1b0;">
+          <div style="font-size: 42px; margin-bottom: 12px;">🔍</div>
+          <h3 style="font-family: var(--comic-font); font-size: 24px; color: #ffd200;">NO MISSIONS MATCHED</h3>
+          <p style="font-size: 14px;">Try searching for another hero (e.g. Iron Man, Thor, Spider-Man, Deadpool) or reset your filter.</p>
+        </div>
+      `;
+      return;
+    }
+
     filtered.forEach((game, index) => {
       const card = document.createElement('div');
-      card.className = `game-card ${game.category === 'multiverse' ? 'multiverse-card' : ''}`;
+      const isDoomsday = game.category === 'doomsday';
+      const isMultiverse = game.category === 'multiverse';
+      card.className = `game-card ${isDoomsday ? 'doomsday-card' : (isMultiverse ? 'multiverse-card' : '')}`;
       card.style.setProperty('--accent-color', game.accentColor);
       card.style.setProperty('--card-index', index);
 
       const hiScore = scores[game.id] || 0;
+      const categoryTag = game.category === 'character' ? 'CHARACTER MISSION' : (game.category === 'doomsday' ? 'DOOMSDAY EVENT' : 'MULTIVERSE MISSION');
 
       card.innerHTML = `
         <div class="card-banner" style="background: ${game.bannerGradient};">
           <div class="card-character-icon">${game.icon}</div>
           <div class="card-badge">${game.badge}</div>
-          <div class="card-category-tag">${game.category === 'character' ? 'CHARACTER MISSION' : 'MULTIVERSE MISSION'}</div>
+          <div class="card-category-tag">${categoryTag}</div>
         </div>
         <div class="card-body">
           <h3 class="card-title">${game.title}</h3>
@@ -348,23 +633,18 @@ class MarvelHub {
         </div>
       `;
 
-      // FIX: Properly separate click targets
-      // The standalone link should navigate; the arena button launches modal;
-      // clicking the card body (outside buttons) also launches the game
       const standaloneLink = card.querySelector('.standalone-btn');
       standaloneLink.addEventListener('click', (e) => {
-        e.stopPropagation(); // Don't trigger card click
+        e.stopPropagation();
       });
 
       const arenaBtn = card.querySelector('.arena-launch-btn');
       arenaBtn.addEventListener('click', (e) => {
-        e.stopPropagation(); // Don't trigger card click
+        e.stopPropagation();
         this.launchGame(game.id);
       });
 
-      // Card-level click — only fires if button/link wasn't the target
       card.addEventListener('click', (e) => {
-        // Prevent double-launch if a button was clicked
         if (e.target.closest('.card-buttons')) return;
         this.launchGame(game.id);
       });
@@ -374,6 +654,55 @@ class MarvelHub {
   }
 
   bindEvents() {
+    // Search input
+    const searchInput = document.getElementById('gameSearchInput');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        this.searchQuery = e.target.value;
+        this.renderCatalog();
+      });
+    }
+
+    // Random mission roulette button
+    const rouletteBtn = document.getElementById('randomMissionBtn');
+    if (rouletteBtn) {
+      rouletteBtn.addEventListener('click', () => this.triggerRandomMission());
+    }
+
+    // Trophy Room Modal Open/Close
+    const trophyBtn = document.getElementById('trophyBtn');
+    if (trophyBtn) {
+      trophyBtn.addEventListener('click', () => this.openTrophiesModal());
+    }
+    const closeTrophyBtn = document.getElementById('closeTrophyModalBtn');
+    if (closeTrophyBtn) {
+      closeTrophyBtn.addEventListener('click', () => this.closeTrophiesModal());
+    }
+    const trophyModal = document.getElementById('trophyModal');
+    if (trophyModal) {
+      trophyModal.addEventListener('click', (e) => {
+        if (e.target === trophyModal) this.closeTrophiesModal();
+      });
+    }
+
+    // Procedural BGM Synthesizer Toggle
+    const bgmBtn = document.getElementById('bgmToggleBtn');
+    if (bgmBtn) {
+      bgmBtn.addEventListener('click', () => {
+        if (window.soundFX) {
+          const isPlaying = window.soundFX.toggleBGM();
+          bgmBtn.textContent = isPlaying ? '🎵 BGM: ON' : '🎵 BGM: OFF';
+          bgmBtn.classList.toggle('active', isPlaying);
+        }
+      });
+    }
+
+    // Fullscreen Toggle
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    if (fullscreenBtn) {
+      fullscreenBtn.addEventListener('click', () => this.toggleFullscreen());
+    }
+
     // Category filter tabs
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -397,7 +726,7 @@ class MarvelHub {
         if (window.soundFX) {
           window.soundFX.init();
           const muted = window.soundFX.toggleMute();
-          audioBtn.innerHTML = muted ? '🔇 AUDIO: OFF' : '🔊 AUDIO: ON';
+          audioBtn.innerHTML = muted ? '🔇 SFX: OFF' : '🔊 SFX: ON';
         }
       });
     }
@@ -449,12 +778,35 @@ class MarvelHub {
       });
     }
 
-    // Keyboard shortcut: Escape closes game modal
+    // Thunder button inside hub modal
+    const thunderBtn = document.getElementById('thunderBtn');
+    if (thunderBtn) {
+      thunderBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (window.soundFX) window.soundFX.init();
+        if (this.activeGame && typeof this.activeGame.triggerThunder === 'function') {
+          this.activeGame.triggerThunder();
+        }
+      });
+    }
+
+    // Keyboard shortcut: Space for Thunder, Escape closes game modal or trophy modal
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && this.activeGame && document.getElementById('gameModal').classList.contains('active')) {
-        // Only close if not in an active game state
-        if (this.activeGame.state === 'READY' || this.activeGame.state === 'GAME_OVER' || this.activeGame.state === 'VICTORY') {
-          this.closeGame();
+      if (e.code === 'Space' && this.activeGame && typeof this.activeGame.triggerThunder === 'function') {
+        const modal = document.getElementById('gameModal');
+        if (modal && modal.classList.contains('active') && this.activeGame.state === 'PLAYING') {
+          e.preventDefault();
+          if (window.soundFX) window.soundFX.init();
+          this.activeGame.triggerThunder();
+        }
+      }
+
+      if (e.key === 'Escape') {
+        this.closeTrophiesModal();
+        if (this.activeGame && document.getElementById('gameModal').classList.contains('active')) {
+          if (this.activeGame.state === 'READY' || this.activeGame.state === 'GAME_OVER' || this.activeGame.state === 'VICTORY') {
+            this.closeGame();
+          }
         }
       }
     });

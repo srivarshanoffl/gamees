@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Incursion Point: Orbital Collision — Marvel Multiverse Arcade</title>
+  <meta name="description" content="Orbital repulsor physics: fire graviton blasts to prevent Earth-616 and Earth-1610 from colliding at the incursion horizon.">
+  <link rel="stylesheet" href="../css/styles.css">
+  <link rel="stylesheet" href="../css/game-frame.css">
+</head>
+<body>
+  <div class="game-wrapper">
+    <header class="game-header">
+      <a href="../index.html" class="back-button">← MULTIVERSE HUB</a>
+      <h1 class="game-title">INCURSION POINT: ORBITAL COLLISION</h1>
+      <div class="game-tag">ORBITAL GRAVITON DEFLECTION</div>
+    </header>
+
+    <div class="hud-container">
+      <div class="hud-box">
+        <span class="hud-label">SURVIVAL TIME</span>
+        <span id="hudStage" class="hud-value">0s / 50s</span>
+      </div>
+      <div class="hud-box">
+        <span class="hud-label">PLANETARY SHIELDS</span>
+        <div class="health-meter">
+          <div id="hudHealthFill" class="health-fill" style="width: 100%;"></div>
+        </div>
+      </div>
+      <div class="hud-box">
+        <span class="hud-label">SCORE</span>
+        <span id="hudScore" class="hud-value">0</span>
+      </div>
+    </div>
+
+    <div class="canvas-container">
+      <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+      <!-- Ready Overlay -->
+      <div id="readyOverlay" class="game-overlay">
+        <h2 class="overlay-title">ILLUMINATI GRAVITON SATELLITE</h2>
+        <p class="overlay-desc">
+          <strong>Earth-616</strong> and <strong>Earth-1610</strong> are hurtling toward mutual collision!<br>
+          Move your satellite and <strong>Click / Tap to fire Graviton Repulsors</strong>.<br>
+          Repulsor pulses nudge the planets apart and intercept incoming antimatter missiles.<br>
+          Maintain orbital separation outside the Roche Limit for 50 seconds to survive!
+        </p>
+        <button id="readyStartBtn" class="action-btn">STABILIZE ORBITS</button>
+      </div>
+
+      <!-- Victory Overlay -->
+      <div id="victoryOverlay" class="game-overlay hidden">
+        <h2 class="overlay-title text-gold">INCURSION AVERTED</h2>
+        <p id="victoryMessage" class="overlay-desc">Planetary orbits repelled to safe cosmic thresholds.</p>
+        <button id="victoryRestartBtn" class="action-btn">DEFEND AGAIN</button>
+      </div>
+
+      <!-- Game Over Overlay -->
+      <div id="gameOverOverlay" class="game-overlay hidden">
+        <h2 class="overlay-title text-crimson">TERMINAL COLLISION</h2>
+        <p id="gameOverMessage" class="overlay-desc">Both Earths breached the Roche Limit and collapsed.</p>
+        <button id="gameOverRestartBtn" class="action-btn">RETRY</button>
+      </div>
+    </div>
+
+    <footer class="game-footer">
+      <div class="instructions">
+        <span><strong>Controls:</strong> Move Mouse to Pilot Satellite | Click/Tap to Fire Graviton Repulsors</span>
+      </div>
+    </footer>
+  </div>
+
+  <script src="../js/engine/GameEngine.js"></script>
+  <script src="../js/games/incursion-point.js"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const game = new IncursionPointGame();
+      const readyBtn = document.getElementById('readyStartBtn');
+      if (readyBtn) readyBtn.addEventListener('click', () => game.start());
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Temporal Echo: Dual Era — Marvel Multiverse Arcade</title>
+  <meta name="description" content="Split-screen asymmetrical cause-and-effect puzzle runner: alter the past to unlock passage in the future.">
+  <link rel="stylesheet" href="../css/styles.css">
+  <link rel="stylesheet" href="../css/game-frame.css">
+</head>
+<body>
+  <div class="game-wrapper">
+    <header class="game-header">
+      <a href="../index.html" class="back-button">← MULTIVERSE HUB</a>
+      <h1 class="game-title">TEMPORAL ECHO: DUAL ERA</h1>
+      <div class="game-tag">SPLIT-ERA CAUSE & EFFECT</div>
+    </header>
+
+    <div class="hud-container">
+      <div class="hud-box">
+        <span class="hud-label">DISTANCE</span>
+        <span id="hudStage" class="hud-value">0m / 800m</span>
+      </div>
+      <div class="hud-box">
+        <span class="hud-label">PARADOX STABILITY</span>
+        <div class="health-meter">
+          <div id="hudHealthFill" class="health-fill" style="width: 100%;"></div>
+        </div>
+      </div>
+      <div class="hud-box">
+        <span class="hud-label">SCORE</span>
+        <span id="hudScore" class="hud-value">0</span>
+      </div>
+    </div>
+
+    <div class="canvas-container">
+      <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+      <!-- Ready Overlay -->
+      <div id="readyOverlay" class="game-overlay">
+        <h2 class="overlay-title">KANG'S CHRONO-CITADEL</h2>
+        <p class="overlay-desc">
+          Steer your <strong>1942 Past Variant</strong> on the left and <strong>2099 Future Variant</strong> on the right.<br>
+          Hit golden <strong>Time Key Switches</strong> in the Past to disable lethal laser gates in the Future!<br>
+          Navigate both variants synchronously to prevent temporal paradox collapse.
+        </p>
+        <button id="readyStartBtn" class="action-btn">SYNCHRONIZE ERAS</button>
+      </div>
+
+      <!-- Victory Overlay -->
+      <div id="victoryOverlay" class="game-overlay hidden">
+        <h2 class="overlay-title text-gold">CITADEL APEX REACHED</h2>
+        <p id="victoryMessage" class="overlay-desc">Dual eras converged in harmonic timeline stability.</p>
+        <button id="victoryRestartBtn" class="action-btn">RUN AGAIN</button>
+      </div>
+
+      <!-- Game Over Overlay -->
+      <div id="gameOverOverlay" class="game-overlay hidden">
+        <h2 class="overlay-title text-crimson">PARADOX FRACTURE</h2>
+        <p id="gameOverMessage" class="overlay-desc">Timelines severed due to barrier collision.</p>
+        <button id="gameOverRestartBtn" class="action-btn">RETRY</button>
+      </div>
+    </div>
+
+    <footer class="game-footer">
+      <div class="instructions">
+        <span><strong>Controls:</strong> Mouse/Touch Left & Right Halves to Steer | A/D or Arrow Keys to move both</span>
+      </div>
+    </footer>
+  </div>
+
+  <script src="../js/engine/GameEngine.js"></script>
+  <script src="../js/games/temporal-echo.js"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const game = new TemporalEchoGame();
+      const readyBtn = document.getElementById('readyStartBtn');
+      if (readyBtn) readyBtn.addEventListener('click', () => game.start());
+    });
+  </script>
+</body>
+</html>

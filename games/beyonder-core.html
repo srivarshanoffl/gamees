@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Secret Wars: Beyonder Core — Marvel Multiverse Arcade</title>
+  <meta name="description" content="Multi-quadrant thermal triage and omnipotent fluid conduit routing to sustain God Emperor Doom's Battleworld reality.">
+  <link rel="stylesheet" href="../css/styles.css">
+  <link rel="stylesheet" href="../css/game-frame.css">
+</head>
+<body>
+  <div class="game-wrapper">
+    <header class="game-header">
+      <a href="../index.html" class="back-button">← MULTIVERSE HUB</a>
+      <h1 class="game-title">SECRET WARS: BEYONDER CORE</h1>
+      <div class="game-tag">OMNIVERSAL CONTAINMENT</div>
+    </header>
+
+    <div class="hud-container">
+      <div class="hud-box">
+        <span class="hud-label">REALITY COHESION</span>
+        <span id="hudStage" class="hud-value">0%</span>
+      </div>
+      <div class="hud-box">
+        <span class="hud-label">CITADEL INTEGRITY</span>
+        <div class="health-meter">
+          <div id="hudHealthFill" class="health-fill" style="width: 100%;"></div>
+        </div>
+      </div>
+      <div class="hud-box">
+        <span class="hud-label">SCORE</span>
+        <span id="hudScore" class="hud-value">0</span>
+      </div>
+    </div>
+
+    <div class="canvas-container">
+      <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+      <!-- Ready Overlay -->
+      <div id="readyOverlay" class="game-overlay">
+        <h2 class="overlay-title">BATTLEWORLD POWER CORE</h2>
+        <p class="overlay-desc">
+          God Emperor Doom is channeling the omnipotent power of the Beyonders.<br>
+          Press <strong>[Q] [W] [A] [S]</strong> or <strong>Click Pods</strong> to purge heat before any quadrant overheats (100%)!<br>
+          Click floating <strong>Golden Sparks</strong> to siphon extra reality cohesion.
+        </p>
+        <button id="readyStartBtn" class="action-btn">COMMAND THE REALITY</button>
+      </div>
+
+      <!-- Victory Overlay -->
+      <div id="victoryOverlay" class="game-overlay hidden">
+        <h2 class="overlay-title text-gold">REALITY COHESION 100%</h2>
+        <p id="victoryMessage" class="overlay-desc">Battleworld stabilized under God Emperor Doom's supreme order.</p>
+        <button id="victoryRestartBtn" class="action-btn">TRIAGE AGAIN</button>
+      </div>
+
+      <!-- Game Over Overlay -->
+      <div id="gameOverOverlay" class="game-overlay hidden">
+        <h2 class="overlay-title text-crimson">BATTLEWORLD COLLAPSE</h2>
+        <p id="gameOverMessage" class="overlay-desc">A reactor quadrant suffered catastrophic thermal meltdown.</p>
+        <button id="gameOverRestartBtn" class="action-btn">RETRY</button>
+      </div>
+    </div>
+
+    <footer class="game-footer">
+      <div class="instructions">
+        <span><strong>Controls:</strong> Keys Q, W, A, S or Click Pods to Vent Heat | Click Golden Sparks to Siphon Energy</span>
+      </div>
+    </footer>
+  </div>
+
+  <script src="../js/engine/GameEngine.js"></script>
+  <script src="../js/games/beyonder-core.js"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const game = new BeyonderCoreGame();
+      const readyBtn = document.getElementById('readyStartBtn');
+      if (readyBtn) readyBtn.addEventListener('click', () => game.start());
+    });
+  </script>
+</body>
+</html>

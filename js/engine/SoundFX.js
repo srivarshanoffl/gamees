@@ -489,7 +489,230 @@ class SoundFX {
       osc.stop(t + 0.15);
     } catch (e) {}
   }
+
+  // Aliases for compatibility
+  laser() { this.repulsor(); }
+  explosion() { this.thunder(); }
+  powerUp() { this.collect(); }
+
+  // Deadpool Whistle Bomb
+  deadpoolWhistle() {
+    if (this.muted || !this.ctx) return;
+    try {
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1200, t);
+      osc.frequency.exponentialRampToValueAtTime(250, t + 0.35);
+
+      gain.gain.setValueAtTime(0.25, t);
+      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.35);
+
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(t);
+      osc.stop(t + 0.36);
+    } catch (e) {}
+  }
+
+  // Cluster Bomb Mini Bursts
+  clusterBurst() {
+    if (this.muted || !this.ctx) return;
+    try {
+      const t = this.ctx.currentTime;
+      for (let i = 0; i < 3; i++) {
+        const offset = i * 0.06;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(450 - i * 60, t + offset);
+        osc.frequency.exponentialRampToValueAtTime(80, t + offset + 0.08);
+
+        gain.gain.setValueAtTime(0.3, t + offset);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + offset + 0.09);
+
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(t + offset);
+        osc.stop(t + offset + 0.1);
+      }
+    } catch (e) {}
+  }
+
+  // Mystical Portal Swirl (Doctor Strange)
+  portalWarp() {
+    if (this.muted || !this.ctx) return;
+    try {
+      const t = this.ctx.currentTime;
+      const freqs = [523.25, 659.25, 783.99, 1046.50]; // C Major chord shimmer
+      freqs.forEach((f, idx) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(f, t);
+        osc.frequency.linearRampToValueAtTime(f * 1.25, t + 0.25);
+        osc.frequency.exponentialRampToValueAtTime(f, t + 0.45);
+
+        gain.gain.setValueAtTime(0.12 / (idx + 1), t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(t + idx * 0.03);
+        osc.stop(t + 0.48);
+      });
+    } catch (e) {}
+  }
+
+  // Reality Glitch / Polarity Swap (Scarlet Witch)
+  realityGlitch() {
+    if (this.muted || !this.ctx) return;
+    try {
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(320, t);
+      osc.frequency.linearRampToValueAtTime(140, t + 0.06);
+      osc.frequency.linearRampToValueAtTime(880, t + 0.12);
+      osc.frequency.exponentialRampToValueAtTime(110, t + 0.22);
+
+      gain.gain.setValueAtTime(0.2, t);
+      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.22);
+
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(t);
+      osc.stop(t + 0.23);
+    } catch (e) {}
+  }
+
+  // Chaos Magic Energy Beam (Scarlet Witch)
+  chaosBlast() {
+    if (this.muted || !this.ctx) return;
+    try {
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(600, t);
+      osc.frequency.exponentialRampToValueAtTime(120, t + 0.28);
+
+      gain.gain.setValueAtTime(0.25, t);
+      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(t);
+      osc.stop(t + 0.3);
+    } catch (e) {}
+  }
+
+  // Time Loop Rewind (TVA Loki)
+  timeRewind() {
+    if (this.muted || !this.ctx) return;
+    try {
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(120, t);
+      osc.frequency.exponentialRampToValueAtTime(1400, t + 0.3);
+
+      gain.gain.setValueAtTime(0.25, t);
+      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.32);
+
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(t);
+      osc.stop(t + 0.33);
+    } catch (e) {}
+  }
+
+  // Procedural BGM Synthesizer (Marvel Heroic Pulse)
+  initBGM() {
+    this.bgmPlaying = false;
+    this.bgmInterval = null;
+    this.bgmStep = 0;
+  }
+
+  toggleBGM() {
+    this.init();
+    if (this.bgmPlaying) {
+      this.stopBGM();
+      return false;
+    } else {
+      this.startBGM();
+      return true;
+    }
+  }
+
+  startBGM() {
+    if (this.bgmPlaying || !this.ctx) return;
+    this.bgmPlaying = true;
+    this.bgmStep = 0;
+
+    // Cinematic chord progression (D minor, Bb major, F major, C major)
+    const chords = [
+      [146.83, 220.00, 261.63], // Dm
+      [116.54, 174.61, 233.08], // Bb
+      [174.61, 220.00, 261.63], // F
+      [130.81, 196.00, 261.63]  // C
+    ];
+
+    const pulseNotes = [146.83, 174.61, 220.00, 293.66];
+
+    this.bgmInterval = setInterval(() => {
+      if (this.muted || !this.bgmPlaying || !this.ctx) return;
+      try {
+        const t = this.ctx.currentTime;
+        const chordIdx = Math.floor(this.bgmStep / 4) % chords.length;
+        const chord = chords[chordIdx];
+        const pulse = pulseNotes[this.bgmStep % pulseNotes.length];
+
+        // Bass/Pad tone
+        if (this.bgmStep % 4 === 0) {
+          chord.forEach((freq) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, t);
+            gain.gain.setValueAtTime(0.04, t);
+            gain.gain.exponentialRampToValueAtTime(0.005, t + 0.9);
+            osc.connect(gain);
+            gain.connect(this.masterGain);
+            osc.start(t);
+            osc.stop(t + 0.95);
+          });
+        }
+
+        // Arpeggiated pulse
+        const pulseOsc = this.ctx.createOscillator();
+        const pulseGain = this.ctx.createGain();
+        pulseOsc.type = 'sine';
+        pulseOsc.frequency.setValueAtTime(pulse * 1.5, t);
+        pulseGain.gain.setValueAtTime(0.03, t);
+        pulseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+        pulseOsc.connect(pulseGain);
+        pulseGain.connect(this.masterGain);
+        pulseOsc.start(t);
+        pulseOsc.stop(t + 0.22);
+
+        this.bgmStep = (this.bgmStep + 1) % 16;
+      } catch (e) {}
+    }, 240); // ~125 BPM
+  }
+
+  stopBGM() {
+    this.bgmPlaying = false;
+    if (this.bgmInterval) {
+      clearInterval(this.bgmInterval);
+      this.bgmInterval = null;
+    }
+  }
 }
 
 window.soundFX = new SoundFX();
+
 

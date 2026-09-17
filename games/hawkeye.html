@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hawkeye: Arrow Trace — Marvel Multiverse Arcade</title>
+  <meta name="description" content="Kinetic archery with dynamic crosswind simulation and trick arrows against Chitauri invaders.">
+  <link rel="stylesheet" href="../css/styles.css">
+  <link rel="stylesheet" href="../css/game-frame.css">
+</head>
+<body>
+  <div class="game-wrapper">
+    <header class="game-header">
+      <a href="../index.html" class="back-button">← MULTIVERSE HUB</a>
+      <h1 class="game-title">HAWKEYE: ARROW TRACE</h1>
+      <div class="game-tag">BALLISTIC ARCHERY</div>
+    </header>
+
+    <div class="hud-container">
+      <div class="hud-box">
+        <span class="hud-label">TARGETS CLEARED</span>
+        <span id="hudStage" class="hud-value">0 / 30</span>
+      </div>
+      <div class="hud-box">
+        <span class="hud-label">SHIELD DEFENSE</span>
+        <div class="health-meter">
+          <div id="hudHealthFill" class="health-fill" style="width: 100%;"></div>
+        </div>
+      </div>
+      <div class="hud-box">
+        <span class="hud-label">SCORE</span>
+        <span id="hudScore" class="hud-value">0</span>
+      </div>
+    </div>
+
+    <div class="canvas-container">
+      <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+      <!-- Ready Overlay -->
+      <div id="readyOverlay" class="game-overlay">
+        <h2 class="overlay-title">CHRYSLER SPIRE PERCH</h2>
+        <p class="overlay-desc">
+          Drag back and release your bow to launch arrows across Manhattan.<br>
+          Compensate for dynamic <strong>Crosswind Vector</strong> drift on every shot!<br>
+          Cycle trick arrows: <strong>[1] Standard</strong>, <strong>[2] Explosive Cluster</strong>, <strong>[3] EMP Disruptor</strong>.
+        </p>
+        <button id="readyStartBtn" class="action-btn">NOCK ARROWS</button>
+      </div>
+
+      <!-- Victory Overlay -->
+      <div id="victoryOverlay" class="game-overlay hidden">
+        <h2 class="overlay-title text-gold">AIRSPACE CLEARED!</h2>
+        <p id="victoryMessage" class="overlay-desc">Chitauri armada pushed back.</p>
+        <button id="victoryRestartBtn" class="action-btn">DEFEND AGAIN</button>
+      </div>
+
+      <!-- Game Over Overlay -->
+      <div id="gameOverOverlay" class="game-overlay hidden">
+        <h2 class="overlay-title text-crimson">PERIMETER LOST</h2>
+        <p id="gameOverMessage" class="overlay-desc">Chitauri invaders overran Manhattan.</p>
+        <button id="gameOverRestartBtn" class="action-btn">RETRY</button>
+      </div>
+    </div>
+
+    <footer class="game-footer">
+      <div class="instructions">
+        <span><strong>Controls:</strong> Click & Drag bow to Aim/Power | Release to Shoot | Keys 1-3 to swap Trick Arrows</span>
+      </div>
+    </footer>
+  </div>
+
+  <script src="../js/engine/GameEngine.js"></script>
+  <script src="../js/games/hawkeye.js"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const game = new HawkeyeGame();
+      const readyBtn = document.getElementById('readyStartBtn');
+      if (readyBtn) readyBtn.addEventListener('click', () => game.start());
+    });
+  </script>
+</body>
+</html>

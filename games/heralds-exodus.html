@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Herald's Exodus: Galactus Devours — Marvel Multiverse Arcade</title>
+  <meta name="description" content="Orbital gravity slingshots and refugee convoy escort as Silver Surfer outruns Galactus's cosmic consumption doom wave.">
+  <link rel="stylesheet" href="../css/styles.css">
+  <link rel="stylesheet" href="../css/game-frame.css">
+</head>
+<body>
+  <div class="game-wrapper">
+    <header class="game-header">
+      <a href="../index.html" class="back-button">← MULTIVERSE HUB</a>
+      <h1 class="game-title">HERALD'S EXODUS: GALACTUS DEVOURS</h1>
+      <div class="game-tag">COSMIC CONVOY ESCORT</div>
+    </header>
+
+    <div class="hud-container">
+      <div class="hud-box">
+        <span class="hud-label">DISTANCE</span>
+        <span id="hudStage" class="hud-value">0 / 1200 PARSECS</span>
+      </div>
+      <div class="hud-box">
+        <span class="hud-label">POWER COSMIC SHIELD</span>
+        <div class="health-meter">
+          <div id="hudHealthFill" class="health-fill" style="width: 100%;"></div>
+        </div>
+      </div>
+      <div class="hud-box">
+        <span class="hud-label">SCORE</span>
+        <span id="hudScore" class="hud-value">0</span>
+      </div>
+    </div>
+
+    <div class="canvas-container">
+      <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+      <!-- Ready Overlay -->
+      <div id="readyOverlay" class="game-overlay">
+        <h2 class="overlay-title">DEVOURING HORIZON</h2>
+        <p class="overlay-desc">
+          <strong>Galactus</strong> is consuming the star system from behind!<br>
+          Click near celestial moons to <strong>Tether & Slingshot</strong> for massive velocity bursts.<br>
+          Click open space to fire <strong>Cosmic Blasts</strong> and destroy blocking asteroid swarms.<br>
+          Escort the 3 refugee evacuation arks to the <strong>Hyper-Jump Warp Gate</strong>!
+        </p>
+        <button id="readyStartBtn" class="action-btn">RIDE THE COSMIC WAVES</button>
+      </div>
+
+      <!-- Victory Overlay -->
+      <div id="victoryOverlay" class="game-overlay hidden">
+        <h2 class="overlay-title text-gold">WARP GATE BREACHED</h2>
+        <p id="victoryMessage" class="overlay-desc">Zenn-La refugees escaped into deep hyperspace.</p>
+        <button id="victoryRestartBtn" class="action-btn">ESCORT AGAIN</button>
+      </div>
+
+      <!-- Game Over Overlay -->
+      <div id="gameOverOverlay" class="game-overlay hidden">
+        <h2 class="overlay-title text-crimson">CONSUMED BY GALACTUS</h2>
+        <p id="gameOverMessage" class="overlay-desc">The fleet was swallowed by the Devourer of Worlds.</p>
+        <button id="gameOverRestartBtn" class="action-btn">RETRY</button>
+      </div>
+    </div>
+
+    <footer class="game-footer">
+      <div class="instructions">
+        <span><strong>Controls:</strong> Click Celestial Moons to Tether/Slingshot | Click Space to Blast Asteroids | Mouse moves Surfer</span>
+      </div>
+    </footer>
+  </div>
+
+  <script src="../js/engine/GameEngine.js"></script>
+  <script src="../js/games/heralds-exodus.js"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const game = new HeraldsExodusGame();
+      const readyBtn = document.getElementById('readyStartBtn');
+      if (readyBtn) readyBtn.addEventListener('click', () => game.start());
+    });
+  </script>
+</body>
+</html>

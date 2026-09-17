@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Canon Stabilizer: Quantum Shutter — Marvel Multiverse Arcade</title>
+  <meta name="description" content="Tri-state quantum reality matching: align Spider-Society loom frequencies to stabilize convergent canon fragments.">
+  <link rel="stylesheet" href="../css/styles.css">
+  <link rel="stylesheet" href="../css/game-frame.css">
+</head>
+<body>
+  <div class="game-wrapper">
+    <header class="game-header">
+      <a href="../index.html" class="back-button">← MULTIVERSE HUB</a>
+      <h1 class="game-title">CANON STABILIZER: QUANTUM SHUTTER</h1>
+      <div class="game-tag">TRI-STATE REALITY</div>
+    </header>
+
+    <div class="hud-container">
+      <div class="hud-box">
+        <span class="hud-label">CANON NODES</span>
+        <span id="hudStage" class="hud-value">0 / 36</span>
+      </div>
+      <div class="hud-box">
+        <span class="hud-label">LOOM INTEGRITY</span>
+        <div class="health-meter">
+          <div id="hudHealthFill" class="health-fill" style="width: 100%;"></div>
+        </div>
+      </div>
+      <div class="hud-box">
+        <span class="hud-label">SCORE</span>
+        <span id="hudScore" class="hud-value">0</span>
+      </div>
+    </div>
+
+    <div class="canvas-container">
+      <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+      <!-- Ready Overlay -->
+      <div id="readyOverlay" class="game-overlay">
+        <h2 class="overlay-title">SPIDER-SOCIETY MULTIVERSE LOOM</h2>
+        <p class="overlay-desc">
+          Incoming canon fragments converge on the central core across 3 frequencies.<br>
+          Switch the shutter using <strong>Keys [1] [2] [3]</strong> or clicking the bottom frequency pods:<br>
+          <strong>[1] Alpha (Cyan)</strong> | <strong>[2] Beta (Pink)</strong> | <strong>[3] Gamma (Gold)</strong>.<br>
+          Matching stabilizes the fragment; mismatches cause catastrophic decoherence!
+        </p>
+        <button id="readyStartBtn" class="action-btn">ALIGN FREQUENCIES</button>
+      </div>
+
+      <!-- Victory Overlay -->
+      <div id="victoryOverlay" class="game-overlay hidden">
+        <h2 class="overlay-title text-gold">CANON PRESERVED</h2>
+        <p id="victoryMessage" class="overlay-desc">Multiverse loom resonance restored.</p>
+        <button id="victoryRestartBtn" class="action-btn">STABILIZE AGAIN</button>
+      </div>
+
+      <!-- Game Over Overlay -->
+      <div id="gameOverOverlay" class="game-overlay hidden">
+        <h2 class="overlay-title text-crimson">DECOHERENCE SPIKE</h2>
+        <p id="gameOverMessage" class="overlay-desc">The Spider-Verse Loom unraveled under anomalous strain.</p>
+        <button id="gameOverRestartBtn" class="action-btn">RETRY</button>
+      </div>
+    </div>
+
+    <footer class="game-footer">
+      <div class="instructions">
+        <span><strong>Controls:</strong> Keys 1, 2, 3 or Click Pods to switch Shutter Frequency | Spacebar for Overdrive</span>
+      </div>
+    </footer>
+  </div>
+
+  <script src="../js/engine/GameEngine.js"></script>
+  <script src="../js/games/canon-stabilizer.js"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const game = new CanonStabilizerGame();
+      const readyBtn = document.getElementById('readyStartBtn');
+      if (readyBtn) readyBtn.addEventListener('click', () => game.start());
+    });
+  </script>
+</body>
+</html>

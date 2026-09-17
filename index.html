@@ -28,7 +28,7 @@
     <div class="marvel-logo-badge">MARVEL</div>
     <h1 class="hero-title">MINI-GAME MULTIVERSE</h1>
     <p class="hero-subtitle">
-      10 unique single-player arcade mini-games powered by iconic Marvel abilities, cosmic dimensional rifts, and high-performance physics.
+      21 unique single-player arcade mini-games powered by iconic Marvel abilities, cosmic dimensional rifts, and high-performance physics.
     </p>
 
     <!-- Project Generated Hero Banner Artwork -->
@@ -37,20 +37,35 @@
     </div>
 
     <div class="hero-stats">
-      <div class="stat-pill">MISSIONS PLAYED: <span id="statMissionsPlayed">0/10</span></div>
+      <div class="stat-pill">MISSIONS PLAYED: <span id="statMissionsPlayed">0/21</span></div>
       <div class="stat-pill">TOTAL MULTIVERSE SCORE: <span id="statTotalScore">0</span></div>
       <div class="stat-pill">PERFORMANCE: <span>60 FPS</span></div>
     </div>
   </header>
 
+  <!-- SEARCH & QUICK ACTION TOOLBAR -->
+  <div class="hub-toolbar-row">
+    <div class="search-wrapper">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="gameSearchInput" class="game-search-input" placeholder="Search by hero, mechanic, or mission title (e.g. Deadpool, Thor, Portals)...">
+    </div>
+    <div class="hub-actions-group">
+      <button class="action-pill-btn roulette-btn" id="randomMissionBtn">🎲 RANDOM MISSION</button>
+      <button class="action-pill-btn trophy-btn" id="trophyBtn">🏆 TROPHIES (<span id="trophyCount">0/10</span>)</button>
+      <button class="action-pill-btn bgm-btn" id="bgmToggleBtn">🎵 BGM: OFF</button>
+      <button class="action-pill-btn" id="fullscreenBtn">⛶ FULLSCREEN</button>
+    </div>
+  </div>
+
   <!-- CATEGORY FILTER & AUDIO CONTROLS -->
   <div class="filter-bar">
     <div class="category-tabs">
-      <button class="tab-btn active" data-filter="all">ALL MISSIONS (10)</button>
-      <button class="tab-btn" data-filter="character">CHARACTER MISSIONS (5)</button>
-      <button class="tab-btn" data-filter="multiverse">MULTIVERSE MISSIONS (5)</button>
+      <button class="tab-btn active" data-filter="all">ALL MISSIONS (21)</button>
+      <button class="tab-btn" data-filter="character">CHARACTER (10)</button>
+      <button class="tab-btn" data-filter="multiverse">MULTIVERSE (9)</button>
+      <button class="tab-btn" data-filter="doomsday">DOOMSDAY (2)</button>
     </div>
-    <button class="audio-toggle-btn" id="audioToggleBtn">🔊 AUDIO: ON</button>
+    <button class="audio-toggle-btn" id="audioToggleBtn">🔊 SFX: ON</button>
   </div>
 
   <!-- GAMES GRID -->
@@ -96,6 +111,15 @@
           <div class="hud-stat-box">
             <span class="hud-label">STAGE</span>
             <span class="hud-value" id="hudStage">1/3</span>
+            <span id="hudPhase" style="display:none;">LEVEL 1</span>
+          </div>
+
+          <div class="hud-stat-box" id="hudCivilians">
+            <span class="hud-label" style="color:#00ff88;">🛡️ CIVILIANS</span>
+            <span class="hud-value" id="hudCasualties" style="font-size:14px; color:#00ff88;">SAFE (0/1)</span>
+            <div class="hud-bar-container">
+              <div class="hud-bar-fill" id="civHealthFill" style="background: linear-gradient(90deg, #00c853, #69f0ae);"></div>
+            </div>
           </div>
 
           <div class="hud-stat-box">
@@ -110,6 +134,13 @@
 
         <div><!-- Spacer for bottom flex --></div>
       </div>
+
+      <!-- THUNDER BUTTON -->
+      <button class="thunder-btn" id="thunderBtn" style="position:absolute; bottom:20px; right:20px; z-index:15; display:flex; align-items:center; gap:8px; background:rgba(14,20,35,0.88); border:2px solid #ffd200; color:#ffd200; font-family:var(--comic-font); font-size:18px; padding:8px 18px; border-radius:12px; cursor:pointer;" title="Call Celestial Thunder (Spacebar)">
+        <span>⚡ THUNDER</span>
+        <span class="thunder-hint" style="font-size:11px; background:rgba(255,255,255,0.15); color:#fff; padding:2px 6px; border-radius:4px;">SPACE</span>
+        <div class="thunder-cooldown-overlay" id="thunderCooldownOverlay" style="position:absolute; left:0; bottom:0; width:100%; height:0%; background:rgba(0,240,255,0.25); pointer-events:none;"></div>
+      </button>
 
       <!-- Ready / Tutorial Overlay -->
       <div class="canvas-screen-overlay" id="readyOverlay">
@@ -156,6 +187,19 @@
     </div>
   </div>
 
+  <!-- TROPHY ROOM SHOWROOM MODAL -->
+  <div class="trophy-modal-backdrop hidden" id="trophyModal">
+    <div class="trophy-modal-box">
+      <div class="trophy-header">
+        <h2>🏆 MULTIVERSE TROPHY SHOWROOM</h2>
+        <button class="trophy-close-btn" id="closeTrophyModalBtn">&times; CLOSE</button>
+      </div>
+      <div class="trophy-grid" id="trophyGrid">
+        <!-- Trophies rendered by hub.js -->
+      </div>
+    </div>
+  </div>
+
   <!-- SCRIPT INCLUDES -->
   <!-- Audio & Base Engine -->
   <script src="js/engine/SoundFX.js"></script>
@@ -166,7 +210,12 @@
   <script src="js/games/captain-america.js"></script>
   <script src="js/games/iron-man.js"></script>
   <script src="js/games/thor.js"></script>
+  <script src="js/games/thor-hammer.js"></script>
   <script src="js/games/ant-man.js"></script>
+  <script src="js/games/black-panther.js"></script>
+  <script src="js/games/wolverine.js"></script>
+  <script src="js/games/hawkeye.js"></script>
+  <script src="js/games/groot.js"></script>
 
   <!-- Part B: Multiverse Games -->
   <script src="js/games/doctor-strange.js"></script>
@@ -174,6 +223,14 @@
   <script src="js/games/tva-loki.js"></script>
   <script src="js/games/watcher-nexus.js"></script>
   <script src="js/games/deadpool.js"></script>
+  <script src="js/games/chrono-branch.js"></script>
+  <script src="js/games/temporal-echo.js"></script>
+  <script src="js/games/canon-stabilizer.js"></script>
+  <script src="js/games/incursion-point.js"></script>
+
+  <!-- Part C: Doomsday Games -->
+  <script src="js/games/heralds-exodus.js"></script>
+  <script src="js/games/beyonder-core.js"></script>
 
   <!-- Main Hub Controller -->
   <script src="js/hub.js"></script>
