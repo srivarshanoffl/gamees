@@ -6,7 +6,9 @@
   <title>Marvel Mini-Games: Character & Multiverse Missions</title>
   <meta name="description" content="A dynamic collection of 10 single-player Marvel web mini-games featuring Spider-Man, Captain America, Iron Man, Thor, Ant-Man, and Multiverse Missions.">
   <meta name="theme-color" content="#e23636">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦸</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/hub.css">
   <link rel="stylesheet" href="css/game.css">
 </head>
@@ -28,7 +30,7 @@
     <div class="marvel-logo-badge">MARVEL</div>
     <h1 class="hero-title">MINI-GAME MULTIVERSE</h1>
     <p class="hero-subtitle">
-      21 unique single-player arcade mini-games powered by iconic Marvel abilities, cosmic dimensional rifts, and high-performance physics.
+      23 unique single-player arcade mini-games powered by iconic Marvel abilities, cosmic dimensional rifts, and high-performance physics.
     </p>
 
     <!-- Project Generated Hero Banner Artwork -->
@@ -37,7 +39,7 @@
     </div>
 
     <div class="hero-stats">
-      <div class="stat-pill">MISSIONS PLAYED: <span id="statMissionsPlayed">0/21</span></div>
+      <div class="stat-pill">MISSIONS PLAYED: <span id="statMissionsPlayed">0/23</span></div>
       <div class="stat-pill">TOTAL MULTIVERSE SCORE: <span id="statTotalScore">0</span></div>
       <div class="stat-pill">PERFORMANCE: <span>60 FPS</span></div>
     </div>
@@ -60,10 +62,10 @@
   <!-- CATEGORY FILTER & AUDIO CONTROLS -->
   <div class="filter-bar">
     <div class="category-tabs">
-      <button class="tab-btn active" data-filter="all">ALL MISSIONS (21)</button>
+      <button class="tab-btn active" data-filter="all">ALL MISSIONS (23)</button>
       <button class="tab-btn" data-filter="character">CHARACTER (10)</button>
-      <button class="tab-btn" data-filter="multiverse">MULTIVERSE (9)</button>
-      <button class="tab-btn" data-filter="doomsday">DOOMSDAY (2)</button>
+      <button class="tab-btn" data-filter="multiverse">MULTIVERSE (10)</button>
+      <button class="tab-btn" data-filter="doomsday">DOOMSDAY (3)</button>
     </div>
     <button class="audio-toggle-btn" id="audioToggleBtn">🔊 SFX: ON</button>
   </div>
@@ -227,6 +229,7 @@
   <script src="js/games/temporal-echo.js"></script>
   <script src="js/games/canon-stabilizer.js"></script>
   <script src="js/games/incursion-point.js"></script>
+  <script src="js/games/loki-timeline-hunt.js"></script>
 
   <!-- Part C: Doomsday Games -->
   <script src="js/games/heralds-exodus.js"></script>

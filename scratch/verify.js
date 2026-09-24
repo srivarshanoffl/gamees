@@ -26,13 +26,13 @@ const expectedGames = [
   'blackpanther', 'wolverine', 'hawkeye', 'groot',
   'doctorstrange', 'scarletwitch', 'tvaloki', 'watchernexus', 'deadpool',
   'chronobranch', 'temporalecho', 'canonstabilizer', 'incursionpoint',
-  'heraldsexodus', 'beyondercore'
+  'lokitimelinehunt', 'heraldsexodus', 'beyondercore', 'lokithelasttimeline'
 ];
 
 expectedGames.forEach(id => {
   assert(hubJs.includes(`id: '${id}'`), 'Hub missing catalog entry: ' + id);
 });
-console.log('✓ Hub catalog contains all 21 games!');
+console.log('✓ Hub catalog contains all 23 games!');
 
 // Verify TROPHIES in Hub
 assert(hubJs.includes('const TROPHIES = ['), 'Hub missing TROPHIES');

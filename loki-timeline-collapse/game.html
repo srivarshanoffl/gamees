@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loki: The Last Timeline — Mission Execution</title>
+  <meta name="description" content="Engage in 2.5D combat, switch between Past, Present, and Future eras with your hero companion, and secure the Nexus Core.">
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header class="top-nav">
+    <div class="brand-badge">
+      <span class="brand-icon" id="missionIcon">⚡</span>
+      <span class="brand-text" id="missionTitle">ASGARD: REALM OF THUNDER</span>
+    </div>
+    <div class="nav-actions">
+      <a href="hub.html" class="nav-link">◀ NEXUS HUB</a>
+      <button id="audioToggleBtn" class="audio-btn" title="Toggle Sound">🔊 AUDIO</button>
+    </div>
+  </header>
+
+  <!-- 2.5D Game Viewport Container -->
+  <main class="game-viewport-container">
+    <canvas id="gameCanvas" width="960" height="540"></canvas>
+
+    <!-- In-Game HUD Overlay -->
+    <div class="in-game-hud">
+      <div class="hud-top-row">
+        <!-- Player Health -->
+        <div class="hud-group">
+          <div class="hud-card">
+            <span class="hud-title">LOKI INTEGRITY</span>
+            <div class="hud-value-row">
+              <div class="health-meter-container">
+                <div class="health-meter-fill" id="playerHealthFill"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Era Badge -->
+          <div class="hud-card era-badge-card">
+            <span class="hud-title">ACTIVE ERA</span>
+            <span class="era-text" id="hudEraText">THE PAST</span>
+          </div>
+
+          <!-- Companion Status Card -->
+          <div class="hud-card companion-card">
+            <span class="companion-avatar" id="companionAvatar">⚡</span>
+            <div>
+              <span class="hud-title">COMPANION</span>
+              <div class="companion-name" id="companionName">THOR</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Boss Meter Overlay -->
+        <div class="boss-hud-bar" id="bossHudBar">
+          <div class="boss-title-row">
+            <span id="bossName">DOOM GUARDIAN</span>
+            <span id="bossSubTitle">TEMPORAL BOSS</span>
+          </div>
+          <div class="boss-meter-container">
+            <div class="boss-meter-fill" id="bossMeterFill"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Controls Legend -->
+      <div class="hud-bottom-row">
+        <div class="controls-legend">
+          <span class="key-badge"><strong>[A][D]</strong> / <strong>[←][→]</strong> MOVE</span>
+          <span class="key-badge"><strong>[W]</strong> / <strong>[SPACE]</strong> JUMP</span>
+          <span class="key-badge"><strong>[Z]</strong> SCEPTER</span>
+          <span class="key-badge"><strong>[X]</strong> MAGIC</span>
+          <span class="key-badge"><strong>[C]</strong> FREEZE</span>
+          <span class="key-badge"><strong>[V]</strong> REWIND</span>
+          <span class="key-badge"><strong>[E]</strong> INTERACT</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Virtual Controls -->
+    <div class="mobile-controls-layer">
+      <div class="touch-dpad">
+        <button class="touch-btn" id="touchLeft">◀</button>
+        <button class="touch-btn" id="touchRight">▶</button>
+        <button class="touch-btn" id="touchJump">▲</button>
+      </div>
+      <div class="touch-actions">
+        <button class="touch-btn" id="touchAttack" style="border-color: #ffd200;">Z</button>
+        <button class="touch-btn" id="touchMagic" style="border-color: #00ff88;">X</button>
+        <button class="touch-btn" id="touchFreeze" style="border-color: #38bdf8;">C</button>
+        <button class="touch-btn" id="touchRewind" style="border-color: #ec4899;">V</button>
+        <button class="touch-btn" id="touchInteract" style="border-color: #f59e0b;">E</button>
+      </div>
+    </div>
+
+    <!-- Pause Overlay -->
+    <div id="pauseOverlay" class="hidden" style="position: absolute; inset: 0; background: rgba(0,0,0,0.8); z-index: 50; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 16px;">
+      <h2 style="font-family: var(--font-comic); font-size: 42px; color: #fff;">TEMPORAL STASIS (PAUSED)</h2>
+      <button onclick="window.engine.togglePause()" class="action-btn-glow">RESUME</button>
+      <a href="hub.html" class="nav-link" style="color: #94a3b8;">EXIT TO HUB</a>
+    </div>
+
+  </main>
+
+  <!-- Core Game Engine & Scripts -->
+  <script src="js/engine/AudioEngine.js"></script>
+  <script src="js/engine/ParticleSystem.js"></script>
+  <script src="js/engine/TimeEraManager.js"></script>
+  <script src="js/engine/DialogueEngine.js"></script>
+  <script src="js/engine/PlatformEngine.js"></script>
+  <script src="js/game/LokiPlayer.js"></script>
+  <script src="js/game/CompanionSystem.js"></script>
+  <script src="js/game/InteractiveObjects.js"></script>
+  <script src="js/game/PuzzleSystem.js"></script>
+  <script src="js/game/EnemySystem.js"></script>
+  <script src="js/game/BossFight.js"></script>
+  <script src="js/game/DimensionConfigs.js"></script>
+  <script src="js/missions.js"></script>
+</body>
+</html>

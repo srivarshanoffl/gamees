@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Final Collision — Loki: The Last Timeline</title>
+  <meta name="description" content="All 4 heroes unite in the final battle against Doctor Doom to shatter the Chrono Forge and restore the multiverse.">
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/game.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header class="top-nav">
+    <div class="brand-badge">
+      <span class="brand-icon">💥</span>
+      <span class="brand-text">THE FINAL COLLISION: CHRONO FORGE</span>
+    </div>
+    <div class="nav-actions">
+      <a href="hub.html" class="nav-link">◀ NEXUS HUB</a>
+      <button id="audioToggleBtn" class="audio-btn" title="Toggle Sound">🔊 AUDIO</button>
+    </div>
+  </header>
+
+  <!-- 2.5D Arena Viewport -->
+  <main class="game-viewport-container" id="arenaContainer">
+    <canvas id="gameCanvas" width="960" height="540"></canvas>
+
+    <!-- In-Game HUD -->
+    <div class="in-game-hud">
+      <div class="hud-top-row">
+        <div class="hud-group">
+          <div class="hud-card">
+            <span class="hud-title">LOKI INTEGRITY</span>
+            <div class="health-meter-container">
+              <div class="health-meter-fill" id="playerHealthFill"></div>
+            </div>
+          </div>
+
+          <div class="hud-card era-badge-card" style="border-color: rgba(239, 68, 68, 0.4);">
+            <span class="hud-title">BATTLE PHASE</span>
+            <span class="era-text" id="hudPhaseText" style="color: #f87171;">PHASE 1: FORGE ENGINES</span>
+          </div>
+        </div>
+
+        <!-- Boss HUD -->
+        <div class="boss-hud-bar active" id="bossHudBar">
+          <div class="boss-title-row">
+            <span id="bossName">CHRONO FORGE CORE</span>
+            <span id="bossSubTitle">DOCTOR DOOM</span>
+          </div>
+          <div class="boss-meter-container">
+            <div class="boss-meter-fill" id="bossMeterFill" style="background: linear-gradient(90deg, #10b981, #ef4444);"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Forge Engine Status Grid Overlay -->
+      <div id="forgeStatusOverlay" style="position: absolute; top: 75px; left: 18px; display: flex; gap: 8px;">
+        <span class="core-slot-pill" id="engine-asgard">⚡ ASGARD ENGINE</span>
+        <span class="core-slot-pill" id="engine-cap">⭐ CAP ENGINE</span>
+        <span class="core-slot-pill" id="engine-stark">🤖 STARK ENGINE</span>
+        <span class="core-slot-pill" id="engine-mystic">👁️ MYSTIC ENGINE</span>
+      </div>
+
+      <div class="hud-bottom-row">
+        <div class="controls-legend">
+          <span class="key-badge"><strong>[A][D]</strong> MOVE</span>
+          <span class="key-badge"><strong>[W]</strong> JUMP</span>
+          <span class="key-badge"><strong>[Z]</strong> SCEPTER</span>
+          <span class="key-badge"><strong>[X]</strong> MAGIC</span>
+          <span class="key-badge"><strong>[C]</strong> FREEZE</span>
+          <span class="key-badge"><strong>[V]</strong> REWIND</span>
+          <span class="key-badge"><strong>[E]</strong> SHATTER ENGINE</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Virtual Controls -->
+    <div class="mobile-controls-layer">
+      <div class="touch-dpad">
+        <button class="touch-btn" id="touchLeft">◀</button>
+        <button class="touch-btn" id="touchRight">▶</button>
+        <button class="touch-btn" id="touchJump">▲</button>
+      </div>
+      <div class="touch-actions">
+        <button class="touch-btn" id="touchAttack" style="border-color: #ffd200;">Z</button>
+        <button class="touch-btn" id="touchMagic" style="border-color: #00ff88;">X</button>
+        <button class="touch-btn" id="touchFreeze" style="border-color: #38bdf8;">C</button>
+        <button class="touch-btn" id="touchRewind" style="border-color: #ec4899;">V</button>
+        <button class="touch-btn" id="touchInteract" style="border-color: #f59e0b;">E</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- GRAND FINALE & EPILOGUE MODAL -->
+  <section class="ending-wrapper" id="epilogueSection" style="display: none;">
+    <div class="ending-cinematic-card">
+      <div class="title-badge" style="background: rgba(251, 191, 36, 0.2); border-color: #fbbf24; color: #fbbf24;">
+        <span>🏆</span> VICTORY ACROSS ALL TIMELINES
+      </div>
+
+      <h2 style="font-family: var(--font-comic); font-size: 52px; color: #fff; letter-spacing: 2px;">
+        THE CHRONO FORGE HAS SHATTERED
+      </h2>
+
+      <!-- United Heroes -->
+      <div class="heroes-united-strip">
+        <div class="hero-pill" style="border-color: #38bdf8; color: #38bdf8;"><span>⚡</span> THOR</div>
+        <div class="hero-pill" style="border-color: #ef4444; color: #ef4444;"><span>⭐</span> CAPTAIN AMERICA</div>
+        <div class="hero-pill" style="border-color: #f59e0b; color: #f59e0b;"><span>🤖</span> IRON MAN</div>
+        <div class="hero-pill" style="border-color: #ec4899; color: #ec4899;"><span>👁️</span> DOCTOR STRANGE</div>
+        <div class="hero-pill" style="border-color: #10b981; color: #10b981;"><span>👑</span> LOKI</div>
+      </div>
+
+      <div class="story-typewriter-box" style="max-width: 700px; text-align: left;">
+        <p>
+          With a unified temporal strike across Past, Present, and Future, the Chrono Forge collapses in blinding radiant light. Doctor Doom’s compression matrix shatters, releasing the captive timelines back to their natural courses.
+        </p>
+        <p style="margin-top: 12px;">
+          Thor grips Loki’s arm. Cap salutes. Stark gives an armored nod, and Strange bows with a mystic sign. One by one, the heroes return to their healed realities.
+        </p>
+        <p style="margin-top: 12px;">
+          Loki returns alone to the great Yggdrasil tree. Amidst the infinite emerald branches, he notices one tiny, brilliant new branch budding—a reality untouched by any previous destiny.
+        </p>
+        <p style="margin-top: 12px; font-style: italic; color: #34d399;">
+          Loki smiles gently. "Another story."
+        </p>
+      </div>
+
+      <div class="loki-returns-block">
+        TIMELINE RESTORED — LOKI WILL RETURN
+      </div>
+
+      <div class="action-row" style="margin-top: 10px; display: flex; gap: 16px; flex-wrap: wrap;">
+        <a href="index.html" class="action-btn-glow" style="background: linear-gradient(135deg, #10b981, #059669);">
+          <span>REPLAY SAGA</span> ↺
+        </a>
+        <a href="../index.html" class="action-btn-glow" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+          <span>MARVEL MINIGAMES HUB</span> ➔
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Scripts -->
+  <script src="js/engine/AudioEngine.js"></script>
+  <script src="js/engine/ParticleSystem.js"></script>
+  <script src="js/engine/TimeEraManager.js"></script>
+  <script src="js/engine/DialogueEngine.js"></script>
+  <script src="js/engine/PlatformEngine.js"></script>
+  <script src="js/game/LokiPlayer.js"></script>
+  <script src="js/game/CompanionSystem.js"></script>
+  <script src="js/game/InteractiveObjects.js"></script>
+  <script src="js/game/PuzzleSystem.js"></script>
+  <script src="js/game/EnemySystem.js"></script>
+  <script src="js/game/BossFight.js"></script>
+  <script src="js/ending.js"></script>
+</body>
+</html>

@@ -298,6 +298,21 @@ const GAMES_CATALOG = [
     bannerGradient: 'linear-gradient(135deg, #0c1a2e 0%, #450a0a 50%, #1e1138 100%)',
     badge: 'Incursion'
   },
+  {
+    id: 'lokitimelinehunt',
+    title: 'Loki: Timeline Hunt',
+    hero: 'Loki / God of Stories',
+    category: 'multiverse',
+    icon: '⏳',
+    mechanic: 'Multi-Era Timeline Shifting',
+    desc: 'Switch between Past, Present, and Future of TVA Sector 4 to observe timeline differences, trigger cross-temporal cause & effect, and stabilize reality.',
+    controls: 'WASD/Arrows to move & jump; [E] to interact; [1, 2, 3] to jump timelines.',
+    className: 'LokiTimelineHuntGame',
+    pageUrl: 'games/loki-timeline-hunt.html',
+    accentColor: '#22c55e',
+    bannerGradient: 'linear-gradient(135deg, #064e3b 0%, #14532d 40%, #2e2814 100%)',
+    badge: 'Timeline Hunt'
+  },
 
   // NEW DOOMSDAY EVENTS
   {
@@ -329,6 +344,20 @@ const GAMES_CATALOG = [
     accentColor: '#10b981',
     bannerGradient: 'linear-gradient(135deg, #022c22 0%, #064e3b 40%, #0f172a 100%)',
     badge: 'Doomsday'
+  },
+  {
+    id: 'lokithelasttimeline',
+    title: 'Loki: The Last Timeline (Full 2.5D Saga)',
+    hero: 'Loki & The Avengers',
+    category: 'doomsday',
+    icon: '⌛',
+    mechanic: '2.5D Time-Shifting Campaign',
+    desc: 'Doctor Doom is rewriting realities with the Chrono Forge! Team up with Thor, Captain America, Iron Man, and Doctor Strange across Past, Present, and Future eras to recover the 4 Nexus Cores.',
+    controls: '[A][D] Move • [W] Jump • [Z] Scepter • [X] Magic • [C] Time Freeze • [V] Rewind • [E] Interact',
+    pageUrl: 'loki-timeline-collapse/index.html',
+    accentColor: '#10b981',
+    bannerGradient: 'linear-gradient(135deg, #022c22 0%, #064e3b 40%, #1e1b4b 100%)',
+    badge: 'Epic 5-Stage Saga'
   }
 ];
 
@@ -431,7 +460,7 @@ const TROPHIES = [
   { id: 'master_of_mystic', name: 'Mystic Master', icon: '🌀', desc: 'Score 1,500+ PTS in Doctor Strange.', check: (scores) => (scores['doctorstrange'] || 0) >= 1500 },
   { id: 'maximum_effort', name: 'Maximum Effort', icon: '💥', desc: 'Score 2,000+ PTS in Deadpool Demolition.', check: (scores) => (scores['deadpool'] || 0) >= 2000 },
   { id: 'chaos_queen', name: 'Chaos Unleashed', icon: '🔮', desc: 'Score 1,500+ PTS in Scarlet Witch.', check: (scores) => (scores['scarletwitch'] || 0) >= 1500 },
-  { id: 'god_of_stories', name: 'God of Stories', icon: '⏳', desc: 'Score 1,500+ PTS in TVA Loki.', check: (scores) => (scores['tvaloki'] || 0) >= 1500 },
+  { id: 'god_of_stories', name: 'God of Stories', icon: '⏳', desc: 'Score 1,500+ PTS in TVA Loki or Timeline Hunt.', check: (scores) => (scores['tvaloki'] || 0) >= 1500 || (scores['lokitimelinehunt'] || 0) >= 1500 },
   { id: 'world_eater', name: "Herald's Flight", icon: '🪐', desc: 'Score 1,500+ PTS in Herald’s Exodus.', check: (scores) => (scores['heraldsexodus'] || 0) >= 1500 },
   { id: 'beyonder_core', name: 'Secret Wars Champion', icon: '🌌', desc: 'Score 1,500+ PTS in Beyonder Core.', check: (scores) => (scores['beyondercore'] || 0) >= 1500 },
   { id: 'multiverse_legend', name: 'Multiverse Legend', icon: '👑', desc: 'Deploy and score in at least 8 different missions.', check: (scores, played) => played >= 8 }
@@ -819,6 +848,12 @@ class MarvelHub {
     if (!meta) return;
     this.activeGameMeta = meta;
 
+    // Direct launch for standalone campaign sagas (e.g. Loki 2.5D Saga)
+    if (!meta.className && meta.pageUrl) {
+      window.location.href = meta.pageUrl;
+      return;
+    }
+
     // Set arena header info
     const nameEl = document.getElementById('arenaGameName');
     const heroEl = document.getElementById('arenaHeroBadge');
@@ -850,7 +885,7 @@ class MarvelHub {
 
     // Stop previous game
     if (this.activeGame) {
-      this.activeGame.stop();
+      if (typeof this.activeGame.stop === 'function') this.activeGame.stop();
       this.activeGame = null;
     }
 
@@ -858,13 +893,15 @@ class MarvelHub {
     const GameClass = window[meta.className];
     if (GameClass) {
       this.activeGame = new GameClass();
-      this.activeGame.start();
+      if (typeof this.activeGame.start === 'function') {
+        this.activeGame.start();
+      }
     }
   }
 
   closeGame() {
     if (this.activeGame) {
-      this.activeGame.stop();
+      if (typeof this.activeGame.stop === 'function') this.activeGame.stop();
       this.activeGame = null;
     }
     const modal = document.getElementById('gameModal');
@@ -882,12 +919,14 @@ class MarvelHub {
    INITIALIZATION
    ======================================================================== */
 function initHub() {
-  if (!window.hub) {
+  if (!window.hub && document.getElementById('gamesGrid')) {
     window.hub = new MarvelHub();
   }
 }
 
-if (document.readyState === 'loading') {
+if (document.getElementById('gamesGrid')) {
+  initHub();
+} else if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initHub);
 } else {
   initHub();
