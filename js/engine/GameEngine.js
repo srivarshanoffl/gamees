@@ -17,8 +17,8 @@ class GameEngine {
   constructor(canvasId, hudConfig = {}) {
     this.canvas = document.getElementById(canvasId);
     this.ctx = this.canvas.getContext('2d');
-    this.vWidth = 960;  // Standard virtual game width
-    this.vHeight = 540; // Standard virtual game height
+    this.vWidth = window.innerWidth;
+    this.vHeight = window.innerHeight;
     this.scale = 1;
 
     // Game state
@@ -72,13 +72,20 @@ class GameEngine {
 
   resize() {
     if (!this.canvas) return;
-    const rect = this.canvas.getBoundingClientRect();
     const dpr = window.devicePixelRatio || 1;
+    this.vWidth = window.innerWidth;
+    this.vHeight = window.innerHeight;
+    
+    this.canvas.style.width = `${this.vWidth}px`;
+    this.canvas.style.height = `${this.vHeight}px`;
     this.canvas.width = this.vWidth * dpr;
     this.canvas.height = this.vHeight * dpr;
-    this.scale = (rect.width / this.vWidth);
+    this.scale = 1;
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
     this.ctx.scale(dpr, dpr);
+    
+    // Custom hook for games that need to re-position entities
+    if (this.onResize) this.onResize();
   }
 
   bindEvents() {
