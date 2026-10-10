@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mjölnir Return | Realm Defense</title>
+  <meta name="description" content="Cinematic full-screen superhero action. Purge Asgardian traitors, solve the Bifrost glitch, and summon celestial thunder with Mjölnir.">
+  <meta name="theme-color" content="#03050a">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔨</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/hub.css">
+  <link rel="stylesheet" href="css/game.css">
+  <!-- INTENTIONAL CODE DEFECT: BIFROST WARD MATRIX (INSPECT & EDIT IN DEVTOOLS) -->
+  <style id="bifrost-ward-css">
+    /* Asgardian Bifrost Barrier Defenses */
+    .bifrost-ward {
+      position: relative;
+      display: center; /* Defective CSS property value */
+      width: 100%;
+      border-radius: 8px;
+    }
+  </style>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100dvh;
+      min-height: 100svh;
+      overflow: hidden;
+      background-color: #03050a;
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #e2e8f0;
+    }
+
+    .canvas-wrapper {
+      position: absolute;
+      inset: 0;
+      width: 100vw;
+      height: 100dvh;
+      min-height: 100svh;
+      max-width: none;
+      aspect-ratio: auto;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      overflow: hidden;
+      background: #03050a;
+    }
+
+    /* CINEMATIC MISSION PANEL AT BOTTOM OF STARTING SCREEN */
+    .cinematic-mission-panel {
+      position: absolute;
+      left: 50%;
+      bottom: clamp(16px, 3vh, 36px);
+      bottom: calc(clamp(16px, 3vh, 36px) + env(safe-area-inset-bottom, 0px));
+      width: min(900px, calc(100% - 32px));
+      transform: translateX(-50%);
+      background: rgba(4, 10, 22, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(0, 240, 255, 0.35);
+      border-radius: 12px;
+      padding: clamp(16px, 2.2vh, 24px) clamp(20px, 3vw, 36px);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.85), 0 0 24px rgba(0, 240, 255, 0.15);
+      z-index: 25;
+      text-align: center;
+      pointer-events: auto;
+      opacity: 1;
+      animation: panelDescend 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.45s ease;
+    }
+
+    @keyframes panelDescend {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -24px);
+      }
+      100% {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+    }
+
+    .cinematic-mission-panel.exiting {
+      opacity: 0 !important;
+      transform: translate(-50%, 28px) !important;
+      pointer-events: none !important;
+    }
+
+    .cinematic-mission-panel.hidden {
+      display: none !important;
+      pointer-events: none !important;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .cinematic-mission-panel {
+        animation: none !important;
+        transition: opacity 0.15s ease !important;
+      }
+      .cinematic-mission-panel.exiting {
+        transform: translate(-50%, 0) !important;
+        opacity: 0 !important;
+      }
+    }
+
+    .mission-heading {
+      margin: 0 0 8px 0;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 900;
+      font-size: clamp(16px, 2vw, 22px);
+      letter-spacing: 2px;
+      color: #00f0ff;
+      text-transform: uppercase;
+      text-shadow: 0 0 16px rgba(0, 240, 255, 0.5);
+    }
+
+    .mission-description {
+      margin: 0 0 10px 0;
+      font-size: clamp(12px, 1.25vw, 15px);
+      line-height: 1.55;
+      color: #cbd5e1;
+    }
+
+    .mission-tagline {
+      margin: 0;
+      font-size: clamp(11px, 1.1vw, 14px);
+      color: #ffd200;
+      letter-spacing: 0.5px;
+    }
+
+    .mission-tagline em {
+      font-style: italic;
+      font-weight: 600;
+      text-shadow: 0 0 12px rgba(255, 210, 0, 0.35);
+    }
+
+    .canvas-wrapper::after {
+      display: none;
+    }
+
+    #gameCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* MINIMAL CINEMATIC HUD — ONLY ESSENTIAL CONTROLS */
+    .fs-controls-container {
+      position: absolute;
+      bottom: clamp(20px, 3.5vw, 36px);
+      right: clamp(20px, 3.5vw, 36px);
+      z-index: 20;
+      pointer-events: auto;
+    }
+
+    /* Primary Action Button — Sleek, Minimal, Premium */
+    .cinematic-action-btn {
+      background: rgba(6, 12, 24, 0.85);
+      backdrop-filter: blur(14px);
+      border: 1.5px solid rgba(0, 240, 255, 0.6);
+      color: #00f0ff;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: clamp(13px, 1.2vw, 15px);
+      letter-spacing: 1.5px;
+      padding: 12px 28px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 16px rgba(0, 240, 255, 0.2);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      text-transform: uppercase;
+    }
+
+    .cinematic-action-btn:hover:not(:disabled) {
+      background: #00f0ff;
+      color: #03050a;
+      box-shadow: 0 10px 32px rgba(0, 240, 255, 0.45);
+      transform: translateY(-2px);
+    }
+
+    .cinematic-action-btn.solve-mode {
+      border-color: rgba(0, 240, 255, 0.7);
+      color: #00f0ff;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 14px rgba(0, 240, 255, 0.2);
+    }
+
+    .cinematic-action-btn.solve-mode:hover:not(:disabled) {
+      background: #00f0ff;
+      color: #03050a;
+      box-shadow: 0 10px 32px rgba(0, 240, 255, 0.5);
+    }
+
+    .cinematic-action-btn.combat-mode {
+      border-color: #ffd200;
+      color: #ffd200;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 20px rgba(255, 210, 0, 0.3);
+    }
+
+    .cinematic-action-btn.combat-mode:hover:not(:disabled) {
+      background: #ffd200;
+      color: #03050a;
+      box-shadow: 0 10px 32px rgba(255, 210, 0, 0.55);
+    }
+
+    .cinematic-action-btn.continue-mode {
+      background: rgba(0, 240, 255, 0.16);
+      border-color: #00f0ff;
+      color: #00f0ff;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 18px rgba(0, 240, 255, 0.35);
+      font-size: 15px;
+      letter-spacing: 2px;
+    }
+
+    .cinematic-action-btn.continue-mode:hover:not(:disabled) {
+      background: #00f0ff;
+      color: #03050a;
+      box-shadow: 0 10px 32px rgba(0, 240, 255, 0.6);
+      transform: translateY(-2px);
+    }
+
+    .cinematic-action-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      border-color: rgba(255, 255, 255, 0.2);
+      color: #94a3b8;
+      box-shadow: none;
+      transform: none;
+    }
+
+    /* TRANSIENT CENTER TOAST — Shows briefly during milestones then smoothly fades */
+    .cinematic-toast {
+      position: absolute;
+      top: 22%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.95);
+      background: rgba(4, 8, 18, 0.88);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(0, 240, 255, 0.4);
+      color: #00f0ff;
+      font-size: clamp(14px, 1.5vw, 18px);
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 10px 24px;
+      border-radius: 30px;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.8), 0 0 24px rgba(0, 240, 255, 0.3);
+      pointer-events: none;
+      z-index: 30;
+      opacity: 0;
+      transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .cinematic-toast.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    /* Modal Screen Overlays */
+    .canvas-screen-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(2, 4, 10, 0.8);
+      backdrop-filter: blur(12px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      padding: 20px;
+    }
+
+    .overlay-card {
+      background: rgba(8, 14, 28, 0.96);
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      border-radius: 16px;
+      padding: 36px 40px;
+      max-width: 580px;
+      width: 90%;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.95);
+      backdrop-filter: blur(20px);
+      text-align: center;
+    }
+
+    .overlay-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      padding: 5px 12px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+    }
+
+    .overlay-title {
+      font-size: clamp(24px, 3.2vw, 34px);
+      font-weight: 900;
+      letter-spacing: 1px;
+      margin: 8px 0 16px 0;
+      color: #fff;
+      text-transform: uppercase;
+    }
+
+    .overlay-title.victory {
+      color: #ffd200;
+      text-shadow: 0 0 24px rgba(255, 210, 0, 0.5);
+    }
+
+    .overlay-instructions {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #94a3b8;
+      margin-bottom: 24px;
+    }
+
+    .overlay-btn-group {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .overlay-btn {
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      padding: 12px 28px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: none;
+      transition: all 0.25s ease;
+      text-transform: uppercase;
+    }
+
+    .overlay-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .overlay-btn.primary {
+      background: #00f0ff;
+      color: #03050a;
+    }
+
+    .overlay-btn.primary:hover {
+      background: #67e8f9;
+      box-shadow: 0 8px 24px rgba(0, 240, 255, 0.5);
+    }
+
+    .overlay-btn.gold {
+      background: #ffd200;
+      color: #03050a;
+    }
+
+    .overlay-btn.gold:hover {
+      background: #fde047;
+      box-shadow: 0 8px 24px rgba(255, 210, 0, 0.5);
+    }
+
+    .overlay-btn.secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: #cbd5e1;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .overlay-btn.secondary:hover {
+      background: rgba(255, 255, 255, 0.16);
+      color: #fff;
+    }
+
+    .victory-stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .victory-stat-box {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .victory-stat-box .v-val {
+      font-size: 32px;
+      font-weight: 900;
+      color: #00ff88;
+      line-height: 1;
+    }
+
+    .victory-stat-box .v-label {
+      font-size: 11px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      margin-top: 4px;
+    }
+
+    /* ASGARDIAN RUNIC DEBUG TERMINAL */
+    .debug-terminal-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(2, 4, 10, 0.85);
+      backdrop-filter: blur(14px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 60;
+      padding: 20px;
+    }
+
+    .debug-terminal-window {
+      background: rgba(8, 14, 28, 0.98);
+      border: 1px solid rgba(0, 240, 255, 0.4);
+      border-radius: 14px;
+      max-width: 660px;
+      width: 100%;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.95);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .terminal-header {
+      background: rgba(6, 10, 20, 0.95);
+      border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .terminal-title {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: #00f0ff;
+    }
+
+    .terminal-close-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 22px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0 4px;
+      transition: color 0.2s;
+    }
+
+    .terminal-close-btn:hover { color: #fff; }
+
+    .terminal-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .terminal-briefing {
+      font-size: 13px;
+      line-height: 1.5;
+      color: #cbd5e1;
+      background: rgba(0, 240, 255, 0.05);
+      border-left: 3px solid #00f0ff;
+      padding: 10px 14px;
+      border-radius: 4px;
+    }
+
+    .code-editor-box {
+      background: #060913;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: 'Consolas', 'Fira Code', monospace;
+      font-size: 13px;
+    }
+
+    .code-line {
+      display: flex;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .code-line:hover { background: rgba(255, 255, 255, 0.06); }
+    .code-line.selected { background: rgba(0, 240, 255, 0.15); border: 1px solid rgba(0, 240, 255, 0.4); }
+
+    .line-num {
+      width: 28px;
+      color: #475569;
+      user-select: none;
+    }
+
+    .line-code { flex: 1; color: #cbd5e1; }
+    .line-code .kw { color: #f43f5e; }
+    .line-code .prop { color: #38bdf8; }
+    .line-code .val { color: #f59e0b; font-weight: bold; }
+    .line-code .comm { color: #64748b; font-style: italic; }
+
+    .fix-selection-area {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      border-radius: 8px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .fix-prompt {
+      font-size: 11px;
+      font-weight: 800;
+      color: #00f0ff;
+      letter-spacing: 0.8px;
+    }
+
+    .fix-options-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .fix-option-btn {
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #e2e8f0;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 13px;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .fix-option-btn:hover {
+      background: rgba(0, 240, 255, 0.15);
+      border-color: #00f0ff;
+      color: #fff;
+    }
+
+    .fix-option-btn.active {
+      background: rgba(0, 255, 136, 0.2);
+      border-color: #00ff88;
+      color: #00ff88;
+    }
+
+    .terminal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-top: 6px;
+    }
+
+    .terminal-status-msg {
+      font-size: 12px;
+      color: #94a3b8;
+      flex: 1;
+    }
+
+    .terminal-status-msg.success { color: #00ff88; }
+    .terminal-status-msg.error { color: #ff5252; }
+
+    .verify-patch-btn {
+      background: #00f0ff;
+      color: #03050a;
+      font-weight: 800;
+      font-size: 13px;
+      padding: 10px 20px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .verify-patch-btn:disabled {
+      background: #334155;
+      color: #64748b;
+      cursor: not-allowed;
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <div class="canvas-wrapper" id="canvasWrapper" style="touch-action: none;">
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- LIVE BIFROST WARD MATRIX ELEMENT (FOR DEVTOOLS VERIFICATION) -->
+    <div id="bifrostWard" class="bifrost-ward" style="position: absolute; width:0; height:0; pointer-events: none; opacity:0;"></div>
+
+    <!-- CINEMATIC STORYLINE MISSION PANEL (STARTING SCREEN) -->
+    <div class="cinematic-mission-panel" id="missionPanel">
+      <h3 class="mission-heading">THOR: POWER RESTORATION PROTOCOL</h3>
+      <p class="mission-description">Thor's power has been locked by a hidden code bug, leaving civilians in danger as intruders take over. Debug the broken code to unleash the thunder, rescue the civilians first, and then wield Mjolnir to smash the intruders.</p>
+      <p class="mission-tagline"><em>Restore the thunder. Save the innocent. Strike down the invaders.</em></p>
+    </div>
+
+    <!-- DISCREET ESSENTIAL CONTROLS (BOTTOM-RIGHT) -->
+    <div class="fs-controls-container" id="fsControlsContainer">
+      <button class="cinematic-action-btn continue-mode" id="continueBtn">
+        <span>CONTINUE</span>
+      </button>
+      <button class="cinematic-action-btn solve-mode" id="primaryActionBtn" style="display: none;">
+        <span>🛠️ DEBUG CODE</span>
+      </button>
+    </div>
+
+    <!-- TRANSIENT CENTER ANNOUNCEMENT (BRIEFLY APPEARS THEN FADES AWAY) -->
+    <div class="cinematic-toast" id="cinematicToast"></div>
+
+    <!-- MISSION BRIEFING OVERLAY (HIDDEN FOR IMMERSIVE CINEMATIC START) -->
+    <div class="canvas-screen-overlay hidden" id="readyOverlay">
+      <div class="overlay-card">
+        <div class="overlay-badge" style="background:#00f0ff; color:#03050a;">MISSION BRIEFING &bull; REALM DEFENSE</div>
+        <h2 class="overlay-title">MJÖLNIR RETURN</h2>
+        <p class="overlay-instructions" style="text-align: left;">
+          <b>MISSION PROGRESSION:</b><br>
+          🛡️ <b>1. HUMAN SHIELDS ACTIVE:</b> Traitors hold Asgardian civilians directly as shields. Mjölnir attacks are locked.<br>
+          🛠️ <b>2. RESTORE BIFROST:</b> Fix the Bifrost ward layout anomaly to trigger evacuation.<br>
+          ⚡ <b>3. CELESTIAL THUNDER:</b> Thunder evacuates civilians to safety, exposing the traitors.<br>
+          🔨 <b>4. PURGE TRAITORS:</b> Unleash Mjölnir to eliminate the exposed villains.
+        </p>
+        <div class="overlay-btn-group">
+          <button class="overlay-btn gold" id="briefingSolveBugBtn">⚡ AUTO-SOLVE &amp; COMMENCE</button>
+          <button class="overlay-btn secondary" id="solveBugFirstBtn">⚙️ INSPECT TERMINAL</button>
+          <button class="overlay-btn primary" id="startMissionBtn">START MISSION</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- VICTORY OVERLAY -->
+    <div class="canvas-screen-overlay hidden" id="victoryOverlay">
+      <div class="overlay-card">
+        <div class="overlay-badge" style="background:#ffd200; color:#03050a;">REALM SECURED</div>
+        <h2 class="overlay-title victory">MISSION COMPLETE</h2>
+        <p class="overlay-instructions" id="victoryMessage">All traitors purged with divine thunder. All Asgardian civilians defended!</p>
+        <div class="victory-stats-grid">
+          <div class="victory-stat-box">
+            <div class="v-val" id="vSafeVal">3</div>
+            <div class="v-label">Civilians Rescued</div>
+          </div>
+          <div class="victory-stat-box">
+            <div class="v-val" id="vTraitorVal" style="color:#ffd200;">3</div>
+            <div class="v-label">Traitors Eliminated</div>
+          </div>
+        </div>
+        <div class="overlay-btn-group">
+          <button class="overlay-btn gold" id="victoryRestartBtn">RESTART MISSION</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ASGARDIAN RUNIC DEBUGGING TERMINAL OVERLAY -->
+    <div class="debug-terminal-overlay hidden" id="debugTerminalOverlay">
+      <div class="debug-terminal-window">
+        <div class="terminal-header">
+          <div class="terminal-title">
+            <span>⚡ ASGARDIAN BIFROST TERMINAL &bull; ANOMALY INSPECTOR</span>
+          </div>
+          <button class="terminal-close-btn" id="terminalCloseBtn" title="Close Inspector">&times;</button>
+        </div>
+        <div class="terminal-body">
+          <div class="terminal-briefing">
+            <b>CSS SYNTAX DEFECT DETECTED IN <code>bifrost-ward.css</code>:</b><br>
+            A CSS layout syntax defect is disrupting the Bifrost Ward matrix and blocking Thor's celestial Thunder power. Inspect Line 4 below, select the valid CSS layout declaration, and deploy the patch to summon thunder and evacuate civilians.
+          </div>
+          <div class="code-editor-box" id="codeEditorBox">
+            <div class="code-line" data-line="1">
+              <span class="line-num">1</span>
+              <span class="line-code"><span class="comm">/* Asgardian Bifrost Barrier Defenses */</span></span>
+            </div>
+            <div class="code-line" data-line="2">
+              <span class="line-num">2</span>
+              <span class="line-code"><span class="kw">.bifrost-ward</span> {</span>
+            </div>
+            <div class="code-line" data-line="3">
+              <span class="line-num">3</span>
+              <span class="line-code">&nbsp;&nbsp;<span class="prop">position</span>: <span class="val">relative</span>;</span>
+            </div>
+            <div class="code-line" data-line="4" id="bugLine">
+              <span class="line-num">4</span>
+              <span class="line-code">&nbsp;&nbsp;<span class="prop">display</span>: <span class="val" id="codeLine4Val">center</span>; <span class="comm">/* &larr; Invalid CSS property value */</span></span>
+            </div>
+            <div class="code-line" data-line="5">
+              <span class="line-num">5</span>
+              <span class="line-code">&nbsp;&nbsp;<span class="prop">width</span>: <span class="val">100%</span>;</span>
+            </div>
+            <div class="code-line" data-line="6">
+              <span class="line-num">6</span>
+              <span class="line-code">&nbsp;&nbsp;<span class="prop">border-radius</span>: <span class="val">8px</span>;</span>
+            </div>
+            <div class="code-line" data-line="7">
+              <span class="line-num">7</span>
+              <span class="line-code">}</span>
+            </div>
+          </div>
+
+          <div class="fix-selection-area" id="fixSelectionArea" style="display: none;">
+            <div class="fix-prompt">SELECT VALID REPLACEMENT CSS DECLARATION FOR LINE <span id="selectedLineNum">4</span>:</div>
+            <div class="fix-options-grid" id="fixOptionsGrid">
+              <button class="fix-option-btn" data-fix="flex">
+                <span>[A]</span> <code>display: flex;</code> &mdash; (Valid CSS Flexible Box Layout)
+              </button>
+              <button class="fix-option-btn" data-fix="middle">
+                <span>[B]</span> <code>display: middle;</code> &mdash; (Invalid CSS value)
+              </button>
+              <button class="fix-option-btn" data-fix="centered">
+                <span>[C]</span> <code>display: centered;</code> &mdash; (Invalid CSS value)
+              </button>
+            </div>
+          </div>
+
+          <div class="terminal-footer">
+            <div class="terminal-status-msg" id="terminalStatusMsg">Click Line 4 to inspect the syntax defect...</div>
+            <button class="overlay-btn secondary" id="terminalSolveBtn" style="font-size: 12px; padding: 6px 14px; border-color: #00ff88; color: #00ff88;">⚡ AUTO-SOLVE</button>
+            <button class="verify-patch-btn" id="verifyPatchBtn" disabled>⚡ VERIFY &amp; DEPLOY PATCH</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPTS -->
+  <script src="js/engine/SoundFX.js"></script>
+  <script src="js/engine/GameEngine.js"></script>
+  <script src="js/games/thor-hammer.js"></script>
+
+  <script>
+    let game;
+    document.addEventListener('DOMContentLoaded', () => {
+      window.game = game = new ThorHammerGame();
+      game.start();
+      game.state = 'START';
+      game.progressionState = 'powerLocked';
+
+      // =========================================================================
+      // STARTING SCREEN & CONTINUE BUTTON HANDLER
+      // =========================================================================
+      let isTransitioning = false;
+
+      function handleContinue(e) {
+        if (e && e.stopPropagation) e.stopPropagation();
+        if (isTransitioning) return;
+        isTransitioning = true;
+        window.soundFX.init();
+        window.soundFX.play('click');
+
+        const panel = document.getElementById('missionPanel');
+        const continueBtn = document.getElementById('continueBtn');
+        const primaryActionBtn = document.getElementById('primaryActionBtn');
+
+        if (panel) {
+          panel.classList.add('exiting');
+        }
+
+        if (continueBtn) {
+          continueBtn.style.opacity = '0';
+          continueBtn.style.transform = 'translateY(12px)';
+          continueBtn.style.pointerEvents = 'none';
+        }
+
+        setTimeout(() => {
+          if (panel) {
+            panel.classList.add('hidden');
+            panel.classList.remove('exiting');
+          }
+          if (continueBtn) {
+            continueBtn.style.display = 'none';
+          }
+          if (primaryActionBtn) {
+            primaryActionBtn.style.display = 'inline-flex';
+            primaryActionBtn.style.opacity = '1';
+          }
+          isTransitioning = false;
+
+          if (game) {
+            game.state = 'PLAYING';
+            game.updateHUD();
+          }
+        }, 450);
+      }
+
+      const continueBtn = document.getElementById('continueBtn');
+      if (continueBtn) {
+        continueBtn.addEventListener('click', handleContinue);
+      }
+
+      const startMissionBtn = document.getElementById('startMissionBtn');
+      if (startMissionBtn) {
+        startMissionBtn.addEventListener('click', handleContinue);
+      }
+
+      // =========================================================================
+      // PRIMARY GAMEPLAY ACTION BUTTON
+      // =========================================================================
+      const primaryActionBtn = document.getElementById('primaryActionBtn');
+      if (primaryActionBtn) {
+        primaryActionBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (!game) return;
+
+          if (game.progressionState === 'powerLocked') {
+            game.openDebugTerminal();
+          } else if (game.progressionState === 'powerUnlocked') {
+            game.startThunderSequence();
+          } else if (game.progressionState === 'civiliansRescued' || game.missionState === 'COMBAT') {
+            game.throwHammerAtTarget();
+          }
+        });
+      }
+
+      // =========================================================================
+      // KEYBOARD ACCESSIBILITY & SHORTCUTS
+      // =========================================================================
+      window.addEventListener('keydown', (e) => {
+        if (e.code === 'Escape' && game && game.terminalOpen) {
+          game.closeDebugTerminal();
+        } else if ((e.code === 'Space' || e.code === 'Enter') && !game.terminalOpen) {
+          const continueBtn = document.getElementById('continueBtn');
+          if (continueBtn && continueBtn.style.display !== 'none' && !isTransitioning) {
+            e.preventDefault();
+            handleContinue();
+          } else if (game && game.progressionState === 'powerUnlocked' && game.missionState === 'REPAIRING') {
+            e.preventDefault();
+            game.startThunderSequence();
+          } else if (game && (game.progressionState === 'civiliansRescued' || game.missionState === 'COMBAT')) {
+            e.preventDefault();
+            game.throwHammerAtTarget();
+          }
+        }
+      });
+
+      // Briefing Auto-solve & Commence
+      const briefingSolveBugBtn = document.getElementById('briefingSolveBugBtn');
+      if (briefingSolveBugBtn) {
+        briefingSolveBugBtn.addEventListener('click', () => {
+          window.soundFX.init();
+          document.getElementById('readyOverlay').classList.add('hidden');
+          handleContinue();
+          applyBugFixSuccess();
+        });
+      }
+
+      // Victory Restart Button
+      const victoryRestartBtn = document.getElementById('victoryRestartBtn');
+      if (victoryRestartBtn) {
+        victoryRestartBtn.addEventListener('click', () => {
+          document.getElementById('victoryOverlay').classList.add('hidden');
+          resetTerminalUI();
+          game.reset();
+          game.state = 'START';
+
+          // Restore Bifrost live CSS defect for the new session
+          const styleEl = document.getElementById('bifrost-ward-css');
+          if (styleEl) {
+            styleEl.textContent = '/* Asgardian Bifrost Barrier Defenses */\n.bifrost-ward {\n  position: relative;\n  display: center;\n  width: 100%;\n  border-radius: 8px;\n}';
+          }
+
+          // Return cleanly to starting screen with mission panel and CONTINUE button
+          const panel = document.getElementById('missionPanel');
+          const continueBtn = document.getElementById('continueBtn');
+          const primaryActionBtn = document.getElementById('primaryActionBtn');
+          if (panel) {
+            panel.classList.remove('hidden', 'exiting');
+          }
+          if (continueBtn) {
+            continueBtn.style.display = 'inline-flex';
+            continueBtn.style.opacity = '1';
+            continueBtn.style.transform = '';
+            continueBtn.style.pointerEvents = 'auto';
+          }
+          if (primaryActionBtn) {
+            primaryActionBtn.style.display = 'none';
+          }
+        });
+      }
+
+      // =========================================================================
+      // INTERACTIVE DEBUGGING TERMINAL & DEVTOOLS BUG OBSERVATION
+      // =========================================================================
+      let selectedLine = null;
+      let selectedFix = null;
+      const codeLines = document.querySelectorAll('.code-line');
+      const fixSelectionArea = document.getElementById('fixSelectionArea');
+      const selectedLineNumSpan = document.getElementById('selectedLineNum');
+      const fixOptionBtns = document.querySelectorAll('.fix-option-btn');
+      const verifyPatchBtn = document.getElementById('verifyPatchBtn');
+      const terminalStatusMsg = document.getElementById('terminalStatusMsg');
+      const terminalCloseBtn = document.getElementById('terminalCloseBtn');
+      const codeLine4Val = document.getElementById('codeLine4Val');
+
+      function resetTerminalUI() {
+        selectedLine = null;
+        selectedFix = null;
+        codeLines.forEach(l => l.classList.remove('selected', 'error-target'));
+        fixOptionBtns.forEach(b => b.classList.remove('active'));
+        if (fixSelectionArea) fixSelectionArea.style.display = 'none';
+        if (verifyPatchBtn) {
+          verifyPatchBtn.disabled = true;
+          verifyPatchBtn.textContent = '⚡ VERIFY & DEPLOY PATCH';
+        }
+        if (terminalStatusMsg) {
+          terminalStatusMsg.className = 'terminal-status-msg';
+          terminalStatusMsg.textContent = 'Click Line 4 to inspect the syntax defect...';
+        }
+        if (codeLine4Val) {
+          codeLine4Val.textContent = 'center';
+          codeLine4Val.style.color = '#f59e0b';
+        }
+      }
+
+      function applyBugFixSuccess() {
+        if (!game || game.bugSolved) return;
+        window.soundFX.init();
+
+        // Update live stylesheet so DevTools reflects valid CSS
+        const styleEl = document.getElementById('bifrost-ward-css');
+        if (styleEl && !/display\s*:\s*flex\b/i.test(styleEl.textContent)) {
+          styleEl.textContent = styleEl.textContent.replace(/display\s*:\s*center/i, 'display: flex');
+        }
+
+        // Update terminal visual editor
+        if (codeLine4Val) {
+          codeLine4Val.textContent = 'flex';
+          codeLine4Val.style.color = '#00ff88';
+        }
+        if (verifyPatchBtn) {
+          verifyPatchBtn.disabled = true;
+          verifyPatchBtn.textContent = '✓ BUG FIXED';
+        }
+        if (terminalStatusMsg) {
+          terminalStatusMsg.className = 'terminal-status-msg success';
+          terminalStatusMsg.innerHTML = '⚡ <b>BUG FIXED!</b> <code>display: flex;</code> deployed! Celestial Thunder unlocked!';
+        }
+
+        // Trigger Thor power restoration sequence
+        game.solveCodingBug();
+
+        setTimeout(() => {
+          if (game) game.closeDebugTerminal();
+        }, 700);
+      }
+
+      // Real Developer Tools live inspection observer
+      function checkDevToolsFix() {
+        if (!game || game.bugSolved || game.progressionState !== 'powerLocked') return;
+        const styleEl = document.getElementById('bifrost-ward-css');
+        const testEl = document.getElementById('bifrostWard');
+        let fixed = false;
+
+        if (styleEl) {
+          const cssCode = styleEl.textContent.replace(/\/\*[\s\S]*?\*\//g, '');
+          if (/display\s*:\s*flex\b/i.test(cssCode)) {
+            fixed = true;
+          }
+        }
+        if (testEl && window.getComputedStyle(testEl).display === 'flex') {
+          fixed = true;
+        }
+
+        if (fixed) {
+          applyBugFixSuccess();
+        }
+      }
+
+      const styleEl = document.getElementById('bifrost-ward-css');
+      if (styleEl && window.MutationObserver) {
+        const observer = new MutationObserver(() => checkDevToolsFix());
+        observer.observe(styleEl, { childList: true, characterData: true, subtree: true });
+      }
+      setInterval(checkDevToolsFix, 500);
+
+      window.fixThorBug = applyBugFixSuccess;
+      window.solveCodingBug = applyBugFixSuccess;
+
+      // Code line click handling
+      codeLines.forEach(lineEl => {
+        lineEl.addEventListener('click', () => {
+          window.soundFX.init();
+          window.soundFX.play('click');
+          codeLines.forEach(l => l.classList.remove('selected'));
+          lineEl.classList.add('selected');
+
+          const lineNum = parseInt(lineEl.getAttribute('data-line'), 10);
+          selectedLine = lineNum;
+          if (selectedLineNumSpan) selectedLineNumSpan.textContent = lineNum;
+
+          if (lineNum === 4) {
+            fixSelectionArea.style.display = 'flex';
+            terminalStatusMsg.className = 'terminal-status-msg';
+            terminalStatusMsg.textContent = "Line 4: 'display: center;' is an invalid CSS property value. Select the valid replacement:";
+            if (selectedFix) {
+              verifyPatchBtn.disabled = false;
+            }
+          } else {
+            fixSelectionArea.style.display = 'none';
+            selectedFix = null;
+            fixOptionBtns.forEach(b => b.classList.remove('active'));
+            verifyPatchBtn.disabled = true;
+            terminalStatusMsg.className = 'terminal-status-msg';
+            terminalStatusMsg.textContent = `Line ${lineNum} contains valid syntax. Investigate the invalid layout declaration on Line 4!`;
+          }
+        });
+      });
+
+      // Fix option buttons handling
+      fixOptionBtns.forEach(optBtn => {
+        optBtn.addEventListener('click', () => {
+          window.soundFX.init();
+          window.soundFX.play('click');
+          fixOptionBtns.forEach(b => b.classList.remove('active'));
+          optBtn.classList.add('active');
+          selectedFix = optBtn.getAttribute('data-fix');
+
+          if (selectedLine === 4) {
+            verifyPatchBtn.disabled = false;
+            terminalStatusMsg.className = 'terminal-status-msg';
+            terminalStatusMsg.textContent = `Ready to verify patch: display: ${selectedFix};`;
+          }
+        });
+      });
+
+      // Verify and Deploy Patch
+      verifyPatchBtn.addEventListener('click', () => {
+        window.soundFX.init();
+        if (selectedLine === 4 && selectedFix === 'flex') {
+          applyBugFixSuccess();
+        } else {
+          terminalStatusMsg.className = 'terminal-status-msg error';
+          if (selectedLine !== 4) {
+            terminalStatusMsg.textContent = '✗ VERIFICATION FAILED: Selected line does not have a defect. Check Line 4!';
+          } else {
+            terminalStatusMsg.innerHTML = `✗ VERIFICATION FAILED: <code>display: ${selectedFix};</code> is NOT valid CSS!`;
+          }
+          window.soundFX.play('hit');
+          if (game) game.shake(6, 0.2);
+        }
+      });
+
+      // Terminal close button
+      if (terminalCloseBtn) {
+        terminalCloseBtn.addEventListener('click', () => {
+          if (game) game.closeDebugTerminal();
+        });
+      }
+
+      // In-terminal auto-solve button
+      const terminalSolveBtn = document.getElementById('terminalSolveBtn');
+      if (terminalSolveBtn) {
+        terminalSolveBtn.addEventListener('click', () => {
+          selectedLine = 4;
+          selectedFix = 'flex';
+          applyBugFixSuccess();
+        });
+      }
+
+      // Shortcut keys: 'B' or 'S' to auto-solve for quick verification
+      window.addEventListener('keydown', (e) => {
+        if ((e.code === 'KeyB' || e.code === 'KeyS') && !e.ctrlKey && !e.metaKey && game && game.progressionState === 'powerLocked') {
+          selectedLine = 4;
+          selectedFix = 'flex';
+          applyBugFixSuccess();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

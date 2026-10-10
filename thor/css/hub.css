@@ -1,0 +1,931 @@
+/* ==========================================================================
+   MARVEL MINI-GAMES HUB STYLES — V2 OVERHAUL
+   ========================================================================== */
+
+/* Fonts loaded via link tag in head for non-blocking performance */
+
+:root {
+  --marvel-red: #e23636;
+  --marvel-red-dark: #b71c1c;
+  --marvel-gold: #ffd200;
+  --marvel-blue: #0088ff;
+  --marvel-cyan: #00f0ff;
+  --multiverse-purple: #8a2be2;
+  --multiverse-pink: #ff007f;
+  --bg-dark: #08090d;
+  --bg-card: rgba(18, 21, 32, 0.85);
+  --bg-card-hover: rgba(28, 33, 48, 0.95);
+  --bg-glass: rgba(255, 255, 255, 0.04);
+  --text-main: #f0f2f5;
+  --text-muted: #9ba1b0;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-glow: rgba(226, 54, 54, 0.4);
+  --comic-font: 'Bangers', cursive, sans-serif;
+  --body-font: 'Outfit', sans-serif;
+  --card-radius: 18px;
+  --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg-dark);
+  background-image:
+    radial-gradient(ellipse at 10% 15%, rgba(226, 54, 54, 0.10) 0%, transparent 50%),
+    radial-gradient(ellipse at 90% 80%, rgba(138, 43, 226, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(0, 136, 255, 0.05) 0%, transparent 60%);
+  color: var(--text-main);
+  font-family: var(--body-font);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Animated dot grid background */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Loading splash screen */
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--bg-dark);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+
+.loading-screen.fade-out {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.loading-logo {
+  font-family: var(--comic-font);
+  font-size: 48px;
+  color: var(--marvel-red);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  animation: loadPulse 1.2s ease-in-out infinite alternate;
+  text-shadow: 0 0 30px rgba(226, 54, 54, 0.6);
+}
+
+.loading-bar-track {
+  width: 200px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  margin-top: 24px;
+  overflow: hidden;
+}
+
+.loading-bar-fill {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--marvel-red), var(--marvel-gold));
+  border-radius: 4px;
+  animation: loadBar 1.8s ease forwards;
+}
+
+@keyframes loadPulse {
+  from { transform: scale(1); opacity: 0.8; }
+  to { transform: scale(1.06); opacity: 1; }
+}
+
+@keyframes loadBar {
+  0% { width: 0%; }
+  60% { width: 75%; }
+  100% { width: 100%; }
+}
+
+/* Animated background particle canvas */
+#bgParticles {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   HEADER & HERO SECTION
+   ========================================================================== */
+.hero-header {
+  position: relative;
+  padding: 48px 20px 28px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg,
+    rgba(226, 54, 54, 0.12) 0%,
+    rgba(138, 43, 226, 0.06) 40%,
+    rgba(8, 9, 13, 0.98) 100%);
+  overflow: hidden;
+  z-index: 1;
+}
+
+/* Animated top gradient stripe */
+.hero-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg,
+    var(--marvel-red),
+    var(--marvel-gold),
+    var(--multiverse-purple),
+    var(--marvel-cyan),
+    var(--marvel-red));
+  background-size: 200% 100%;
+  animation: gradientShift 4s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 100% 0%; }
+  100% { background-position: 0% 0%; }
+}
+
+/* Floating cosmic particles in hero */
+.hero-header::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(2px 2px at 15% 35%, rgba(255, 210, 0, 0.3), transparent),
+    radial-gradient(2px 2px at 75% 20%, rgba(0, 240, 255, 0.3), transparent),
+    radial-gradient(2px 2px at 45% 70%, rgba(138, 43, 226, 0.3), transparent),
+    radial-gradient(1px 1px at 85% 60%, rgba(226, 54, 54, 0.4), transparent),
+    radial-gradient(1px 1px at 25% 80%, rgba(0, 136, 255, 0.3), transparent);
+  animation: floatStars 6s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes floatStars {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-8px); }
+}
+
+.marvel-logo-badge {
+  display: inline-block;
+  background: var(--marvel-red);
+  color: #fff;
+  font-family: var(--comic-font);
+  font-size: 28px;
+  letter-spacing: 3px;
+  padding: 5px 22px;
+  text-transform: uppercase;
+  transform: skewX(-10deg);
+  box-shadow: 4px 4px 0 #000, 0 0 20px rgba(226, 54, 54, 0.4);
+  margin-bottom: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  position: relative;
+  z-index: 2;
+}
+
+.hero-title {
+  font-family: var(--comic-font);
+  font-size: clamp(40px, 6.5vw, 68px);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #ffffff 10%, var(--marvel-gold) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 10px;
+  line-height: 1.1;
+  position: relative;
+  z-index: 2;
+  filter: drop-shadow(0 4px 12px rgba(255, 210, 0, 0.25));
+}
+
+.hero-subtitle {
+  font-size: 16px;
+  color: var(--text-muted);
+  max-width: 660px;
+  margin: 0 auto 22px;
+  line-height: 1.6;
+  position: relative;
+  z-index: 2;
+}
+
+.hero-stats {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 2;
+}
+
+.stat-pill {
+  background: var(--bg-glass);
+  border: 1px solid var(--border-subtle);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 7px 18px;
+  border-radius: 24px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: 0.3px;
+  transition: all 0.3s var(--transition-smooth);
+}
+
+.stat-pill:hover {
+  border-color: rgba(255, 210, 0, 0.3);
+  background: rgba(255, 210, 0, 0.06);
+}
+
+.stat-pill span {
+  color: var(--marvel-gold);
+  font-family: var(--comic-font);
+  font-size: 18px;
+}
+
+/* ==========================================================================
+   NAVIGATION & CATEGORY FILTER
+   ========================================================================== */
+.filter-bar {
+  max-width: 1200px;
+  margin: 28px auto 22px;
+  padding: 0 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  position: relative;
+  z-index: 2;
+}
+
+.category-tabs {
+  display: flex;
+  gap: 6px;
+  background: var(--bg-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 5px;
+  border-radius: 14px;
+  border: 1px solid var(--border-subtle);
+}
+
+.tab-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--body-font);
+  font-size: 13px;
+  font-weight: 800;
+  padding: 9px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.25s var(--transition-smooth);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: relative;
+  overflow: hidden;
+}
+
+.tab-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--marvel-red);
+  opacity: 0;
+  border-radius: inherit;
+  transition: opacity 0.25s ease;
+}
+
+.tab-btn.active::before, .tab-btn:hover::before {
+  opacity: 1;
+}
+
+.tab-btn.active, .tab-btn:hover {
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(226, 54, 54, 0.35);
+}
+
+.tab-btn span, .tab-btn {
+  position: relative;
+  z-index: 1;
+}
+
+.audio-toggle-btn {
+  background: var(--bg-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-main);
+  padding: 9px 18px;
+  border-radius: 12px;
+  font-family: var(--body-font);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.25s var(--transition-smooth);
+}
+
+.audio-toggle-btn:hover {
+  border-color: var(--marvel-cyan);
+  color: var(--marvel-cyan);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.15);
+}
+
+/* ==========================================================================
+   GAMES GRID
+   ========================================================================== */
+.games-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 10px 20px 70px;
+  position: relative;
+  z-index: 2;
+}
+
+.games-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 24px;
+}
+
+/* ==========================================================================
+   GAME CARDS — Premium Glassmorphism + Glow
+   ========================================================================== */
+.game-card {
+  --accent: var(--accent-color, var(--marvel-red));
+  position: relative;
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition:
+    transform 0.35s var(--transition-smooth),
+    border-color 0.35s ease,
+    box-shadow 0.35s ease;
+  animation: cardEntrance 0.5s ease backwards;
+}
+
+/* Staggered entrance: JS will set --card-index */
+.game-card { animation-delay: calc(var(--card-index, 0) * 0.07s); }
+
+@keyframes cardEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Accent glow border on hover */
+.game-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: var(--card-radius);
+  background: linear-gradient(135deg, var(--accent), transparent 60%);
+  opacity: 0;
+  z-index: -1;
+  transition: opacity 0.35s ease;
+}
+
+.game-card:hover {
+  transform: translateY(-8px) scale(1.015);
+  border-color: var(--accent);
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.5),
+    0 0 24px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.game-card:hover::before {
+  opacity: 0.15;
+}
+
+.card-banner {
+  position: relative;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  /* Character-themed gradient — set via inline style or JS */
+  background: linear-gradient(135deg, rgba(30, 34, 48, 1) 0%, rgba(18, 21, 32, 1) 100%);
+}
+
+/* Animated shimmer on card banner */
+.card-banner::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.04), transparent);
+  transition: left 0.6s ease;
+}
+
+.game-card:hover .card-banner::after {
+  left: 120%;
+}
+
+.card-character-icon {
+  font-size: 58px;
+  z-index: 2;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.7));
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.game-card:hover .card-character-icon {
+  transform: scale(1.2) rotate(-5deg);
+}
+
+.card-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  z-index: 3;
+}
+
+.card-category-tag {
+  position: absolute;
+  bottom: 10px;
+  left: 14px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--marvel-gold);
+  z-index: 3;
+  opacity: 0.8;
+}
+
+.card-body {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.card-title {
+  font-family: var(--comic-font);
+  font-size: 23px;
+  letter-spacing: 1px;
+  line-height: 1.15;
+  color: #fff;
+  margin-bottom: 5px;
+}
+
+.card-mechanic-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--marvel-cyan);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+
+.card-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 16px;
+  flex: 1;
+}
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.card-score {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.card-score b {
+  color: var(--marvel-gold);
+  font-family: var(--comic-font);
+  font-size: 16px;
+}
+
+.card-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.play-btn {
+  background: var(--marvel-red);
+  color: #fff;
+  border: none;
+  font-family: var(--comic-font);
+  font-size: 16px;
+  letter-spacing: 1px;
+  padding: 7px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s var(--transition-smooth);
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+  position: relative;
+  overflow: hidden;
+  z-index: 5;
+}
+
+.play-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 2px 4px 0 rgba(0,0,0,0.5);
+}
+
+.play-btn:active {
+  transform: translateY(0);
+  box-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+}
+
+.play-btn.standalone-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  text-decoration: none;
+  font-size: 13px;
+  padding: 7px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.play-btn.standalone-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.game-card:hover .play-btn.arena-launch-btn {
+  background: var(--accent);
+}
+
+/* Multiverse Card Tint */
+.game-card.multiverse-card {
+  --accent-color: var(--multiverse-purple);
+}
+
+/* ==========================================================================
+   FOOTER
+   ========================================================================== */
+.hub-footer {
+  text-align: center;
+  padding: 36px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  color: var(--text-muted);
+  font-size: 13px;
+  position: relative;
+  z-index: 2;
+}
+
+.hub-footer p {
+  margin-bottom: 6px;
+}
+
+.hub-footer a {
+  color: var(--marvel-cyan);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.hub-footer a:hover {
+  color: var(--marvel-gold);
+}
+
+/* Doomsday Event Card Flare */
+.doomsday-card {
+  border-color: rgba(168, 85, 247, 0.35);
+  box-shadow: 0 4px 20px rgba(88, 28, 135, 0.25);
+}
+
+.doomsday-card:hover {
+  border-color: #c084fc;
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.6),
+    0 0 28px rgba(192, 132, 252, 0.4);
+}
+
+.doomsday-card .card-badge {
+  background: linear-gradient(135deg, #7e22ce, #dc2626);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+@media (max-width: 768px) {
+  .hero-header {
+    padding: 28px 16px 20px;
+  }
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .category-tabs {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .audio-toggle-btn {
+    justify-content: center;
+  }
+  .games-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .card-banner {
+    height: 120px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-title {
+    font-size: 32px;
+  }
+  .hero-subtitle {
+    font-size: 14px;
+  }
+  .stat-pill {
+    font-size: 11px;
+    padding: 5px 12px;
+  }
+  .tab-btn {
+    font-size: 11px;
+    padding: 7px 12px;
+  }
+}
+
+/* ==========================================================================
+   ENHANCED HUB CONTROLS: SEARCH, ROULETTE, TROPHIES & BGM
+   ========================================================================== */
+.hub-toolbar-row {
+  max-width: 1200px;
+  margin: 0 auto 16px;
+  padding: 0 20px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  z-index: 2;
+}
+
+.search-wrapper {
+  flex: 1;
+  min-width: 280px;
+  position: relative;
+}
+
+.game-search-input {
+  width: 100%;
+  background: rgba(18, 21, 32, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(12px);
+  color: #fff;
+  font-family: var(--body-font);
+  font-size: 14px;
+  padding: 10px 16px 10px 38px;
+  border-radius: 12px;
+  outline: none;
+  transition: all 0.25s ease;
+}
+
+.game-search-input:focus {
+  border-color: var(--marvel-gold);
+  box-shadow: 0 0 16px rgba(255, 210, 0, 0.35);
+  background: rgba(26, 30, 46, 0.95);
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-size: 14px;
+  opacity: 0.6;
+}
+
+.hub-actions-group {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.action-pill-btn {
+  background: var(--bg-glass);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+  color: #fff;
+  font-family: var(--comic-font);
+  font-size: 15px;
+  letter-spacing: 0.8px;
+  padding: 8px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.25s ease;
+  user-select: none;
+}
+
+.action-pill-btn:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.action-pill-btn.roulette-btn {
+  background: linear-gradient(135deg, rgba(226, 54, 54, 0.3), rgba(255, 210, 0, 0.3));
+  border-color: var(--marvel-gold);
+  color: #fff;
+}
+.action-pill-btn.roulette-btn:hover {
+  background: linear-gradient(135deg, #e23636, #ffd200);
+  color: #000;
+  box-shadow: 0 4px 20px rgba(255, 210, 0, 0.4);
+}
+
+.action-pill-btn.trophy-btn {
+  border-color: #ffd200;
+  color: #ffd200;
+}
+.action-pill-btn.trophy-btn:hover {
+  background: #ffd200;
+  color: #000;
+  box-shadow: 0 4px 20px rgba(255, 210, 0, 0.5);
+}
+
+.action-pill-btn.bgm-btn {
+  border-color: #00f0ff;
+  color: #00f0ff;
+}
+.action-pill-btn.bgm-btn:hover {
+  background: #00f0ff;
+  color: #000;
+  box-shadow: 0 4px 20px rgba(0, 240, 255, 0.4);
+}
+
+/* Trophy Room Modal */
+.trophy-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 6, 12, 0.85);
+  backdrop-filter: blur(10px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.trophy-modal-backdrop.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.trophy-modal-box {
+  background: #0f1322;
+  border: 2px solid var(--marvel-gold);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 820px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(255, 210, 0, 0.25);
+  padding: 28px;
+  position: relative;
+}
+
+.trophy-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+}
+
+.trophy-header h2 {
+  font-family: var(--comic-font);
+  font-size: 28px;
+  letter-spacing: 1.5px;
+  color: var(--marvel-gold);
+  margin: 0;
+}
+
+.trophy-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 14px;
+}
+
+.trophy-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  transition: all 0.25s ease;
+}
+
+.trophy-card.unlocked {
+  background: rgba(255, 210, 0, 0.08);
+  border-color: rgba(255, 210, 0, 0.4);
+  box-shadow: 0 4px 16px rgba(255, 210, 0, 0.15);
+}
+
+.trophy-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.trophy-info h4 {
+  font-family: var(--comic-font);
+  font-size: 16px;
+  letter-spacing: 0.8px;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.trophy-card.unlocked .trophy-info h4 {
+  color: var(--marvel-gold);
+}
+
+.trophy-info p {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.trophy-close-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-family: var(--comic-font);
+  font-size: 18px;
+  padding: 4px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.trophy-close-btn:hover {
+  background: var(--marvel-red);
+  border-color: var(--marvel-red);
+}
+
