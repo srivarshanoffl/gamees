@@ -1,0 +1,3118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>The Fractured Dimension</title>
+    <link rel="icon"
+        href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2016%2016'%3E%3Cpath%20d='M8%200L16%208L8%2016L0%208Z'%20fill='%23a06ae0'/%3E%3C/svg%3E">
+
+    <style>
+        /* ============ base ============ */
+        :root {
+            --serif: 'Palatino Linotype', 'Book Antiqua', Palatino, 'URW Palladio L', Georgia, 'Times New Roman', serif;
+            --mono: ui-monospace, 'Cascadia Code', Consolas, 'Liberation Mono', 'Courier New', monospace;
+            --ink: #e9e3f5;
+            --ink-dim: #a99dc9;
+            --accent: #c78ae8;
+            --danger: #e0556a;
+            --ok: #8fd8b8;
+            --panel: rgba(10, 8, 24, .74);
+            --line: rgba(190, 160, 230, .28);
+            --figh: clamp(250px, 64vh, 620px);
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+        }
+
+        html {
+            -webkit-text-size-adjust: 100%;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #06070f;
+            background-image: url('assets/cosmic_magic_bg.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            color: var(--ink);
+            font-family: var(--serif);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        button {
+            font: inherit;
+            touch-action: manipulation;
+        }
+
+        #app {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+        }
+
+        .fade-in {
+            animation: app-in 1.6s ease;
+        }
+
+        @keyframes app-in {
+            from {
+                opacity: 0;
+            }
+        }
+
+        #stage,
+        #camera,
+        #settle,
+        #world {
+            position: absolute;
+            inset: 0;
+        }
+
+        #stage {
+            overflow: hidden;
+        }
+
+        .layer {
+            position: absolute;
+            inset: 0;
+        }
+
+        /* ============ camera & settle ============ */
+        #camera {
+            transform-origin: 50% 62%;
+        }
+
+        #camera.run {
+            animation: camera-push 80s ease-out forwards;
+        }
+
+        @keyframes camera-push {
+            from {
+                transform: scale(1.02) translateY(0);
+            }
+
+            to {
+                transform: scale(1.075) translateY(-1.2%);
+            }
+        }
+
+        #stage.jolt {
+            animation: cam-jolt 480ms steps(2, end) 1;
+        }
+
+        @keyframes cam-jolt {
+            0% {
+                transform: translate(0, 0);
+            }
+
+            20% {
+                transform: translate(-7px, 3px);
+            }
+
+            40% {
+                transform: translate(6px, -4px);
+            }
+
+            60% {
+                transform: translate(-4px, 2px);
+            }
+
+            80% {
+                transform: translate(3px, -2px);
+            }
+
+            100% {
+                transform: translate(0, 0);
+            }
+        }
+
+        #settle {
+            transition: transform .8s ease, filter .8s ease;
+        }
+
+        #settle.settled {
+            transform: scale(1.015);
+            filter: brightness(1.07) saturate(1.05);
+            transition: transform 2600ms cubic-bezier(.22, .61, .36, 1), filter 2600ms ease;
+        }
+
+        #settle.flicker {
+            animation: flicker 900ms steps(1) 1;
+        }
+
+        @keyframes flicker {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            25% {
+                opacity: .86;
+            }
+
+            40% {
+                opacity: .95;
+            }
+
+            55% {
+                opacity: .8;
+            }
+
+            70% {
+                opacity: .92;
+            }
+        }
+
+        /* ============ cosmic magic background ============ */
+        #cosmic-bg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('assets/cosmic_magic_bg.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            pointer-events: none;
+            z-index: 0;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+        }
+
+        #cosmic-overlay {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at 50% 50%, rgba(5, 3, 12, 0.08) 0%, rgba(3, 2, 8, 0.28) 100%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Suppress legacy SVG vector background graphics that compete with supplied artwork */
+        #bg-svg,
+        #seal-svg,
+        #rays,
+        #fg-layer,
+        .haze.a,
+        .haze.b {
+            display: none !important;
+        }
+
+        /* ============ background svg ============ */
+        #bg-svg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        #ring {
+            transform-box: fill-box;
+            transform-origin: 50% 50%;
+            animation: ring-turn 220s linear infinite;
+            opacity: .75;
+            transition: opacity 3s ease;
+        }
+
+        @keyframes ring-turn {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        #app.calm #ring {
+            opacity: 1;
+        }
+
+        .bob {
+            transform-box: fill-box;
+            animation: bob var(--bd, 12s) ease-in-out var(--bdel, 0s) infinite alternate;
+        }
+
+        @keyframes bob {
+            from {
+                transform: translateY(-4px);
+            }
+
+            to {
+                transform: translateY(5px);
+            }
+        }
+
+        #seam {
+            opacity: .55;
+            transition: opacity 1.8s ease;
+        }
+
+        #seam-glow {
+            opacity: .22;
+            transition: opacity 1.8s ease;
+        }
+
+        .seam-branch {
+            opacity: .45;
+            transition: opacity 1.8s ease;
+        }
+
+        #app.tense #seam {
+            opacity: .9;
+        }
+
+        #app.tense #seam-glow {
+            opacity: .6;
+        }
+
+        #app.tense .seam-branch {
+            opacity: .85;
+        }
+
+        #app.calm #seam {
+            opacity: .4;
+        }
+
+        #app.calm #seam-glow {
+            opacity: .3;
+        }
+
+        #app.calm .seam-branch {
+            opacity: .3;
+        }
+
+        /* sky fracture & ground fissures */
+        .fracture-glow {
+            filter: blur(7px);
+            animation: frac-pulse 9s ease-in-out infinite;
+        }
+
+        .fracture-core {
+            animation: frac-pulse 5.5s ease-in-out infinite;
+        }
+
+        @keyframes frac-pulse {
+
+            0%,
+            100% {
+                opacity: .55;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        #app.tense .fracture-glow {
+            filter: blur(7px) brightness(1.9) saturate(1.3);
+        }
+
+        #app.failing .fracture-glow {
+            filter: blur(8px) brightness(2.6) saturate(1.5);
+        }
+
+        #app.failing .fracture-core {
+            filter: brightness(1.9);
+        }
+
+        .fissure {
+            filter: blur(4px);
+            animation: frac-pulse 7s ease-in-out infinite;
+        }
+
+        .fissure-core {
+            animation: frac-pulse 5s ease-in-out infinite;
+        }
+
+        #app.tense .fissure {
+            filter: blur(4px) brightness(1.8);
+        }
+
+        #app.failing .fissure {
+            filter: blur(4px) brightness(2.4);
+        }
+
+        .pulse-soft {
+            animation: soft-pulse 3.2s ease-in-out infinite;
+        }
+
+        @keyframes soft-pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: .45;
+            }
+        }
+
+        /* ============ atmosphere layers ============ */
+        #rays {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 2;
+            mix-blend-mode: screen;
+        }
+
+        .ray {
+            position: absolute;
+            top: -12%;
+            height: 85%;
+            background: linear-gradient(180deg, rgba(190, 150, 255, .16), rgba(190, 150, 255, 0) 80%);
+            filter: blur(9px);
+            transform-origin: 50% 0;
+        }
+
+        .ray.r1 {
+            left: 17%;
+            width: 9vw;
+            --ra: 14deg;
+            animation: ray-sway 17s ease-in-out infinite alternate;
+        }
+
+        .ray.r2 {
+            left: 63%;
+            width: 7vw;
+            --ra: -11deg;
+            animation: ray-sway 23s ease-in-out infinite alternate-reverse;
+        }
+
+        @keyframes ray-sway {
+            from {
+                opacity: .3;
+                transform: rotate(calc(var(--ra) - 2.5deg)) translateX(-1.5%);
+            }
+
+            to {
+                opacity: .75;
+                transform: rotate(calc(var(--ra) + 3deg)) translateX(1.5%);
+            }
+        }
+
+        .haze {
+            pointer-events: none;
+        }
+
+        .haze.a {
+            background: linear-gradient(0deg, rgba(130, 70, 170, .14), transparent 46%);
+            animation: haze-a 26s ease-in-out infinite alternate;
+        }
+
+        @keyframes haze-a {
+            to {
+                transform: translateX(2.5%);
+            }
+        }
+
+        .haze.b {
+            background: radial-gradient(60% 42% at 58% 72%, rgba(170, 90, 190, .10), transparent 70%);
+            animation: haze-b 34s ease-in-out infinite alternate;
+            z-index: 7;
+        }
+
+        @keyframes haze-b {
+            to {
+                transform: translate(-2%, -1.5%);
+            }
+        }
+
+        #fg-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 6;
+            pointer-events: none;
+        }
+
+        #fg-left,
+        #fg-right {
+            position: absolute;
+            bottom: -4vh;
+            width: 36vw;
+            height: 26vh;
+            background: linear-gradient(180deg, #0d0826, #050310);
+        }
+
+        #fg-left {
+            left: -6vw;
+            clip-path: polygon(0 46%, 26% 18%, 48% 38%, 72% 30%, 100% 62%, 100% 100%, 0 100%);
+            filter: blur(6px);
+        }
+
+        #fg-right {
+            right: -6vw;
+            clip-path: polygon(0 60%, 20% 28%, 44% 42%, 70% 12%, 100% 38%, 100% 100%, 0 100%);
+            filter: blur(6px);
+        }
+
+        /* ============ ground reality seal ============ */
+        #seal-svg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .seal {
+            opacity: 0;
+            transform: scale(.86);
+            transform-box: view-box;
+            transform-origin: 50% 82.5%;
+            transition: opacity 1.8s ease, transform 2.4s cubic-bezier(.22, .8, .3, 1);
+        }
+
+        #app.resumed .seal {
+            opacity: .95;
+            transform: scale(1);
+        }
+
+        #app.complete .seal {
+            opacity: 0;
+            transform: scale(1.05);
+            transition: opacity 6s ease, transform 8s ease;
+        }
+
+        .rot-a,
+        .rot-b,
+        .rot-c,
+        .rot-d,
+        .rot-e,
+        .rot-f,
+        .rot-g {
+            transform-box: fill-box;
+            transform-origin: center;
+        }
+
+        .rot-a {
+            animation: rot-cw 11s linear infinite;
+        }
+
+        .rot-b {
+            animation: rot-ccw 7.5s linear infinite;
+        }
+
+        .rot-c {
+            animation: rot-cw 5s linear infinite;
+        }
+
+        .rot-d {
+            animation: rot-ccw 16s linear infinite;
+        }
+
+        .rot-e {
+            animation: rot-cw 34s linear infinite;
+        }
+
+        .rot-f {
+            animation: rot-ccw 26s linear infinite;
+        }
+
+        .rot-g {
+            animation: rot-cw 45s linear infinite;
+        }
+
+        @keyframes rot-cw {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes rot-ccw {
+            to {
+                transform: rotate(-360deg);
+            }
+        }
+
+        /* ============ characters ============ */
+        #actors {
+            position: absolute;
+            inset: 0;
+            z-index: 3;
+        }
+
+        .actor {
+            position: absolute;
+            bottom: 5.5vh;
+            height: var(--figh);
+            aspect-ratio: 300/660;
+        }
+
+        .actor::after {
+            content: "";
+            position: absolute;
+            left: 6%;
+            right: 6%;
+            bottom: -1.4%;
+            height: 4.6%;
+            background: radial-gradient(50% 50% at 50% 50%, rgba(0, 0, 0, .55), transparent 70%);
+        }
+
+        #strange-wrap {
+            left: 7%;
+            animation: strange-float 8.5s ease-in-out infinite;
+            transform-origin: 50% 100%;
+        }
+
+        @keyframes strange-float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-6px);
+            }
+        }
+
+        #wanda-stack {
+            right: 6%;
+            animation: wanda-levitate 6.8s ease-in-out infinite;
+            transform-origin: 50% 100%;
+        }
+
+        @keyframes wanda-levitate {
+            0%, 100% {
+                transform: translateY(0) rotate(0.4deg);
+            }
+            25% {
+                transform: translateY(-8px) rotate(-0.5deg);
+            }
+            50% {
+                transform: translateY(-15px) rotate(0.6deg);
+            }
+            75% {
+                transform: translateY(-6px) rotate(-0.3deg);
+            }
+        }
+
+        #fig-strange {
+            width: 100%;
+            height: 100%;
+            display: block;
+            position: relative;
+            overflow: visible;
+            filter: drop-shadow(0 16px 22px rgba(0, 0, 0, .55)) drop-shadow(0 0 12px rgba(255, 170, 60, .3)) saturate(1.02) contrast(1.05);
+            transition: filter .6s ease;
+            animation: breath 6.5s ease-in-out infinite;
+            transform-origin: 50% 100%;
+        }
+
+        @keyframes breath {
+            50% {
+                transform: scaleY(1.01) scaleX(1.004);
+            }
+        }
+
+        .casting #fig-strange {
+            filter: drop-shadow(0 16px 22px rgba(0, 0, 0, .55)) saturate(1.1) contrast(1.1) drop-shadow(0 0 24px rgba(255, 180, 50, .75)) drop-shadow(0 0 50px rgba(255, 120, 20, .45));
+        }
+
+        .recoil #fig-strange {
+            filter: drop-shadow(0 16px 22px rgba(0, 0, 0, .55)) saturate(1.12) drop-shadow(0 0 28px rgba(255, 60, 60, .6));
+        }
+
+        .wanda-fig {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+        }
+
+        .wanda-evil {
+            filter: drop-shadow(0 16px 22px rgba(0, 0, 0, .6)) drop-shadow(0 0 24px rgba(255, 20, 50, .65)) drop-shadow(0 0 55px rgba(180, 0, 40, .35)) contrast(1.08) saturate(1.1);
+            opacity: 1;
+            transition: opacity 3.4s ease .3s, filter 3.4s ease .3s;
+        }
+
+        .wanda-normal {
+            filter: drop-shadow(0 16px 22px rgba(0, 0, 0, .5)) brightness(1.02) contrast(1.03) saturate(1.02) drop-shadow(0 0 20px rgba(255, 210, 160, .4));
+            opacity: 0;
+            transition: opacity 3.4s ease .3s, filter 3.4s ease .3s;
+        }
+
+        .restored .wanda-evil {
+            opacity: 0;
+        }
+
+        .restored .wanda-normal {
+            opacity: 1;
+        }
+
+        /* Strange pose & cast rig */
+        #fig-strange #arm-far,
+        #fig-strange #arm-near {
+            transform-box: fill-box;
+            transition: transform 1100ms cubic-bezier(.4, 0, .2, 1);
+        }
+
+        #fig-strange #arm-far {
+            transform-origin: 52% 6%;
+        }
+
+        #fig-strange #arm-near {
+            transform-origin: 48% 6%;
+        }
+
+        .casting #arm-far {
+            transform: rotate(30deg);
+        }
+
+        .casting #arm-near {
+            transform: rotate(-31deg);
+        }
+
+        .recoil #arm-far {
+            transform: rotate(-6deg);
+        }
+
+        .recoil #arm-near {
+            transform: rotate(7deg);
+        }
+
+        #fig-strange #head-g {
+            transform-box: fill-box;
+            transform-origin: 50% 85%;
+            transition: transform .9s ease;
+        }
+
+        .casting #head-g {
+            transform: rotate(2.5deg);
+        }
+
+        .recoil #head-g {
+            transform: rotate(-3.5deg);
+        }
+
+        #fig-strange .cloak-b {
+            transform-box: fill-box;
+            transform-origin: 50% 10%;
+            transition: transform 1300ms ease;
+        }
+
+        .casting .cloak-b {
+            animation: cloak-sway 3.2s ease-in-out infinite;
+        }
+
+        @keyframes cloak-sway {
+
+            0%,
+            100% {
+                transform: scale(1.02) translateY(-1%) rotate(.6deg);
+            }
+
+            50% {
+                transform: scale(1.035) translateY(-1.8%) rotate(-.7deg);
+            }
+        }
+
+        /* spell mandalas (Strange) */
+        .mand-svg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: visible;
+        }
+
+        #mand-front {
+            transition: filter .3s ease;
+        }
+
+        .surge #mand-front {
+            filter: brightness(1.5) saturate(1.2);
+        }
+
+        .mand {
+            opacity: 0;
+            transform: scale(.5);
+            transform-box: fill-box;
+            transform-origin: center;
+            transition: opacity .45s ease, transform .9s cubic-bezier(.3, 1.5, .45, 1);
+        }
+
+        .casting .mand {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .m1 {
+            transition-delay: .05s;
+        }
+
+        .m2 {
+            transition-delay: .18s;
+        }
+
+        .m3 {
+            transition-delay: .3s;
+        }
+
+        .m0 {
+            transition: opacity 2.2s ease, transform 2.6s ease;
+        }
+
+        .casting .m0 {
+            opacity: 0;
+            transform: scale(.72);
+        }
+
+        #app.resumed .casting .m0 {
+            opacity: .55;
+            transform: scale(1);
+        }
+
+        .recoil .mand {
+            animation: mand-glitch .65s steps(2, end) 1 forwards;
+        }
+
+        @keyframes mand-glitch {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            20% {
+                opacity: 0;
+                transform: scale(1.04);
+            }
+
+            35% {
+                opacity: .9;
+                transform: scale(.97);
+            }
+
+            55% {
+                opacity: 0;
+            }
+
+            70% {
+                opacity: .5;
+                transform: scale(1.03) translateX(2px);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(.6);
+            }
+        }
+
+        .mand-glow {
+            filter: drop-shadow(0 0 4px rgba(255, 180, 80, .9)) drop-shadow(0 0 12px rgba(255, 120, 30, .45));
+        }
+
+        .gs {
+            stroke: #ffca6e;
+            fill: none;
+            stroke-linecap: round;
+        }
+
+        .gs2 {
+            stroke: #ffe3a6;
+            fill: none;
+            stroke-linecap: round;
+        }
+
+        #hand-glow,
+        #amulet-glow {
+            opacity: 0;
+            transition: opacity .5s ease;
+        }
+
+        .casting #hand-glow {
+            opacity: 1;
+            animation: soft-pulse 1.3s ease-in-out infinite;
+        }
+
+        .casting #amulet-glow {
+            opacity: 1;
+            animation: time-stone-pulse 1.8s ease-in-out infinite;
+        }
+
+        @keyframes time-stone-pulse {
+            0%, 100% {
+                filter: drop-shadow(0 0 6px #ffe27a) drop-shadow(0 0 14px #2effa8);
+            }
+            50% {
+                filter: drop-shadow(0 0 12px #ffe27a) drop-shadow(0 0 28px #00ff88);
+            }
+        }
+
+        .wanda-eyes-fx {
+            pointer-events: none;
+            filter: drop-shadow(0 0 4px #ff0033) drop-shadow(0 0 12px #ff0044);
+        }
+
+        .eye-glow-dot {
+            animation: eye-pulse 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes eye-pulse {
+            0% { opacity: .7; transform: scale(.95); }
+            100% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .wanda-plasma-fx {
+            pointer-events: none;
+            filter: drop-shadow(0 0 10px rgba(255, 20, 50, .95)) drop-shadow(0 0 26px rgba(255, 0, 40, .7));
+        }
+
+        .plasma-pulse {
+            animation: plasma-surge 1.8s ease-in-out infinite alternate;
+            transform-box: fill-box;
+            transform-origin: center;
+        }
+
+        @keyframes plasma-surge {
+            0% { transform: scale(.9); opacity: .75; }
+            100% { transform: scale(1.2); opacity: 1; }
+        }
+
+        /* Wanda auras */
+        .aura {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            transition: opacity 3.4s ease .3s;
+        }
+
+        .aura-evil {
+            opacity: 1;
+            filter: drop-shadow(0 0 16px rgba(255, 30, 60, .6)) drop-shadow(0 0 35px rgba(200, 10, 40, .35));
+        }
+
+        .aura-normal {
+            opacity: 0;
+            filter: drop-shadow(0 0 18px rgba(255, 200, 140, .5));
+        }
+
+        .restored .aura-evil {
+            opacity: 0;
+        }
+
+        .restored .aura-normal {
+            opacity: 1;
+        }
+
+        .aura-pulse {
+            animation: soft-pulse 2.6s ease-in-out infinite;
+        }
+
+        .hoop {
+            transform-box: fill-box;
+            transform-origin: center;
+        }
+
+        .h1 {
+            animation: hoop-rock 6s ease-in-out infinite alternate;
+        }
+
+        .h2 {
+            animation: hoop-rock 8s ease-in-out infinite alternate-reverse;
+        }
+
+        .h3 {
+            animation: hoop-rock 11s ease-in-out infinite alternate;
+        }
+
+        @keyframes hoop-rock {
+            from {
+                transform: rotate(-16deg);
+            }
+
+            to {
+                transform: rotate(18deg);
+            }
+        }
+
+        .hoop-glow {
+            filter: drop-shadow(0 0 8px rgba(255, 40, 70, .85)) drop-shadow(0 0 20px rgba(255, 10, 40, .5));
+        }
+
+        /* ============ particle canvas & dust ============ */
+        #fx-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 8;
+        }
+
+        #fx {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 9;
+        }
+
+        .mote {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(222, 192, 255, .9), rgba(222, 192, 255, 0) 70%);
+            opacity: 0;
+            animation: mote-float var(--dr, 20s) linear var(--dd, 0s) infinite;
+        }
+
+        @keyframes mote-float {
+            0% {
+                transform: translate3d(0, 0, 0);
+                opacity: 0;
+            }
+
+            12% {
+                opacity: var(--ds, .2);
+            }
+
+            80% {
+                opacity: var(--ds, .2);
+            }
+
+            100% {
+                transform: translate3d(var(--dx, 20px), -72vh, 0);
+                opacity: 0;
+            }
+        }
+
+        .shard {
+            position: absolute;
+            width: 14px;
+            height: 8px;
+            opacity: .5;
+            background: linear-gradient(#3a2a5e, #181030);
+            clip-path: polygon(0 40%, 55% 0, 100% 65%, 40% 100%);
+            animation: shard-drift var(--sr, 50s) ease-in-out var(--sd, 0s) infinite alternate;
+        }
+
+        @keyframes shard-drift {
+            from {
+                transform: translate3d(-4vw, 0, 0) rotate(-14deg);
+            }
+
+            to {
+                transform: translate3d(6vw, -9vh, 0) rotate(22deg);
+            }
+        }
+
+        /* ============ grade & overlays ============ */
+        #grade {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #grade>div {
+            position: absolute;
+            inset: 0;
+            transition: opacity 2.6s ease;
+        }
+
+        #grade-base {
+            opacity: 0.18;
+            background:
+                radial-gradient(120% 90% at 50% 100%, rgba(20, 8, 40, .35), transparent 60%),
+                linear-gradient(200deg, rgba(90, 40, 140, .10), rgba(30, 10, 50, .22) 60%, rgba(70, 20, 90, .14));
+        }
+
+        #grade-tense {
+            opacity: 0;
+            background:
+                radial-gradient(70% 55% at 50% 60%, rgba(150, 40, 130, .14), transparent 72%),
+                linear-gradient(180deg, rgba(70, 20, 110, .22), rgba(40, 8, 60, .12) 45%, rgba(120, 20, 80, .20));
+        }
+
+        #grade-calm {
+            opacity: 0;
+            background: linear-gradient(180deg, rgba(185, 145, 225, .09), rgba(240, 185, 165, .11) 70%, rgba(120, 80, 140, .10));
+        }
+
+        #grade-fail {
+            opacity: 0;
+            transition: opacity .35s ease;
+            background: radial-gradient(60% 50% at 50% 62%, rgba(220, 50, 80, .17), transparent 70%);
+        }
+
+        #app.tense #grade-tense {
+            opacity: 1;
+        }
+
+        #app.calm #grade-calm {
+            opacity: 1;
+        }
+
+        #app.failing #grade-fail {
+            opacity: 1;
+        }
+
+        #vignette {
+            position: absolute;
+            inset: 0;
+            z-index: 28;
+            pointer-events: none;
+            background: radial-gradient(ellipse at 50% 46%, transparent 52%, rgba(4, 2, 12, .62) 100%);
+        }
+
+        #grain {
+            position: absolute;
+            inset: -60%;
+            width: 220%;
+            height: 220%;
+            z-index: 30;
+            opacity: .05;
+            pointer-events: none;
+            animation: grain-shift 1.1s steps(5) infinite;
+        }
+
+        @keyframes grain-shift {
+            0% {
+                transform: translate(0, 0);
+            }
+
+            20% {
+                transform: translate(-1.5%, 1%);
+            }
+
+            40% {
+                transform: translate(1%, -1.5%);
+            }
+
+            60% {
+                transform: translate(-1%, -1%);
+            }
+
+            80% {
+                transform: translate(1.5%, 1.5%);
+            }
+
+            100% {
+                transform: translate(0, 0);
+            }
+        }
+
+        /* ============ HUD ============ */
+        .hud {
+            position: absolute;
+            z-index: 50;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity .7s ease, visibility 0s linear .7s, transform .7s ease;
+        }
+
+        .hud.show {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+            transition: opacity .7s ease, transform .7s ease;
+        }
+
+        .eyebrow {
+            font-family: var(--mono);
+            font-size: .6rem;
+            letter-spacing: .52em;
+            padding-left: .52em;
+            color: var(--ink-dim);
+            margin: 0;
+        }
+
+        .rule {
+            width: min(320px, 60vw);
+            height: 1px;
+            position: relative;
+            margin: 1.2rem 0;
+            background: linear-gradient(90deg, transparent, var(--line) 20%, var(--line) 80%, transparent);
+        }
+
+        .rule::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 7px;
+            height: 7px;
+            transform: translate(-50%, -50%) rotate(45deg);
+            background: var(--accent);
+            box-shadow: 0 0 10px rgba(200, 140, 240, .55);
+        }
+
+        h1,
+        .big {
+            font-family: var(--serif);
+            font-weight: 400;
+            font-size: clamp(1.55rem, 5vw, 3.5rem);
+            letter-spacing: .3em;
+            padding-left: .3em;
+            margin: .9rem 0 0;
+            color: var(--ink);
+            text-align: center;
+        }
+
+        .center-card {
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+            transform: translateY(8px);
+        }
+
+        .center-card.show {
+            transform: translateY(0);
+        }
+
+        .subtitle {
+            font-family: var(--serif);
+            font-style: italic;
+            color: var(--ink-dim);
+            letter-spacing: .12em;
+            font-size: clamp(.8rem, 1.8vw, 1.05rem);
+            margin: 0;
+        }
+
+        #caption {
+            left: 50%;
+            bottom: 15vh;
+            transform: translateX(-50%);
+            font-family: var(--serif);
+            font-style: italic;
+            font-size: clamp(.85rem, 2vw, 1.08rem);
+            letter-spacing: .14em;
+            color: var(--ink-dim);
+            text-align: center;
+            width: max-content;
+            max-width: 90vw;
+            text-shadow: 0 1px 12px rgba(0, 0, 0, .8);
+        }
+
+        #fail-badge {
+            left: 50%;
+            top: 7vh;
+            transform: translate(-50%, -8px);
+            font-family: var(--mono);
+            font-size: .74rem;
+            letter-spacing: .3em;
+            padding-left: .3em;
+            color: var(--danger);
+            background: rgba(30, 6, 16, .66);
+            border: 1px solid rgba(224, 85, 106, .45);
+            padding: .65em 1.2em .55em;
+            backdrop-filter: blur(4px);
+            white-space: nowrap;
+        }
+
+        #fail-badge.show {
+            transform: translate(-50%, 0);
+        }
+
+        #fail-badge .txt {
+            display: inline-block;
+        }
+
+        #fail-badge.show .txt {
+            animation: glitch 640ms steps(1) 1;
+            text-shadow: 1px 0 rgba(224, 85, 106, .8), -1px 0 rgba(120, 140, 255, .45);
+        }
+
+        @keyframes glitch {
+            0% {
+                transform: translate(0);
+            }
+
+            20% {
+                transform: translate(-2px, 1px);
+            }
+
+            40% {
+                transform: translate(2px, -1px);
+            }
+
+            60% {
+                transform: translate(-1px, 0);
+            }
+
+            80% {
+                transform: translate(1px, 1px);
+            }
+
+            100% {
+                transform: translate(0);
+            }
+        }
+
+        #debug-panel {
+            left: 50%;
+            bottom: 3.2vh;
+            transform: translate(-50%, 12px);
+            width: min(600px, 94vw);
+            background: var(--panel);
+            border: 1px solid var(--line);
+            padding: 18px 20px 14px;
+            backdrop-filter: blur(6px);
+            font-family: var(--mono);
+            font-size: .78rem;
+            line-height: 1.55;
+        }
+
+        #debug-panel.show {
+            transform: translate(-50%, 0);
+        }
+
+        #debug-panel header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        #debug-panel h2 {
+            font-family: var(--serif);
+            font-weight: 400;
+            font-size: .86rem;
+            letter-spacing: .28em;
+            color: var(--danger);
+            margin: 0;
+        }
+
+        #debug-panel ol {
+            margin: .7rem 0 .2rem;
+            padding-left: 1.3rem;
+            color: var(--ink-dim);
+        }
+
+        #debug-panel li {
+            margin: .18rem 0;
+        }
+
+        code {
+            color: var(--accent);
+            font-family: inherit;
+        }
+
+        .dim {
+            color: var(--ink-dim);
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: .9rem 0 .7rem;
+            letter-spacing: .12em;
+            border-top: 1px solid rgba(190, 160, 230, .14);
+            padding-top: .7rem;
+        }
+
+        .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--accent);
+            flex: none;
+        }
+
+        .dot.danger {
+            background: var(--danger);
+        }
+
+        .status .dot {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            50% {
+                opacity: .25;
+            }
+        }
+
+        .status.ok .dot {
+            background: var(--ok);
+            animation: none;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .hint {
+            font-family: var(--mono);
+            font-size: .64rem;
+            margin: .75rem 0 0;
+            color: var(--ink-dim);
+            line-height: 1.6;
+        }
+
+        #complete-card .sub {
+            font-family: var(--serif);
+            letter-spacing: .42em;
+            padding-left: .42em;
+            font-size: .72rem;
+            color: var(--ink-dim);
+            margin: .2rem 0 2.2rem;
+        }
+
+        #bypass-note {
+            margin-top: 1.4rem;
+        }
+
+        /* ============ buttons & system ============ */
+        .btn {
+            font-family: var(--serif);
+            letter-spacing: .28em;
+            text-transform: uppercase;
+            font-size: .72rem;
+            color: var(--ink);
+            background: rgba(20, 12, 40, .5);
+            border: 1px solid var(--line);
+            padding: .75em 1.7em .6em;
+            cursor: pointer;
+            transition: border-color .25s, background .25s, transform .25s;
+        }
+
+        .btn:hover {
+            border-color: rgba(210, 170, 255, .6);
+            background: rgba(80, 40, 130, .25);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn:focus-visible {
+            outline: 1px solid var(--accent);
+            outline-offset: 3px;
+        }
+
+        .btn.small {
+            padding: .55em 1.1em .45em;
+            letter-spacing: .2em;
+            font-size: .66rem;
+        }
+
+        .btn.ghost {
+            border-style: dashed;
+            color: var(--ink-dim);
+        }
+
+        .btn:disabled {
+            opacity: .4;
+            cursor: default;
+        }
+
+        #sys {
+            position: absolute;
+            top: 14px;
+            right: 16px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            z-index: 55;
+        }
+
+        .icon-btn {
+            width: 32px;
+            height: 32px;
+            display: grid;
+            place-items: center;
+            background: rgba(16, 10, 34, .55);
+            border: 1px solid var(--line);
+            color: var(--ink-dim);
+            cursor: pointer;
+            transition: .25s;
+        }
+
+        .icon-btn:hover {
+            color: var(--ink);
+            border-color: rgba(210, 170, 255, .55);
+        }
+
+        #restart-btn {
+            font-family: var(--mono);
+            font-size: .6rem;
+            letter-spacing: .24em;
+            color: var(--ink-dim);
+            background: rgba(16, 10, 34, .55);
+            border: 1px solid var(--line);
+            padding: .6em .9em .5em;
+            cursor: pointer;
+            opacity: .75;
+            transition: .25s;
+        }
+
+        #restart-btn:hover {
+            color: var(--ink);
+            border-color: rgba(210, 170, 255, .55);
+            opacity: 1;
+        }
+
+        .mute-x {
+            display: none;
+        }
+
+        .icon-btn.muted .wave {
+            display: none;
+        }
+
+        .icon-btn.muted .mute-x {
+            display: block;
+        }
+
+        #boot {
+            position: absolute;
+            inset: 0;
+            z-index: 70;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: rgba(5, 5, 16, .82);
+            backdrop-filter: blur(3px);
+            padding: 20px;
+            transition: opacity .9s ease, visibility 0s linear .9s;
+        }
+
+        #boot.gone {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        #boot .boot-line {
+            font-family: var(--serif);
+            font-style: italic;
+            color: var(--ink-dim);
+            letter-spacing: .1em;
+            line-height: 1.9;
+            margin: 0 0 2.2rem;
+            font-size: clamp(.85rem, 2vw, 1rem);
+        }
+
+        #boot .hint {
+            margin-top: 2.4rem;
+        }
+
+        /* ============ responsive ============ */
+        @media (max-width:760px) {
+            :root {
+                --figh: clamp(170px, 42vh, 360px);
+            }
+
+            #strange-wrap {
+                left: 1.5%;
+            }
+
+            #wanda-stack {
+                right: 1.5%;
+            }
+
+            h1,
+            .big {
+                letter-spacing: .18em;
+                padding-left: .18em;
+            }
+
+            #debug-panel {
+                font-size: .7rem;
+                padding: 14px 14px 12px;
+            }
+
+            #fail-badge {
+                font-size: .6rem;
+                letter-spacing: .2em;
+            }
+
+            .ray.r1 {
+                left: 6%;
+            }
+
+            .ray.r2 {
+                left: 76%;
+            }
+        }
+
+        @media (max-height:520px) {
+            :root {
+                --figh: clamp(150px, 58vh, 320px);
+            }
+        }
+
+        /* ============ the intentional bug lives in #spell-transition-css ============ */
+
+        @keyframes dimensional-transition {
+            from {
+                transform: scale(0.96);
+            }
+
+            to {
+                transform: scale(1);
+            }
+        }
+
+        /* ============ reduced motion ============ */
+        @media (prefers-reduced-motion: reduce) {
+
+            #camera.run,
+            .mote,
+            .shard,
+            #ring,
+            .bob,
+            .haze.a,
+            .haze.b,
+            #grain,
+            #fig-strange,
+            #wanda-stack,
+            #stage.jolt,
+            #settle.flicker,
+            .hoop,
+            .aura-pulse,
+            .pulse-soft,
+            .ray,
+            .rot-a,
+            .rot-b,
+            .rot-c,
+            .rot-d,
+            .rot-e,
+            .rot-f,
+            .rot-g,
+            .fracture-glow,
+            .fracture-core,
+            .fissure,
+            .fissure-core,
+            .cloak-sway {
+                animation: none !important;
+            }
+        }
+    </style>
+
+    <style id="spell-transition-css">
+        .spell-transition {
+            animation: dimensionalTransition 700ms ease-out forwards;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app" data-state="BOOT">
+
+        <!-- shared Wanda figure: identical geometry for both states -->
+        <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+            <defs>
+                <symbol id="wanda-figure" viewBox="0 0 300 660">
+                    <path
+                        d="M148 42 C108 46 92 82 94 122 C88 182 80 246 74 306 C72 338 82 362 102 368 C112 346 114 318 116 290 C118 242 122 198 128 162 L168 162 C174 198 178 242 180 290 C182 318 184 346 194 368 C214 362 224 338 222 306 C216 246 210 182 204 122 C206 82 188 46 148 42 Z"
+                        fill="var(--w-hair)" />
+                    <path
+                        d="M104 140 C98 200 92 260 88 306 C87 326 91 344 98 354 C94 330 96 300 100 264 C104 222 108 178 112 142 Z"
+                        fill="#000" opacity=".25" />
+                    <path
+                        d="M198 140 C204 200 210 260 214 306 C215 326 211 344 204 354 C208 330 206 300 202 264 C198 222 194 178 190 142 Z"
+                        fill="#000" opacity=".18" />
+                    <path d="M120 70 C112 96 108 130 108 164 C108 150 114 116 124 90 Z" fill="var(--w-hair-hi)"
+                        opacity=".5" />
+                    <path d="M180 74 C188 100 192 134 192 168 C192 152 186 118 176 92 Z" fill="var(--w-hair-hi)"
+                        opacity=".4" />
+                    <path
+                        d="M182 154 C194 174 200 200 198 226 C197 242 192 256 184 264 C178 256 175 244 176 230 C178 206 175 182 170 160 Z"
+                        fill="var(--w-suit-d)" />
+                    <path d="M189 258 C194 266 195 276 190 283 C183 287 176 282 175 273 C175 266 181 259 186 256 Z"
+                        fill="var(--w-skin)" />
+                    <path d="M126 400 L122 470 L124 558 L142 558 L145 470 L147 402 Z" fill="var(--w-suit-d)" />
+                    <path d="M152 402 L154 470 L156 558 L174 558 L177 468 L170 400 Z" fill="var(--w-suit-d)" />
+                    <path d="M154 402 L156 558 L166 558 L172 470 L168 400 Z" fill="#000" opacity=".14" />
+                    <path d="M122 552 L120 584 C120 598 129 604 142 604 L152 604 C152 594 148 588 142 584 L142 552 Z"
+                        fill="var(--w-boot)" />
+                    <path d="M156 552 L156 582 C150 588 145 594 145 604 L170 604 C179 599 181 586 179 568 L178 552 Z"
+                        fill="var(--w-boot)" />
+                    <path d="M106 276 C100 326 102 368 110 400 L130 400 C126 368 126 332 130 296 L146 296 L146 276 Z"
+                        fill="var(--w-suit)" />
+                    <path d="M190 276 C196 326 194 368 186 400 L166 400 C170 368 170 332 166 296 L150 296 L150 276 Z"
+                        fill="var(--w-suit)" />
+                    <path d="M141 296 L146 398 L149 398 L151 296 Z" fill="#000" opacity=".32" />
+                    <path
+                        d="M146 130 C128 132 114 142 110 156 C104 190 102 232 106 268 L106 280 L190 280 L190 268 C194 232 192 190 186 156 C182 142 164 132 146 130 Z"
+                        fill="var(--w-suit)" />
+                    <path d="M146 148 L124 216 M146 148 L168 216" stroke="var(--w-suit-d)" stroke-width="3" fill="none"
+                        opacity=".8" />
+                    <path d="M146 146 L146 262" stroke="var(--w-suit-d)" stroke-width="2.5" opacity=".6" />
+                    <path d="M108 260 L188 260 L186 280 L110 280 Z" fill="var(--w-suit-d)" />
+                    <rect x="140" y="264" width="12" height="10" fill="var(--w-accent)" />
+                    <path d="M112 150 L96 160 L112 172 Z" fill="var(--w-suit-d)" />
+                    <path d="M180 150 L196 160 L180 172 Z" fill="var(--w-suit-d)" />
+                    <path d="M170 138 C180 168 184 214 180 262 L188 262 C192 226 190 188 184 158 Z" fill="#000"
+                        opacity=".22" />
+                    <path d="M112 160 C108 190 107 226 110 258 L106 258 C103 224 105 188 110 158 Z" fill="#000"
+                        opacity=".14" />
+                    <path
+                        d="M114 152 C102 172 96 198 98 224 C99 240 104 254 112 262 C118 254 121 242 120 228 C118 204 121 180 126 158 Z"
+                        fill="var(--w-suit-l)" />
+                    <path d="M104 256 C98 264 96 274 100 282 C107 288 115 285 117 276 C118 268 113 260 109 254 Z"
+                        fill="var(--w-skin)" />
+                    <path d="M101 268 L112 272 M102 276 L112 279" stroke="#000" opacity=".25" stroke-width="1.2"
+                        fill="none" />
+                    <path d="M139 118 L139 140 C143 146 150 146 154 140 L154 118 Z" fill="var(--w-skin)" />
+                    <path d="M139 120 L139 140 C141 143 143 144 146 145 L146 120 Z" fill="#000" opacity=".2" />
+                    <path
+                        d="M146 54 C126 54 119 71 120 90 C121 109 132 126 146 130 C160 126 171 109 172 90 C173 71 166 54 146 54 Z"
+                        fill="var(--w-skin)" />
+                    <path
+                        d="M146 54 C126 54 119 71 120 90 C121 94 122 98 123 102 C124 84 131 70 146 68 C161 70 168 84 169 102 C170 98 171 94 172 90 C173 71 166 54 146 54 Z"
+                        fill="#000" opacity=".1" />
+                    <path d="M126 82 L140 78 L139 83 L127 85 Z" fill="var(--w-brow)" />
+                    <path d="M152 78 L166 82 L165 85 L153 83 Z" fill="var(--w-brow)" />
+                    <path d="M129 89 Q134 87 139 89 Q134 92 129 89 Z" fill="#191216" />
+                    <path d="M153 89 Q158 87 163 89 Q158 92 153 89 Z" fill="#191216" />
+                    <path d="M145 92 L143 103 Q146 106 149 103 Z" fill="#000" opacity=".16" />
+                    <path d="M138 110 Q146 114 154 110 Q146 118 138 110 Z" fill="var(--w-lip)" />
+                    <g style="opacity:var(--w-evil-o,0)">
+                        <path d="M126 84 Q134 78 141 83 Q134 88 126 84 Z" fill="#000" opacity=".55" />
+                        <path d="M151 83 Q158 78 166 84 Q158 88 151 83 Z" fill="#000" opacity=".55" />
+                        <path d="M132 96 C134 106 139 116 146 120 C140 114 136 106 135 98 Z" fill="#000" opacity=".4" />
+                        <path d="M160 96 C158 106 153 116 146 120 C152 114 156 106 157 98 Z" fill="#000" opacity=".4" />
+                        <path
+                            d="M120 88 C121 106 131 124 146 129 C160 124 171 106 172 88 C170 112 158 132 146 133 C134 132 122 112 120 88 Z"
+                            fill="#4a0d12" opacity=".35" />
+                        <ellipse cx="134" cy="90" rx="10" ry="5" fill="#ff2f4d" opacity=".22" />
+                        <ellipse cx="134" cy="90" rx="5.5" ry="2.6" fill="#ff2f4d" opacity=".85" />
+                        <ellipse cx="158" cy="90" rx="10" ry="5" fill="#ff2f4d" opacity=".22" />
+                        <ellipse cx="158" cy="90" rx="5.5" ry="2.6" fill="#ff2f4d" opacity=".85" />
+                    </g>
+                    <g style="opacity:var(--w-crown-o,0)">
+                        <path
+                            d="M118 72 C122 50 128 34 135 22 C136 38 138 52 141 62 C143 44 144 28 146 16 C148 28 149 44 151 62 C154 52 156 38 157 22 C164 34 170 50 174 72 C156 60 136 60 118 72 Z"
+                            fill="var(--w-crown)" />
+                        <path d="M119 74 C137 63 155 63 173 74 L171 82 C155 72 137 72 121 82 Z" fill="var(--w-crown)" />
+                        <path d="M146 16 L146 62" stroke="#000" opacity=".3" stroke-width="1.5" />
+                    </g>
+                    <path
+                        d="M114 118 C104 158 100 208 102 256 C104 282 108 302 116 314 C122 298 124 272 124 246 C124 204 126 160 132 122 Z"
+                        fill="var(--w-hair)" />
+                    <path
+                        d="M178 118 C190 158 194 208 192 256 C190 282 186 302 178 314 C172 298 170 272 170 246 C170 204 168 160 162 122 Z"
+                        fill="var(--w-hair)" />
+                    <path
+                        d="M108 150 C104 196 102 240 106 278 C108 294 112 306 116 312 C112 296 110 272 110 244 C110 206 112 170 116 140 Z"
+                        fill="#000" opacity=".2" />
+                    <path d="M112 158 C106 190 104 230 108 264 L104 264 C100 230 102 190 108 156 Z"
+                        fill="rgba(255,120,150,.28)" />
+                    <path d="M121 56 C128 52 138 50 146 50 C134 52 126 58 122 66 Z" fill="rgba(255,150,170,.3)"
+                        opacity=".8" />
+                </symbol>
+            </defs>
+        </svg>
+
+        <div id="stage">
+            <div id="camera">
+                <div id="settle">
+                    <div id="world">
+                        <div id="cosmic-bg" class="cosmic-bg" aria-hidden="true"></div>
+                        <div id="cosmic-overlay" class="cosmic-overlay" aria-hidden="true"></div>
+
+                        <svg id="bg-svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+                            <defs>
+                                <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0" stop-color="#040618" />
+                                    <stop offset=".3" stop-color="#0d0a30" />
+                                    <stop offset=".52" stop-color="#221349" />
+                                    <stop offset=".68" stop-color="#3c1a5c" />
+                                    <stop offset=".78" stop-color="#522066" />
+                                    <stop offset=".88" stop-color="#281347" />
+                                    <stop offset="1" stop-color="#0c0722" />
+                                </linearGradient>
+                                <radialGradient id="glowG" cx=".5" cy=".62" r=".55">
+                                    <stop offset="0" stop-color="#a04ab0" stop-opacity=".5" />
+                                    <stop offset=".55" stop-color="#6d2a86" stop-opacity=".22" />
+                                    <stop offset="1" stop-color="#6d2a86" stop-opacity="0" />
+                                </radialGradient>
+                                <radialGradient id="nebA" cx=".5" cy=".5" r=".5">
+                                    <stop offset="0" stop-color="#7a3fb0" stop-opacity=".22" />
+                                    <stop offset="1" stop-color="#7a3fb0" stop-opacity="0" />
+                                </radialGradient>
+                                <radialGradient id="nebB" cx=".5" cy=".5" r=".5">
+                                    <stop offset="0" stop-color="#c04a8e" stop-opacity=".16" />
+                                    <stop offset="1" stop-color="#c04a8e" stop-opacity="0" />
+                                </radialGradient>
+                                <radialGradient id="haloG" cx=".5" cy=".5" r=".5">
+                                    <stop offset="0" stop-color="#7a3f96" stop-opacity=".22" />
+                                    <stop offset="1" stop-color="#7a3f96" stop-opacity="0" />
+                                </radialGradient>
+                                <linearGradient id="rockA" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0" stop-color="#2a1e4e" />
+                                    <stop offset="1" stop-color="#191036" />
+                                </linearGradient>
+                                <linearGradient id="rockLit" x1="0" y1="0" x2="1" y2="1">
+                                    <stop offset="0" stop-color="#4a2c66" />
+                                    <stop offset="1" stop-color="#241a42" />
+                                </linearGradient>
+                                <linearGradient id="groundG" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0" stop-color="#1c1240" />
+                                    <stop offset="1" stop-color="#0c0722" />
+                                </linearGradient>
+                                <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
+                                    <feGaussianBlur stdDeviation="5" />
+                                </filter>
+                            </defs>
+
+                            <!-- SKY -->
+                            <g id="lyr-sky">
+                                <rect width="1600" height="900" fill="url(#skyG)" />
+                                <ellipse cx="360" cy="290" rx="520" ry="300" fill="url(#nebA)" />
+                                <ellipse cx="1250" cy="250" rx="440" ry="260" fill="url(#nebB)" />
+                                <ellipse cx="800" cy="560" rx="620" ry="330" fill="url(#glowG)" />
+                                <g id="stars"></g>
+                                <g id="fracture-g">
+                                    <g class="fracture-glow">
+                                        <path
+                                            d="M -20 132 L 150 158 L 236 120 L 322 166 L 424 138 L 556 174 L 648 148 L 796 188 L 906 146 L 1024 172 L 1136 136 L 1252 168 L 1384 142 L 1620 166"
+                                            fill="none" stroke="#8a4fd8" stroke-width="10" stroke-linejoin="round"
+                                            stroke-opacity=".5" />
+                                        <path
+                                            d="M 556 174 L 604 232 L 582 296 M 1024 172 L 996 238 L 1018 292 M 322 166 L 296 224 M 1252 168 L 1284 226"
+                                            fill="none" stroke="#8a4fd8" stroke-width="6" stroke-opacity=".4" />
+                                        <path d="M 962 58 L 1108 92 L 1236 66 L 1408 98 L 1620 78" fill="none"
+                                            stroke="#8a4fd8" stroke-width="7" stroke-opacity=".4" />
+                                    </g>
+                                    <g class="fracture-core">
+                                        <path
+                                            d="M -20 132 L 150 158 L 236 120 L 322 166 L 424 138 L 556 174 L 648 148 L 796 188 L 906 146 L 1024 172 L 1136 136 L 1252 168 L 1384 142 L 1620 166"
+                                            fill="none" stroke="#efe0ff" stroke-width="2" stroke-linejoin="round"
+                                            stroke-opacity=".8" />
+                                        <path
+                                            d="M 556 174 L 604 232 L 582 296 M 1024 172 L 996 238 L 1018 292 M 322 166 L 296 224 M 1252 168 L 1284 226"
+                                            fill="none" stroke="#d8c2ff" stroke-width="1.3" stroke-opacity=".65" />
+                                        <path d="M 962 58 L 1108 92 L 1236 66 L 1408 98 L 1620 78" fill="none"
+                                            stroke="#d8c2ff" stroke-width="1.4" stroke-opacity=".55" />
+                                    </g>
+                                </g>
+                                <g id="ring">
+                                    <circle cx="800" cy="252" r="212" fill="none" stroke="#7b3f96" stroke-width="7"
+                                        stroke-dasharray="300 70 180 120 260 90 200 97" opacity=".34"
+                                        stroke-linecap="round" />
+                                    <circle cx="800" cy="252" r="238" fill="none" stroke="#c39be0" stroke-width="2"
+                                        stroke-dasharray="420 260 300 340" opacity=".16" />
+                                    <circle cx="800" cy="252" r="196" fill="none" stroke="#5a2a72" stroke-width="2.5"
+                                        stroke-dasharray="140 420 90 666" opacity=".22" />
+                                    <circle cx="800" cy="252" r="258" fill="none" stroke="#8a4bb0" stroke-width="4"
+                                        stroke-dasharray="220 500 120 480" opacity=".18" stroke-linecap="round" />
+                                    <path d="M 588 252 L 566 244 L 560 260 L 580 268 Z" fill="#6d3f96" opacity=".5" />
+                                    <path d="M 1012 252 L 1034 244 L 1040 260 L 1020 268 Z" fill="#6d3f96"
+                                        opacity=".5" />
+                                    <path d="M 800 40 L 814 22 L 788 20 Z" fill="#8a4bb0" opacity=".45" />
+                                </g>
+                            </g>
+
+                            <!-- FAR -->
+                            <g id="lyr-far" data-depth="7">
+                                <path
+                                    d="M0 592 L110 546 L206 578 L318 516 L420 570 L548 534 L700 582 L852 544 L1000 584 L1146 538 L1288 580 L1420 550 L1600 588 L1600 700 L0 700 Z"
+                                    fill="#150d33" />
+                                <g fill="#1a1140">
+                                    <path d="M64 640 L86 320 L100 320 L118 640 Z" />
+                                    <path d="M140 640 L152 400 L162 400 L176 640 Z" />
+                                    <path d="M188 640 L200 360 L206 374 L212 358 L228 640 Z" />
+                                    <path d="M96 640 L104 470 L118 470 L124 640 Z" opacity=".8" />
+                                    <path d="M1240 640 L1252 470 L1262 470 L1272 640 Z" />
+                                </g>
+                                <path d="M1150 640 L1180 520 L1266 496 L1330 560 L1352 640 Z" fill="#1a1140"
+                                    opacity=".9" />
+                                <path d="M1330 640 C1330 500 1430 470 1500 512 L1500 548 C1440 514 1362 540 1364 640 Z"
+                                    fill="#1a1140" />
+                                <g class="bob" style="--bd:16s;--bdel:-3s">
+                                    <path d="M1168 208 L1312 252 L1218 330 Z" fill="#1c1240" />
+                                    <path d="M1168 208 L1218 330 L1224 326 Z" fill="#2c1c52" />
+                                </g>
+                                <g class="bob" style="--bd:22s;--bdel:-5s">
+                                    <path d="M1168 470 L1240 448 L1318 462 L1340 496 L1306 526 L1226 534 L1186 506 Z"
+                                        fill="#191140" />
+                                    <path d="M1168 470 L1240 448 L1318 462 L1300 474 L1210 484 Z" fill="#22164a" />
+                                    <path d="M1226 534 L1240 574 L1256 534 Z" fill="#150d33" />
+                                    <path d="M1268 528 L1280 556 L1292 526 Z" fill="#150d33" />
+                                    <path d="M1240 448 L1246 372 L1258 344 L1270 372 L1276 448 Z" fill="#120b2c" />
+                                    <path d="M1252 372 L1258 330 L1264 372 Z" fill="#120b2c" />
+                                    <path d="M1210 470 L1214 428 L1222 412 L1230 428 L1233 470 Z" fill="#120b2c" />
+                                    <circle cx="1258" cy="326" r="3.2" fill="#ffd9a0" class="pulse-soft" />
+                                    <rect x="1250" y="398" width="2.4" height="3.6" fill="#ffc27a" opacity=".55" />
+                                    <rect x="1258" y="412" width="2.4" height="3.6" fill="#ffc27a" opacity=".45" />
+                                    <rect x="1264" y="392" width="2.4" height="3.6" fill="#ffc27a" opacity=".5" />
+                                    <rect x="1218" y="440" width="2" height="3" fill="#ffc27a" opacity=".4" />
+                                </g>
+                                <g class="bob" style="--bd:19s;--bdel:-11s">
+                                    <path d="M140 296 L208 282 L244 300 L220 322 L168 326 Z" fill="#191140" />
+                                    <path d="M140 296 L208 282 L228 292 L172 304 Z" fill="#22164a" />
+                                    <path d="M168 326 L178 352 L190 324 Z" fill="#150d33" />
+                                </g>
+                                <g class="bob" style="--bd:24s;--bdel:-9s">
+                                    <path d="M468 160 L536 160 L505 296 L499 296 Z" fill="#171040" />
+                                    <path d="M468 160 L536 160" stroke="#5a3d78" stroke-width="1.6" opacity=".5" />
+                                    <path d="M536 160 L505 296" stroke="#4a2c66" stroke-width="1.2" opacity=".5" />
+                                </g>
+                            </g>
+
+                            <!-- MID -->
+                            <g id="lyr-mid" data-depth="14">
+                                <ellipse cx="300" cy="560" rx="300" ry="320" fill="url(#haloG)" opacity=".55" />
+                                <ellipse cx="1300" cy="560" rx="300" ry="320" fill="url(#haloG)" opacity=".55" />
+                                <path d="M28 736 L96 566 L178 540 L262 596 L306 736 Z" fill="url(#rockA)" />
+                                <path d="M96 566 L178 540 L206 612 L124 640 Z" fill="url(#rockLit)" opacity=".85" />
+                                <path d="M96 566 L124 640 L118 736 M178 540 L206 612 L262 596" stroke="#7a4390"
+                                    stroke-width="1.6" fill="none" opacity=".32" />
+                                <path d="M28 736 L96 566" stroke="#9a5cb0" stroke-width="2" opacity=".22" fill="none" />
+                                <path d="M1294 736 L1338 596 L1422 540 L1504 566 L1572 736 Z" fill="url(#rockA)" />
+                                <path d="M1422 540 L1504 566 L1476 640 L1394 612 Z" fill="url(#rockLit)"
+                                    opacity=".85" />
+                                <path d="M1422 540 L1394 612 L1390 736 M1504 566 L1476 640" stroke="#7a4390"
+                                    stroke-width="1.6" fill="none" opacity=".32" />
+                                <path d="M1572 736 L1504 566" stroke="#9a5cb0" stroke-width="2" opacity=".22"
+                                    fill="none" />
+                                <path d="M332 736 L340 470 L364 452 L374 736 Z" fill="url(#rockA)" />
+                                <path d="M340 470 L364 452 L370 470 L348 486 Z" fill="url(#rockLit)" opacity=".9" />
+                                <path d="M452 736 L458 506 L482 490 L490 736 Z" fill="url(#rockA)" />
+                                <path d="M458 506 L482 490 L487 508 L465 522 Z" fill="url(#rockLit)" opacity=".9" />
+                                <path d="M338 476 C364 432 432 430 464 474 L452 490 C426 452 372 454 352 492 Z"
+                                    fill="url(#rockA)" />
+                                <path d="M332 736 L340 470" stroke="#9a5cb0" stroke-width="1.8" opacity=".22"
+                                    fill="none" />
+                                <path d="M346 520 L356 640 L350 736" stroke="#000" stroke-width="2" opacity=".3"
+                                    fill="none" />
+                                <path d="M1136 736 L1142 566 L1166 552 L1174 736 Z" fill="url(#rockA)" />
+                                <path d="M1142 566 L1166 552 L1172 570 L1148 584 Z" fill="url(#rockLit)"
+                                    opacity=".85" />
+                                <path d="M1252 736 L1258 472 L1284 454 L1294 736 Z" fill="url(#rockA)" />
+                                <path d="M1258 472 L1284 454 L1290 472 L1266 488 Z" fill="url(#rockLit)" opacity=".9" />
+                                <path d="M1278 478 C1256 436 1196 442 1168 492 L1180 506 C1202 462 1250 458 1268 494 Z"
+                                    fill="url(#rockA)" />
+                                <path d="M1252 736 L1258 472" stroke="#9a5cb0" stroke-width="1.8" opacity=".22"
+                                    fill="none" />
+                                <g class="bob" style="--bd:13s">
+                                    <path d="M436 500 L438 552 L472 550 L470 498 Z" fill="url(#rockLit)" />
+                                </g>
+                                <g class="bob" style="--bd:17s;--bdel:-6s">
+                                    <path d="M442 448 L458 444 L460 476 L444 478 Z" fill="#241a42" />
+                                </g>
+                                <g class="bob" style="--bd:11s">
+                                    <path d="M880 470 L918 452 L936 484 L902 500 Z" fill="#241a42" />
+                                    <path d="M918 452 L936 484" stroke="#7a4390" stroke-width="1.4" opacity=".4"
+                                        fill="none" />
+                                </g>
+                                <g class="bob" style="--bd:15s;--bdel:-4s">
+                                    <path d="M1080 380 L1104 370 L1114 392 L1092 402 Z" fill="#1e1540" />
+                                </g>
+                                <g class="bob" style="--bd:19s;--bdel:-9s">
+                                    <path d="M560 430 L590 420 L600 444 L572 454 Z" fill="#1e1540" />
+                                </g>
+                                <g class="bob" style="--bd:12s;--bdel:-2s">
+                                    <path d="M686 352 L716 344 L724 366 L700 376 Z" fill="#241a42" />
+                                    <path d="M716 344 L724 366" stroke="#7a4390" stroke-width="1.2" opacity=".35"
+                                        fill="none" />
+                                </g>
+                                <g class="bob" style="--bd:14s;--bdel:-7s">
+                                    <path d="M952 300 L972 294 L978 310 L958 316 Z" fill="#1e1540" />
+                                </g>
+                                <g class="bob" style="--bd:16s;--bdel:-3s">
+                                    <path d="M1316 352 L1344 344 L1352 368 L1326 376 Z" fill="#241a42" />
+                                    <path d="M1344 344 L1352 368" stroke="#7a4390" stroke-width="1.2" opacity=".35"
+                                        fill="none" />
+                                </g>
+                                <g class="bob" style="--bd:18s;--bdel:-10s">
+                                    <path d="M230 384 L252 376 L260 398 L236 406 Z" fill="#1e1540" />
+                                </g>
+                                <g class="bob" style="--bd:27s">
+                                    <path d="M196 -24 L330 -24 L302 58 L262 74 L232 42 Z" fill="#100a28" />
+                                    <path d="M232 42 L262 74 L268 44 Z" fill="#1c1240" />
+                                </g>
+                                <g class="bob" style="--bd:31s;--bdel:-14s">
+                                    <path d="M1306 -24 L1462 -24 L1424 50 L1374 64 L1338 30 Z" fill="#100a28" />
+                                    <path d="M1338 30 L1374 64 L1380 34 Z" fill="#1c1240" />
+                                </g>
+                            </g>
+
+                            <!-- GROUND -->
+                            <g id="lyr-ground" data-depth="5">
+                                <path
+                                    d="M0 728 L170 708 L348 724 L526 702 L760 720 L986 700 L1206 722 L1424 704 L1600 722 L1600 900 L0 900 Z"
+                                    fill="url(#groundG)" />
+                                <path
+                                    d="M0 728 L170 708 L348 724 L526 702 L760 720 L986 700 L1206 722 L1424 704 L1600 722"
+                                    fill="none" stroke="#6d3f8a" stroke-width="2" opacity=".28" />
+                                <path
+                                    d="M210 730 L268 792 L250 862 M540 712 L560 790 L540 848 M900 716 L872 780 L896 842 M1240 724 L1268 786 M1440 710 L1462 776"
+                                    stroke="#000" stroke-width="2" opacity=".35" fill="none" />
+                                <path
+                                    d="M320 762 L356 822 L338 882 M640 744 L700 806 L688 862 M1042 752 L1006 812 L1036 872 M1424 736 L1454 794"
+                                    stroke="#000" stroke-width="1.6" opacity=".3" fill="none" />
+                                <path d="M700 726 L742 760 L724 812 M880 722 L920 756" stroke="#a5559e"
+                                    stroke-width="1.6" opacity=".2" fill="none" />
+                                <g class="fissure">
+                                    <path d="M806 734 L742 782 L712 842" fill="none" stroke="#d05fd0" stroke-width="6"
+                                        stroke-opacity=".3" />
+                                    <path d="M810 738 L884 792 L912 852" fill="none" stroke="#d05fd0" stroke-width="6"
+                                        stroke-opacity=".3" />
+                                    <path d="M1180 742 L1230 788 L1246 838" fill="none" stroke="#d05fd0"
+                                        stroke-width="5" stroke-opacity=".26" />
+                                    <path d="M420 748 L372 800 L356 856" fill="none" stroke="#d05fd0" stroke-width="5"
+                                        stroke-opacity=".26" />
+                                </g>
+                                <g class="fissure-core">
+                                    <path d="M806 734 L742 782 L712 842" fill="none" stroke="#f0a8ee" stroke-width="1.4"
+                                        stroke-opacity=".55" />
+                                    <path d="M810 738 L884 792 L912 852" fill="none" stroke="#f0a8ee" stroke-width="1.4"
+                                        stroke-opacity=".5" />
+                                    <path d="M1180 742 L1230 788 L1246 838" fill="none" stroke="#f0a8ee"
+                                        stroke-width="1.2" stroke-opacity=".45" />
+                                    <path d="M420 748 L372 800 L356 856" fill="none" stroke="#f0a8ee" stroke-width="1.2"
+                                        stroke-opacity=".45" />
+                                </g>
+                                <path d="M250 780 l26 -12 l22 14 l-8 16 l-30 4 Z" fill="#140c30" />
+                                <path d="M1120 764 l30 -10 l20 16 l-12 14 l-32 2 Z" fill="#140c30" />
+                                <path d="M600 812 l22 -10 l18 12 l-10 14 l-26 2 Z" fill="#120a2c" />
+                                <path d="M1350 820 l24 -8 l16 12 l-10 12 l-26 2 Z" fill="#120a2c" />
+                                <path d="M120 830 l20 -8 l14 10 l-8 12 l-24 2 Z" fill="#100826" />
+                                <ellipse cx="800" cy="700" rx="700" ry="90" fill="#7a4ba0" opacity=".1"
+                                    filter="url(#soft)" />
+                                <path id="seam" d="M806 722 L796 642 L812 560 L799 478 L815 398 L805 322"
+                                    stroke="#c56fbd" stroke-width="2" fill="none" />
+                                <path id="seam-glow" d="M806 722 L796 642 L812 560 L799 478 L815 398 L805 322"
+                                    stroke="#d887d8" stroke-width="5" fill="none" filter="url(#soft)" />
+                                <g class="seam-branch">
+                                    <path d="M812 560 L846 512 L838 464 M799 478 L766 430 L774 384 M815 398 L842 356"
+                                        stroke="#c56fbd" stroke-width="1.4" fill="none" />
+                                </g>
+                            </g>
+                        </svg>
+
+                        <div id="rays" aria-hidden="true">
+                            <div class="ray r1"></div>
+                            <div class="ray r2"></div>
+                        </div>
+
+                        <div class="layer haze a"></div>
+
+                        <!-- ground reality seal -->
+                        <svg id="seal-svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice"
+                            aria-hidden="true">
+                            <defs>
+                                <radialGradient id="sealGlowG" cx=".5" cy=".5" r=".5">
+                                    <stop offset="0" stop-color="#ffbe6a" stop-opacity=".26" />
+                                    <stop offset=".6" stop-color="#ff9a3a" stop-opacity=".1" />
+                                    <stop offset="1" stop-color="#ff9a3a" stop-opacity="0" />
+                                </radialGradient>
+                            </defs>
+                            <g id="seal" class="seal">
+                                <ellipse cx="800" cy="742" rx="250" ry="56" fill="url(#sealGlowG)" />
+                                <ellipse cx="800" cy="742" rx="360" ry="84" fill="none" stroke="#ffca6e"
+                                    stroke-width="1" opacity=".35" />
+                                <g class="rot-f">
+                                    <ellipse cx="800" cy="742" rx="330" ry="76" fill="none" stroke="#ffca6e"
+                                        stroke-width="2.5" stroke-dasharray="60 26 120 34 90 50" opacity=".8"
+                                        stroke-linecap="round" />
+                                </g>
+                                <g class="rot-e">
+                                    <ellipse cx="800" cy="742" rx="268" ry="60" fill="none" stroke="#ffd98a"
+                                        stroke-width="1.5" stroke-dasharray="30 22 80 30" opacity=".7" />
+                                </g>
+                                <g class="rot-g">
+                                    <ellipse cx="800" cy="742" rx="205" ry="45" fill="none" stroke="#ffe3a6"
+                                        stroke-width="6" stroke-dasharray="3 40" opacity=".8" />
+                                </g>
+                                <path class="pulse-soft" style="animation-delay:-1s"
+                                    d="M 792 666 L 800 657 L 808 666 L 800 675 Z" fill="#ffe3a6" />
+                                <path class="pulse-soft" style="animation-delay:-2.4s"
+                                    d="M 792 818 L 800 809 L 808 818 L 800 827 Z" fill="#ffe3a6" />
+                                <path class="pulse-soft" style="animation-delay:-3.6s"
+                                    d="M 461 742 L 470 733 L 479 742 L 470 751 Z" fill="#ffe3a6" />
+                                <path class="pulse-soft" style="animation-delay:-.6s"
+                                    d="M 1121 742 L 1130 733 L 1139 742 L 1130 751 Z" fill="#ffe3a6" />
+                            </g>
+                        </svg>
+
+                        <div id="actors">
+                            <div id="strange-wrap" class="actor">
+                                <svg id="mand-back" class="mand-svg" viewBox="0 0 300 660" aria-hidden="true">
+                                    <g class="mand m0 mand-glow">
+                                        <!-- Outer Runic Glyph Ring -->
+                                        <g class="rot-g">
+                                            <circle cx="150" cy="290" r="165" class="gs" stroke-width="1.6"
+                                                stroke-dasharray="18 8 36 12 50 14" opacity=".85" />
+                                        </g>
+                                        <!-- Concentric Diamond Geometries -->
+                                        <g class="rot-e">
+                                            <polygon points="150,132 308,290 150,448 -8,290" fill="none" stroke="#ffbe5a"
+                                                stroke-width="1.5" opacity=".7" />
+                                            <circle cx="150" cy="290" r="138" class="gs" stroke-width="2"
+                                                stroke-dasharray="70 24 130 40 90 30" opacity=".85" />
+                                        </g>
+                                        <g class="rot-f">
+                                            <polygon points="150,146 294,290 150,434 6,290" fill="none" stroke="#ffd68a"
+                                                stroke-width="1.2" stroke-dasharray="32 14 70 20" opacity=".65" />
+                                            <circle cx="150" cy="290" r="152" class="gs2" stroke-width="1.4"
+                                                stroke-dasharray="200 140 160 220" opacity=".7" />
+                                        </g>
+                                        <g class="rot-d">
+                                            <circle cx="150" cy="290" r="105" class="gs2" stroke-width="5"
+                                                stroke-dasharray="3 36" opacity=".8" />
+                                            <polygon points="150,165 275,290 150,415 25,290" fill="none" stroke="#ffe3a6"
+                                                stroke-width="1" stroke-dasharray="16 8 32 12" opacity=".6" />
+                                        </g>
+                                    </g>
+                                </svg>
+                                <svg id="fig-strange" viewBox="0 0 300 660" role="img" aria-label="Doctor Strange" overflow="visible">
+                                    <image href="assets/doctor_strange.png" xlink:href="assets/doctor_strange.png" x="-22" y="36" width="344" height="576" preserveAspectRatio="none" id="strange-photo" />
+                                    <!-- Eye of Agamotto: Emerald Time Stone + Golden Talisman Flare -->
+                                    <g id="amulet-glow" class="mand-glow">
+                                        <circle cx="144" cy="182" r="18" fill="rgba(255,210,110,.35)" />
+                                        <circle cx="144" cy="182" r="10" fill="#ffd97d" opacity=".95" />
+                                        <circle cx="144" cy="182" r="5.5" fill="#2effa8" class="time-stone-glow" />
+                                        <circle cx="144" cy="182" r="2.2" fill="#ffffff" />
+                                    </g>
+                                    <!-- Eldritch Hand Auras & Mini Glyphs -->
+                                    <g id="hand-glow" class="mand-glow">
+                                        <circle cx="79" cy="344" r="18" fill="rgba(255,190,90,.45)" />
+                                        <circle cx="79" cy="344" r="7" fill="#ffe6b0" />
+                                        <circle cx="79" cy="344" r="28" fill="none" stroke="#ffca6e" stroke-width="1.4"
+                                            stroke-dasharray="12 6 22 8" class="rot-a" opacity=".85" />
+
+                                        <circle cx="221" cy="344" r="18" fill="rgba(255,190,90,.45)" />
+                                        <circle cx="221" cy="344" r="7" fill="#ffe6b0" />
+                                        <circle cx="221" cy="344" r="28" fill="none" stroke="#ffca6e" stroke-width="1.4"
+                                            stroke-dasharray="12 6 22 8" class="rot-b" opacity=".85" />
+                                    </g>
+                                </svg>
+                                <svg id="mand-front" class="mand-svg" viewBox="0 0 300 660" aria-hidden="true">
+                                    <!-- Center Tao Mandala -->
+                                    <g class="mand m1 mand-glow">
+                                        <g class="rot-a">
+                                            <circle cx="150" cy="282" r="88" class="gs" stroke-width="2.2"
+                                                stroke-dasharray="26 10 44 14 60 12" />
+                                            <polygon points="150,198 234,282 150,366 66,282" fill="none" stroke="#ffca6e"
+                                                stroke-width="1.6" opacity=".8" />
+                                        </g>
+                                        <g class="rot-b">
+                                            <circle cx="150" cy="282" r="68" class="gs2" stroke-width="1.6"
+                                                stroke-dasharray="60 34 90 40" opacity=".95" />
+                                            <polygon points="150,218 214,282 150,346 86,282" fill="none" stroke="#ffe3a6"
+                                                stroke-width="1.4" stroke-dasharray="24 10 48 16" opacity=".85" />
+                                            <circle cx="150" cy="214" r="3.2" fill="#ffe9b0" />
+                                            <circle cx="218" cy="282" r="2.8" fill="#ffe9b0" />
+                                        </g>
+                                        <g class="rot-c">
+                                            <circle cx="150" cy="282" r="50" class="gs" stroke-width="5"
+                                                stroke-dasharray="3 26" opacity=".9" />
+                                        </g>
+                                        <g class="rot-d">
+                                            <circle cx="150" cy="282" r="34" class="gs2" stroke-width="1.5"
+                                                opacity=".8" />
+                                            <circle cx="150" cy="282" r="18" fill="rgba(255,220,130,.3)" />
+                                            <circle cx="150" cy="282" r="6" fill="#fff5d9" />
+                                        </g>
+                                    </g>
+                                    <!-- Left Hand Spell Shield -->
+                                    <g class="mand m2 mand-glow">
+                                        <g class="rot-c">
+                                            <circle cx="79" cy="344" r="46" class="gs" stroke-width="2"
+                                                stroke-dasharray="16 8 26 10 38 12" />
+                                            <polygon points="79,302 121,344 79,386 37,344" fill="none" stroke="#ffca6e"
+                                                stroke-width="1.4" opacity=".8" />
+                                        </g>
+                                        <g class="rot-b">
+                                            <circle cx="79" cy="344" r="32" class="gs2" stroke-width="3.5"
+                                                stroke-dasharray="2.5 14" opacity=".9" />
+                                            <circle cx="79" cy="312" r="2.5" fill="#ffe9b0" />
+                                            <circle cx="111" cy="344" r="2.5" fill="#ffe9b0" />
+                                        </g>
+                                        <g class="rot-d">
+                                            <circle cx="79" cy="344" r="18" class="gs2" stroke-width="1.4"
+                                                opacity=".75" />
+                                            <circle cx="79" cy="344" r="6" fill="#fff5d9" />
+                                        </g>
+                                    </g>
+                                    <!-- Right Hand Spell Shield -->
+                                    <g class="mand m3 mand-glow">
+                                        <g class="rot-d">
+                                            <circle cx="221" cy="344" r="46" class="gs" stroke-width="2"
+                                                stroke-dasharray="16 8 26 10 38 12" />
+                                            <polygon points="221,302 263,344 221,386 179,344" fill="none" stroke="#ffca6e"
+                                                stroke-width="1.4" opacity=".8" />
+                                        </g>
+                                        <g class="rot-e">
+                                            <circle cx="221" cy="344" r="32" class="gs2" stroke-width="3.5"
+                                                stroke-dasharray="2.5 14" opacity=".9" />
+                                            <circle cx="221" cy="376" r="2.5" fill="#ffe9b0" />
+                                            <circle cx="189" cy="344" r="2.5" fill="#ffe9b0" />
+                                        </g>
+                                        <g class="rot-c">
+                                            <circle cx="221" cy="344" r="18" class="gs2" stroke-width="1.4"
+                                                opacity=".75" />
+                                            <circle cx="221" cy="344" r="6" fill="#fff5d9" />
+                                        </g>
+                                    </g>
+                                </svg>
+                            </div>
+                            <div id="wanda-stack" class="actor" role="img" aria-label="Wanda">
+                                <svg class="aura aura-evil" viewBox="0 0 300 660" aria-hidden="true" overflow="visible">
+                                    <defs>
+                                        <radialGradient id="chaosG" cx=".5" cy=".45" r=".55">
+                                            <stop offset="0" stop-color="#ff1a40" stop-opacity=".38" />
+                                            <stop offset=".5" stop-color="#cc0830" stop-opacity=".2" />
+                                            <stop offset="1" stop-color="#8a0020" stop-opacity="0" />
+                                        </radialGradient>
+                                    </defs>
+                                    <!-- Expanding Chaos Pulse & Distortion -->
+                                    <ellipse cx="150" cy="300" rx="135" ry="245" fill="url(#chaosG)"
+                                        class="aura-pulse" />
+                                    <!-- Darkhold Chaos Crest Geometry -->
+                                    <g class="rot-f">
+                                        <polygon points="150,135 255,195 255,315 150,375 45,315 45,195" fill="none"
+                                            stroke="#ff1f4b" stroke-width="1.6" stroke-dasharray="32 12 65 20" opacity=".65" />
+                                    </g>
+                                    <g class="rot-c">
+                                        <polygon points="150,375 255,315 255,195 150,135 45,195 45,315" fill="none"
+                                            stroke="#ff456e" stroke-width="1.2" stroke-dasharray="40 18" opacity=".5" />
+                                    </g>
+                                    <!-- Concentric Orbiting Chaos Hoops -->
+                                    <g class="hoop h1 hoop-glow">
+                                        <ellipse cx="150" cy="330" rx="108" ry="28" fill="none" stroke="#ff385c"
+                                            stroke-width="2" stroke-dasharray="70 28 120 38" opacity=".8" />
+                                    </g>
+                                    <g class="hoop h2 hoop-glow">
+                                        <ellipse cx="150" cy="362" rx="90" ry="22" fill="none" stroke="#d81b4a"
+                                            stroke-width="1.5" stroke-dasharray="40 24 95 32" opacity=".65" />
+                                    </g>
+                                    <g class="hoop h3 hoop-glow">
+                                        <ellipse cx="150" cy="270" rx="122" ry="32" fill="none" stroke="#ff1f4b"
+                                            stroke-width="2.2" stroke-dasharray="90 30 140 45" opacity=".75" />
+                                    </g>
+                                </svg>
+                                <svg class="aura aura-normal" viewBox="0 0 300 660" aria-hidden="true" overflow="visible">
+                                    <defs>
+                                        <radialGradient id="warmG" cx=".5" cy=".45" r=".55">
+                                            <stop offset="0" stop-color="#ffe2ba" stop-opacity=".3" />
+                                            <stop offset=".6" stop-color="#f0af7f" stop-opacity=".15" />
+                                            <stop offset="1" stop-color="#e8a878" stop-opacity="0" />
+                                        </radialGradient>
+                                    </defs>
+                                    <ellipse cx="150" cy="300" rx="130" ry="240" fill="url(#warmG)"
+                                        class="aura-pulse" />
+                                    <g class="rot-e">
+                                        <circle cx="150" cy="300" r="140" fill="none" stroke="#ffdfb0" stroke-width="1.2"
+                                            stroke-dasharray="60 30 100 40" opacity=".5" />
+                                    </g>
+                                </svg>
+                                <svg class="wanda-fig wanda-evil" viewBox="0 0 300 660" aria-hidden="true" overflow="visible">
+                                    <image href="assets/wanda_evil.png" xlink:href="assets/wanda_evil.png" x="0" y="5" width="300" height="649" preserveAspectRatio="none" id="wanda-evil-photo" />
+                                    <!-- Glowing Crimson Darkhold Eyes -->
+                                    <g class="wanda-eyes-fx">
+                                        <circle cx="145" cy="100" r="3.2" fill="#ff0033" class="eye-glow-dot" />
+                                        <circle cx="155" cy="100" r="3.2" fill="#ff0033" class="eye-glow-dot" />
+                                        <ellipse cx="145" cy="100" rx="7" ry="4" fill="rgba(255,20,50,.55)" class="eye-flare-aura" />
+                                        <ellipse cx="155" cy="100" rx="7" ry="4" fill="rgba(255,20,50,.55)" class="eye-flare-aura" />
+                                    </g>
+                                    <!-- Twin Chaos Magic Plasma Orbs -->
+                                    <g class="wanda-plasma-fx">
+                                        <!-- Left Hand Plasma (x: 41, y: 229) -->
+                                        <g transform="translate(41, 229)">
+                                            <circle cx="0" cy="0" r="26" fill="rgba(255,10,40,.28)" class="plasma-pulse" />
+                                            <circle cx="0" cy="0" r="16" fill="rgba(255,40,70,.55)" class="plasma-pulse" />
+                                            <circle cx="0" cy="0" r="8" fill="#ff4d73" />
+                                            <circle cx="0" cy="0" r="3.5" fill="#ffffff" />
+                                            <circle cx="0" cy="0" r="34" fill="none" stroke="#ff1a40" stroke-width="1.5"
+                                                stroke-dasharray="14 6 22 8" class="rot-a" opacity=".85" />
+                                        </g>
+                                        <!-- Right Hand Plasma (x: 281, y: 253) -->
+                                        <g transform="translate(281, 253)">
+                                            <circle cx="0" cy="0" r="26" fill="rgba(255,10,40,.28)" class="plasma-pulse" />
+                                            <circle cx="0" cy="0" r="16" fill="rgba(255,40,70,.55)" class="plasma-pulse" />
+                                            <circle cx="0" cy="0" r="8" fill="#ff4d73" />
+                                            <circle cx="0" cy="0" r="3.5" fill="#ffffff" />
+                                            <circle cx="0" cy="0" r="34" fill="none" stroke="#ff1a40" stroke-width="1.5"
+                                                stroke-dasharray="14 6 22 8" class="rot-b" opacity=".85" />
+                                        </g>
+                                    </g>
+                                </svg>
+                                <svg class="wanda-fig wanda-normal" viewBox="0 0 300 660" aria-hidden="true" overflow="visible">
+                                    <image href="assets/wanda_normal.png" xlink:href="assets/wanda_normal.png" x="-32" y="52" width="362" height="571" preserveAspectRatio="none" id="wanda-normal-photo" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div id="fg-layer" data-depth="-26">
+                            <div id="fg-left"></div>
+                            <div id="fg-right"></div>
+                        </div>
+
+                        <div class="layer haze b"></div>
+                        <canvas id="fx-canvas" aria-hidden="true"></canvas>
+                        <div id="fx"></div>
+
+                        <div id="grade">
+                            <div id="grade-base"></div>
+                            <div id="grade-tense"></div>
+                            <div id="grade-calm"></div>
+                            <div id="grade-fail"></div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <svg id="grain" aria-hidden="true">
+            <filter id="grain-f">
+                <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" stitchTiles="stitch" />
+            </filter>
+            <rect width="100%" height="100%" filter="url(#grain-f)" />
+        </svg>
+        <div id="vignette"></div>
+
+        <div id="sys">
+            <button id="sound-btn" class="icon-btn" aria-label="Toggle sound" aria-pressed="false">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                    <path class="spk" d="M4 9.5v5h3.4L12 18.6V5.4L7.4 9.5H4Z" fill="currentColor" />
+                    <path class="wave" d="M15.5 8.6a4.8 4.8 0 0 1 0 6.8M17.8 6.4a8 8 0 0 1 0 11.2" fill="none"
+                        stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                    <path class="mute-x" d="M15 9.5l6 5M21 9.5l-6 5" fill="none" stroke="currentColor"
+                        stroke-width="1.6" stroke-linecap="round" />
+                </svg>
+            </button>
+            <button id="restart-btn" aria-label="Restart">RESTART</button>
+        </div>
+
+        <section id="title-card" class="hud center-card" aria-hidden="true">
+            <p class="eyebrow">A REALITY IN COLLAPSE</p>
+            <h1>THE FRACTURED DIMENSION</h1>
+            <div class="rule"></div>
+            <p class="subtitle">Reality is beginning to collapse.</p>
+        </section>
+
+        <p id="caption" class="hud" aria-live="polite"></p>
+
+        <div id="fail-badge" class="hud" role="alert"><span class="txt">REALITY TRANSITION FAILED</span></div>
+
+        <section id="debug-panel" class="hud" role="alert" aria-label="Reality transition failed">
+            <header><span class="dot danger"></span>
+                <h2>REALITY TRANSITION FAILED</h2>
+            </header>
+            <p>The dimensional transition animation did not start.</p>
+            <p class="dim">Inspect <code>.spell-transition</code> and compare its animation name with
+                <code>@keyframes dimensional-transition</code>.</p>
+            <ol>
+                <li>Open browser DevTools <span class="dim">(F12 — or right-click, then Inspect)</span></li>
+                <li>Inspect the <code>.spell-transition</code> CSS rule</li>
+                <li>Compare its animation name with <code>@keyframes dimensional-transition</code></li>
+                <li>Correct the animation name</li>
+                <li>Return here — the game detects the real animation</li>
+            </ol>
+            <p id="debug-status" class="status"><span class="dot"></span><span id="debug-status-txt">AWAITING GENUINE
+                    ANIMATION…</span></p>
+            <div class="row">
+                <button id="rechannel-btn" class="btn small">RE-CHANNEL TRANSITION</button>
+                <button id="bypass-btn" class="btn small ghost" title="Developer testing only">BYPASS TEST</button>
+            </div>
+            <p class="hint">DevTools edits apply to this page live. RE-CHANNEL re-applies the class — use it if a
+                corrected rule does not restart the animation on its own.</p>
+        </section>
+
+        <section id="complete-card" class="hud center-card">
+            <p class="eyebrow">THE FRACTURE CLOSES</p>
+            <h2 class="big">REALITY RESTORED</h2>
+            <div class="rule"></div>
+            <p class="sub">THE FRACTURED DIMENSION</p>
+            <button id="play-again" class="btn">PLAY AGAIN</button>
+            <p id="bypass-note" class="hint" hidden>Developer bypass used — the CSS bug was not repaired in this run.
+            </p>
+        </section>
+
+        <div id="boot">
+            <div>
+                <p class="eyebrow">A CINEMATIC DEBUGGING EXPERIENCE</p>
+                <h1>THE FRACTURED DIMENSION</h1>
+                <div class="rule"></div>
+                <p class="boot-line">Reality is fracturing. What broke can be mended —<br>if you can read the weave.</p>
+                <button id="begin-btn" class="btn">BEGIN</button>
+                <p class="hint dim">Runs entirely on this page · Sound optional · Desktop browser recommended</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        'use strict';
+
+        const ENABLE_TEST_BYPASS = true;
+
+        const TARGET_ANIM = 'dimensional-transition';
+        const BUGGY_CSS = '.spell-transition {\n  animation: dimensionalTransition 700ms ease-out forwards;\n}';
+
+        const State = {
+            INTRO: 'INTRO',
+            STRANGE_PREPARES: 'STRANGE_PREPARES',
+            SPELL_FAILURE: 'SPELL_FAILURE',
+            DEBUG_PAUSE: 'DEBUG_PAUSE',
+            SPELL_RESUMED: 'SPELL_RESUMED',
+            WANDA_RESTORED: 'WANDA_RESTORED',
+            COMPLETE: 'COMPLETE'
+        };
+
+        const $ = id => document.getElementById(id);
+        const app = $('app'), stage = $('stage'), camera = $('camera'), settleEl = $('settle'), world = $('world');
+        const bugStyle = $('spell-transition-css'), boot = $('boot');
+        const titleCard = $('title-card'), captionEl = $('caption'), failBadge = $('fail-badge');
+        const debugPanel = $('debug-panel'), debugStatus = $('debug-status'), debugStatusTxt = $('debug-status-txt');
+        const rechannelBtn = $('rechannel-btn'), bypassBtn = $('bypass-btn');
+        const completeCard = $('complete-card'), playAgainBtn = $('play-again');
+        const restartBtn = $('restart-btn'), soundBtn = $('sound-btn'), beginBtn = $('begin-btn');
+        const bypassNote = $('bypass-note'), strangeWrap = $('strange-wrap'), wandaStack = $('wanda-stack');
+
+        let state = 'BOOT';
+        let runToken = 0;
+        let timers = [];
+        let pollId = null;
+        let fixDetected = false;
+        let bypassUsed = false;
+        let resumedOnce = false;
+        let lastStart = 0;
+
+        const REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        function schedule(fn, ms) {
+            const token = runToken;
+            const id = setTimeout(() => { if (token === runToken) fn(); }, ms);
+            timers.push(id);
+            return id;
+        }
+        function clearRunTimers() { timers.forEach(clearTimeout); timers = []; stopPoll(); }
+        function stopPoll() { if (pollId !== null) { clearInterval(pollId); pollId = null; } }
+        function setState(s) { state = s; app.dataset.state = s; }
+        function show(e) { if (e) e.classList.add('show'); }
+        function hide(e) { if (e) e.classList.remove('show'); }
+        function showCaption(text) {
+            captionEl.textContent = text;
+            show(captionEl);
+            schedule(hideCaption, 4600);
+        }
+        function hideCaption() { hide(captionEl); }
+        function setDebugStatus(text, mode) {
+            debugStatusTxt.textContent = text;
+            debugStatus.classList.toggle('ok', mode === 'ok');
+        }
+
+        /* ---------- ambient audio (optional, WebAudio only) ---------- */
+        const AudioFX = {
+            ctx: null, master: null, droneGain: null, filter: null, muted: false, ok: false, noiseBuf: null,
+            init() {
+                if (this.ok) return;
+                try {
+                    const AC = window.AudioContext || window.webkitAudioContext;
+                    if (!AC) return;
+                    this.ctx = new AC();
+                    if (this.ctx.state === 'suspended') this.ctx.resume();
+                    this.master = this.ctx.createGain();
+                    this.master.gain.value = .6;
+                    this.master.connect(this.ctx.destination);
+                    this.filter = this.ctx.createBiquadFilter();
+                    this.filter.type = 'lowpass'; this.filter.frequency.value = 240; this.filter.Q.value = .7;
+                    this.filter.connect(this.master);
+                    this.droneGain = this.ctx.createGain();
+                    this.droneGain.gain.value = .0001;
+                    this.droneGain.connect(this.filter);
+                    const mk = (f, g, type) => {
+                        const o = this.ctx.createOscillator(); o.type = type; o.frequency.value = f;
+                        const gg = this.ctx.createGain(); gg.gain.value = g;
+                        o.connect(gg); gg.connect(this.droneGain); o.start();
+                    };
+                    mk(55, .5, 'sine'); mk(82.4, .3, 'sine'); mk(110, .14, 'triangle'); mk(164.8, .05, 'sine');
+                    const lfo = this.ctx.createOscillator(); lfo.frequency.value = .06;
+                    const lg = this.ctx.createGain(); lg.gain.value = 60;
+                    lfo.connect(lg); lg.connect(this.filter.frequency); lfo.start();
+                    this.droneGain.gain.setValueAtTime(.0001, this.ctx.currentTime);
+                    this.droneGain.gain.exponentialRampToValueAtTime(.16, this.ctx.currentTime + 3);
+                    this.ok = true;
+                } catch (e) { this.ok = false; }
+            },
+            rampF(v, t) {
+                if (!this.ok) return;
+                try {
+                    this.filter.frequency.cancelScheduledValues(this.ctx.currentTime);
+                    this.filter.frequency.linearRampToValueAtTime(v, this.ctx.currentTime + t);
+                } catch (e) { }
+            },
+            tense() { this.rampF(430, 2.6); },
+            thud() {
+                if (!this.ok) return;
+                try {
+                    const t = this.ctx.currentTime;
+                    const o = this.ctx.createOscillator(); o.type = 'sine';
+                    o.frequency.setValueAtTime(160, t);
+                    o.frequency.exponentialRampToValueAtTime(52, t + .5);
+                    const g = this.ctx.createGain();
+                    g.gain.setValueAtTime(.28, t);
+                    g.gain.exponentialRampToValueAtTime(.0001, t + .65);
+                    o.connect(g); g.connect(this.master); o.start(t); o.stop(t + .7);
+                } catch (e) { }
+            },
+            chime() {
+                if (!this.ok) return;
+                try {
+                    const t = this.ctx.currentTime;
+                    [880, 1318, 1760].forEach((f, i) => {
+                        const o = this.ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+                        const g = this.ctx.createGain();
+                        const st = t + i * .07;
+                        g.gain.setValueAtTime(.0001, st);
+                        g.gain.exponentialRampToValueAtTime(.045, st + .03);
+                        g.gain.exponentialRampToValueAtTime(.0001, st + .9);
+                        o.connect(g); g.connect(this.master); o.start(st); o.stop(st + 1);
+                    });
+                } catch (e) { }
+            },
+            shatter() {
+                if (!this.ok) return;
+                try {
+                    const t = this.ctx.currentTime, dur = .5;
+                    if (!this.noiseBuf) {
+                        this.noiseBuf = this.ctx.createBuffer(1, Math.floor(this.ctx.sampleRate * .6), this.ctx.sampleRate);
+                        const d = this.noiseBuf.getChannelData(0);
+                        for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+                    }
+                    const src = this.ctx.createBufferSource(); src.buffer = this.noiseBuf;
+                    const bp = this.ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.1;
+                    bp.frequency.setValueAtTime(2400, t);
+                    bp.frequency.exponentialRampToValueAtTime(220, t + dur);
+                    const g = this.ctx.createGain();
+                    g.gain.setValueAtTime(.2, t);
+                    g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+                    src.connect(bp); bp.connect(g); g.connect(this.master); src.start(t); src.stop(t + dur);
+                } catch (e) { }
+            },
+            anchor() {
+                this.rampF(320, 3);
+                if (!this.ok) return;
+                try {
+                    const t = this.ctx.currentTime;
+                    [220, 330].forEach(f => {
+                        const o = this.ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+                        const g = this.ctx.createGain();
+                        g.gain.setValueAtTime(.0001, t);
+                        g.gain.exponentialRampToValueAtTime(.045, t + 1.8);
+                        g.gain.exponentialRampToValueAtTime(.0001, t + 5.5);
+                        o.connect(g); g.connect(this.master); o.start(t); o.stop(t + 5.7);
+                    });
+                } catch (e) { }
+            },
+            restore() {
+                this.rampF(260, 4);
+                if (!this.ok) return;
+                try {
+                    const t = this.ctx.currentTime;
+                    [261.6, 392, 523.3].forEach((f, i) => {
+                        const o = this.ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+                        const g = this.ctx.createGain();
+                        g.gain.setValueAtTime(.0001, t + i * .4);
+                        g.gain.exponentialRampToValueAtTime(.04, t + i * .4 + 2.4);
+                        g.gain.exponentialRampToValueAtTime(.0001, t + i * .4 + 8);
+                        o.connect(g); g.connect(this.master); o.start(t); o.stop(t + 12);
+                    });
+                } catch (e) { }
+            },
+            toggle() {
+                this.muted = !this.muted;
+                if (this.ok) {
+                    try { this.master.gain.linearRampToValueAtTime(this.muted ? 0 : .6, this.ctx.currentTime + .25); } catch (e) { }
+                }
+                return this.muted;
+            }
+        };
+
+        /* ---------- magic particle system (canvas) ---------- */
+        const GOLD = ['255,214,130', '255,190,96', '255,236,180', '255,168,74', '255,245,160', '255,140,40'];
+        const TIME = ['40,240,160', '80,255,190', '130,255,210', '20,200,120'];
+        const CHAOS = ['255,70,92', '224,32,72', '255,126,146', '176,22,64', '255,40,70', '210,15,50'];
+        const SEAMC = ['255,130,208', '214,96,224', '255,84,150', '186,80,255'];
+        const CLASH = ['255,220,130', '255,70,120', '210,100,255', '255,255,255'];
+        const WARM = ['255,228,168', '255,206,128', '255,246,224', '255,182,120'];
+        const MIXRG = ['255,70,92', '255,190,96', '214,96,224', '255,236,180', '255,255,255'];
+
+        const FX = {
+            c: $('fx-canvas'), ctx: null, parts: [], max: 550,
+            strangeCast: false, strong: false, chaos: .35, seam: false, restoreGlow: 0, ambient: false,
+            accG: 0, accC: 0, accS: 0, accR: 0, accA: 0, accClash: 0, handFlip: 0,
+            handL: null, handR: null, eyeAgamotto: null,
+            wChest: null, wHandL: null, wHandR: null, wTiara: null, wSpan: null, lastRect: 0,
+            init() {
+                try { this.ctx = this.c.getContext('2d'); } catch (e) { this.ctx = null; }
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+            },
+            resize() {
+                if (!this.ctx) return;
+                const dpr = Math.min(window.devicePixelRatio || 1, 1.75);
+                this.c.width = Math.max(1, Math.floor(window.innerWidth * dpr));
+                this.c.height = Math.max(1, Math.floor(window.innerHeight * dpr));
+                this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            },
+            reset() {
+                this.parts.length = 0;
+                this.accG = this.accC = this.accS = this.accR = this.accA = this.accClash = 0;
+                this.handFlip = 0;
+                this.strangeCast = false; this.strong = false;
+                this.chaos = .35; this.seam = false; this.restoreGlow = 0; this.ambient = false;
+            },
+            add(p) { if (this.parts.length < this.max) { p.seed = Math.random() * 10; this.parts.push(p); } },
+            refreshAnchors(now) {
+                if (now - this.lastRect < 250) return;
+                this.lastRect = now;
+                try {
+                    const sr = strangeWrap.getBoundingClientRect();
+                    if (sr.width > 0) {
+                        this.handL = { x: sr.left + sr.width * (79 / 300), y: sr.top + sr.height * (344 / 660) };
+                        this.handR = { x: sr.left + sr.width * (221 / 300), y: sr.top + sr.height * (344 / 660) };
+                        this.eyeAgamotto = { x: sr.left + sr.width * (150 / 300), y: sr.top + sr.height * (182 / 660) };
+                    }
+                    const wr = wandaStack.getBoundingClientRect();
+                    if (wr.width > 0) {
+                        this.wChest = { x: wr.left + wr.width * .5, y: wr.top + wr.height * (235 / 660) };
+                        this.wHandL = { x: wr.left + wr.width * (41 / 300), y: wr.top + wr.height * (229 / 660) };
+                        this.wHandR = { x: wr.left + wr.width * (281 / 300), y: wr.top + wr.height * (253 / 660) };
+                        this.wTiara = { x: wr.left + wr.width * .5, y: wr.top + wr.height * (95 / 660) };
+                        this.wSpan = { w: wr.width * .22, top: wr.top + wr.height * .20, h: wr.height * .65 };
+                    }
+                } catch (e) { }
+            },
+            burst(x, y, n, pal, sp) {
+                for (let i = 0; i < n; i++) {
+                    const a = Math.random() * Math.PI * 2, v = sp * (.35 + Math.random());
+                    this.add({
+                        type: Math.random() < .4 ? 'shard' : 'spark', core: Math.random() < .3,
+                        x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 20,
+                        life: .45 + Math.random() * .75, t: 0, size: 1 + Math.random() * 2.4,
+                        color: pal[(Math.random() * pal.length) | 0], drag: .955, grav: 90,
+                        rot: Math.random() * 6.3, vr: (Math.random() - .5) * 14, flicker: Math.random() < .5
+                    });
+                }
+            },
+            restoreBurst() {
+                const c = this.wChest; if (!c) return;
+                const R = Math.max(70, (this.wSpan ? this.wSpan.w : 60) * 3.4);
+                for (let i = 0; i < 90; i++) {
+                    const a = Math.random() * Math.PI * 2, rr = R * (.55 + Math.random() * .75);
+                    const sp = 40 + Math.random() * 90;
+                    this.add({
+                        type: 'spark', core: true,
+                        x: c.x + Math.cos(a) * rr, y: c.y + Math.sin(a) * rr * .9 - Math.random() * 40,
+                        vx: -Math.cos(a) * sp * .55 - Math.sin(a) * sp * .8,
+                        vy: -Math.sin(a) * sp * .5 - 26,
+                        life: 1.1 + Math.random() * 1.3, t: 0, size: 1.2 + Math.random() * 2,
+                        color: WARM[(Math.random() * WARM.length) | 0], drag: .975, grav: -18
+                    });
+                }
+            },
+            step(dt) {
+                this.refreshAnchors(performance.now());
+                if (this.strangeCast) {
+                    this.accG += (this.strong ? 85 : 45) * dt;
+                    while (this.accG >= 1) {
+                        this.accG--;
+                        const h = (this.handFlip++ % 2) ? this.handR : this.handL;
+                        if (h) {
+                            const ang = Math.random() * Math.PI * 2;
+                            const rad = Math.random() * (this.strong ? 26 : 18);
+                            // Tangential rotational velocity + directional stream towards center seam
+                            this.add({
+                                type: Math.random() < .3 ? 'shard' : 'spark', core: true,
+                                x: h.x + Math.cos(ang) * rad,
+                                y: h.y + Math.sin(ang) * rad,
+                                vx: 35 + Math.random() * 65 - Math.sin(ang) * 25,
+                                vy: -15 + (Math.random() - .5) * 40 + Math.cos(ang) * 25,
+                                life: .45 + Math.random() * .65, t: 0, size: 1.1 + Math.random() * 2.2,
+                                color: GOLD[(Math.random() * GOLD.length) | 0], drag: .982, grav: -20,
+                                rot: Math.random() * 6.3, vr: (Math.random() - .5) * 12
+                            });
+                        }
+                    }
+                    // Eye of Agamotto emerald pulse spark
+                    if (this.eyeAgamotto && Math.random() < 0.12) {
+                        this.add({
+                            type: 'spark', core: true,
+                            x: this.eyeAgamotto.x + (Math.random() - .5) * 12,
+                            y: this.eyeAgamotto.y + (Math.random() - .5) * 12,
+                            vx: 15 + Math.random() * 25, vy: -18 - Math.random() * 25,
+                            life: .6 + Math.random() * .7, t: 0, size: 1.2 + Math.random() * 1.8,
+                            color: TIME[(Math.random() * TIME.length) | 0], drag: .985, grav: -12, flicker: true
+                        });
+                    }
+                }
+                if (this.chaos > 0) {
+                    // Hand plasma discharge towards center seam
+                    this.accC += this.chaos * (this.strong ? 55 : 32) * dt;
+                    while (this.accC >= 1) {
+                        this.accC--;
+                        const wh = Math.random() < .5 ? this.wHandL : this.wHandR;
+                        if (wh) {
+                            const ang = Math.random() * Math.PI * 2;
+                            const rad = Math.random() * (this.strong ? 28 : 20);
+                            this.add({
+                                type: Math.random() < .35 ? 'shard' : 'spark', core: true,
+                                x: wh.x + Math.cos(ang) * rad,
+                                y: wh.y + Math.sin(ang) * rad,
+                                vx: -(35 + Math.random() * 65) + Math.sin(ang) * 20,
+                                vy: -16 + (Math.random() - .5) * 44 + Math.cos(ang) * 20,
+                                life: .5 + Math.random() * .7, t: 0, size: 1.2 + Math.random() * 2.4,
+                                color: CHAOS[(Math.random() * CHAOS.length) | 0], drag: .982, grav: -18,
+                                rot: Math.random() * 6.3, vr: (Math.random() - .5) * 14, flicker: true
+                            });
+                        }
+                    }
+                    // Chaotic rising embers from Darkhold aura & crown
+                    if (this.wSpan) {
+                        if (Math.random() < 0.4) {
+                            this.add({
+                                type: 'spark',
+                                x: this.wChest.x + (Math.random() - .5) * this.wSpan.w * 2,
+                                y: this.wSpan.top + Math.random() * this.wSpan.h,
+                                vx: (Math.random() - .5) * 18, vy: -(20 + Math.random() * 50),
+                                life: 1 + Math.random() * 1.3, t: 0, size: .9 + Math.random() * 2,
+                                color: CHAOS[(Math.random() * CHAOS.length) | 0], drag: .994, grav: -8,
+                                sway: true, flicker: true
+                            });
+                        }
+                    }
+                }
+                // Central Reality Seam Clash (Eldritch Gold vs Chaos Crimson collision)
+                if ((this.strangeCast && this.chaos > 0) || this.seam) {
+                    this.accClash += (this.strong ? 38 : 18) * dt;
+                    while (this.accClash >= 1) {
+                        this.accClash--;
+                        const seamX = window.innerWidth * .5;
+                        const seamY = window.innerHeight * (.36 + Math.random() * .42);
+                        this.add({
+                            type: Math.random() < .45 ? 'shard' : 'spark', core: true,
+                            x: seamX + (Math.random() - .5) * 20,
+                            y: seamY,
+                            vx: (Math.random() - .5) * 45,
+                            vy: (Math.random() - .5) * 110,
+                            life: .4 + Math.random() * .6, t: 0, size: 1.2 + Math.random() * 2.5,
+                            color: CLASH[(Math.random() * CLASH.length) | 0], drag: .965, grav: 30,
+                            rot: Math.random() * 6.3, vr: (Math.random() - .5) * 18, flicker: true
+                        });
+                    }
+                }
+                if (this.seam) {
+                    this.accS += 14 * dt;
+                    while (this.accS >= 1) {
+                        this.accS--;
+                        this.add({
+                            type: 'spark', x: window.innerWidth * .5 + (Math.random() - .5) * 36,
+                            y: window.innerHeight * (.38 + Math.random() * .45),
+                            vx: (Math.random() - .5) * 16, vy: -(26 + Math.random() * 45),
+                            life: 1 + Math.random() * 1.6, t: 0, size: 1.1 + Math.random() * 1.8,
+                            color: SEAMC[(Math.random() * SEAMC.length) | 0], drag: .995, grav: -12, flicker: true
+                        });
+                    }
+                }
+                if (this.restoreGlow > 0 && this.wSpan) {
+                    this.accR += 44 * dt;
+                    while (this.accR >= 1) {
+                        this.accR--;
+                        this.add({
+                            type: 'spark', core: true, x: this.wChest.x + (Math.random() - .5) * this.wSpan.w * 2.4,
+                            y: this.wSpan.top + Math.random() * this.wSpan.h,
+                            vx: (Math.random() - .5) * 10, vy: -(10 + Math.random() * 26),
+                            life: 1.4 + Math.random() * 1.4, t: 0, size: 1 + Math.random() * 2,
+                            color: WARM[(Math.random() * WARM.length) | 0], drag: .99, grav: -14
+                        });
+                    }
+                }
+                if (this.ambient) {
+                    this.accA += 7 * dt;
+                    while (this.accA >= 1) {
+                        this.accA--;
+                        this.add({
+                            type: 'spark', x: Math.random() * window.innerWidth,
+                            y: window.innerHeight * (.35 + Math.random() * .6),
+                            vx: (Math.random() - .5) * 6, vy: -(6 + Math.random() * 14),
+                            life: 3 + Math.random() * 2.5, t: 0, size: .8 + Math.random() * 1.2,
+                            color: GOLD[(Math.random() * GOLD.length) | 0], drag: .999, grav: -4, flicker: true
+                        });
+                    }
+                }
+                const ps = this.parts, w = window.innerWidth, h = window.innerHeight;
+                for (let i = ps.length - 1; i >= 0; i--) {
+                    const p = ps[i];
+                    p.t += dt;
+                    if (p.t >= p.life || p.y < -40 || p.x < -60 || p.x > w + 60 || p.y > h + 60) { ps.splice(i, 1); continue; }
+                    const dg = Math.pow(p.drag, dt * 60);
+                    p.vx *= dg;
+                    p.vy = p.vy * dg + (p.grav || 0) * dt;
+                    if (p.sway) p.vx += Math.sin(p.t * 4 + p.seed) * 22 * dt;
+                    p.x += p.vx * dt; p.y += p.vy * dt;
+                    if (p.type === 'shard') p.rot += p.vr * dt;
+                }
+            },
+            draw() {
+                const ctx = this.ctx;
+                if (!ctx) return;
+                ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+                if (!this.parts.length) return;
+                ctx.globalCompositeOperation = 'lighter';
+                for (const p of this.parts) {
+                    const k = 1 - p.t / p.life;
+                    let a = k;
+                    if (p.flicker) a *= .45 + .55 * Math.abs(Math.sin(p.t * 26 + p.seed));
+                    if (a <= 0) continue;
+                    ctx.fillStyle = 'rgba(' + p.color + ',' + a.toFixed(3) + ')';
+                    if (p.type === 'shard') {
+                        ctx.save();
+                        ctx.translate(p.x, p.y);
+                        ctx.rotate(p.rot);
+                        ctx.fillRect(-p.size * 1.6, -p.size * .5, p.size * 3.2, p.size);
+                        ctx.restore();
+                    } else {
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, Math.max(.3, p.size * (.35 + .65 * k)), 0, 6.2832);
+                        ctx.fill();
+                        if (p.core) {
+                            ctx.fillStyle = 'rgba(255,255,240,' + (a * .85).toFixed(3) + ')';
+                            ctx.beginPath();
+                            ctx.arc(p.x, p.y, Math.max(.2, p.size * .45 * k), 0, 6.2832);
+                            ctx.fill();
+                        }
+                    }
+                }
+                ctx.globalCompositeOperation = 'source-over';
+            }
+        };
+
+        /* ---------- genuine CSS animation detection ---------- */
+
+        function onAnimStart(e) {
+            if (!e || e.target !== world) return;
+            if (e.animationName !== TARGET_ANIM) return;
+            onFixDetected();
+        }
+
+        function checkAnimations() {
+            if (fixDetected) return;
+            if (state !== State.DEBUG_PAUSE && state !== State.STRANGE_PREPARES && state !== State.SPELL_FAILURE) return;
+            let anims = null;
+            try {
+                if (typeof world.getAnimations === 'function') anims = world.getAnimations();
+            } catch (err) { anims = null; }
+            if (!anims) return;
+            for (let i = 0; i < anims.length; i++) {
+                const a = anims[i];
+                if (a && a.animationName === TARGET_ANIM && (a.playState === 'running' || a.playState === 'finished')) {
+                    onFixDetected();
+                    return;
+                }
+            }
+        }
+
+        function onFixDetected() {
+            if (fixDetected || runToken === 0) return;
+            if (state === State.SPELL_RESUMED || state === State.WANDA_RESTORED || state === State.COMPLETE || state === 'BOOT') return;
+            fixDetected = true;
+            console.log('GENUINE ANIMATION DETECTED — "' + TARGET_ANIM + '" is running');
+            if (state === State.DEBUG_PAUSE || state === State.SPELL_FAILURE) {
+                resumeSequence(false);
+            }
+        }
+
+        document.addEventListener('animationstart', onAnimStart, true);
+
+        /* ---------- state machine & cinematic phases ---------- */
+
+        function beginRun() {
+            const now = performance.now();
+            if (now - lastStart < 450) return;
+            lastStart = now;
+
+            runToken++;
+            clearRunTimers();
+
+            fixDetected = false;
+            bypassUsed = false;
+            resumedOnce = false;
+
+            bugStyle.textContent = BUGGY_CSS;
+            FX.reset();
+
+            world.classList.remove('spell-transition');
+            settleEl.classList.remove('settled', 'flicker');
+            stage.classList.remove('jolt');
+            camera.classList.remove('run');
+            app.classList.remove('tense', 'calm', 'restored', 'failing', 'resumed', 'complete');
+            strangeWrap.classList.remove('casting', 'recoil', 'surge');
+            if (bypassNote) bypassNote.hidden = true;
+
+            [titleCard, captionEl, failBadge, debugPanel, completeCard].forEach(hide);
+            hide(bypassBtn);
+
+            void stage.offsetWidth;
+
+            setState(State.INTRO);
+            app.classList.remove('fade-in');
+            void app.offsetWidth;
+            app.classList.add('fade-in');
+            camera.classList.add('run');
+
+            runIntro();
+        }
+
+        function runIntro() {
+            show(titleCard);
+            schedule(() => showCaption('Two figures at the edge of a broken sky.'), 6200);
+            schedule(runStrangePrepares, 11500);
+        }
+
+        function runStrangePrepares() {
+            setState(State.STRANGE_PREPARES);
+            hide(titleCard);
+            strangeWrap.classList.add('casting');
+            app.classList.add('tense');
+            FX.strangeCast = true;
+            FX.chaos = 1;
+            showCaption('Strange reaches for the threads of reality.');
+            AudioFX.tense();
+            AudioFX.chime();
+            schedule(triggerTransition, 7600);
+        }
+
+        function triggerTransition() {
+            strangeWrap.classList.add('surge');
+            FX.strong = true;
+            world.classList.add('spell-transition');
+            if (pollId === null) pollId = setInterval(checkAnimations, 350);
+            schedule(() => {
+                if (fixDetected) resumeSequence(true);
+                else runSpellFailure();
+            }, 1400);
+        }
+
+        function runSpellFailure() {
+            setState(State.SPELL_FAILURE);
+            hideCaption();
+            strangeWrap.classList.remove('casting', 'surge');
+            strangeWrap.classList.add('recoil');
+            app.classList.add('failing');
+            settleEl.classList.add('flicker');
+            stage.classList.add('jolt');
+            schedule(() => stage.classList.remove('jolt'), 650);
+            show(failBadge);
+            FX.strangeCast = false;
+            FX.strong = false;
+            FX.seam = true;
+            FX.chaos = 1.2;
+            FX.burst(window.innerWidth * .5, window.innerHeight * .55, 36, MIXRG, 210);
+            FX.burst(window.innerWidth * .5, window.innerHeight * .72, 30, SEAMC, 170);
+            if (FX.handL) FX.burst(FX.handL.x, FX.handL.y, 22, GOLD, 150);
+            if (FX.handR) FX.burst(FX.handR.x, FX.handR.y, 22, GOLD, 150);
+            if (FX.wHandL) FX.burst(FX.wHandL.x, FX.wHandL.y, 22, CHAOS, 150);
+            if (FX.wHandR) FX.burst(FX.wHandR.x, FX.wHandR.y, 22, CHAOS, 150);
+            AudioFX.thud();
+            AudioFX.shatter();
+            schedule(enterDebugPause, 3000);
+        }
+
+        function enterDebugPause() {
+            if (fixDetected) { resumeSequence(false); return; }
+            setState(State.DEBUG_PAUSE);
+            show(debugPanel);
+            if (ENABLE_TEST_BYPASS && bypassBtn && !bypassUsed) show(bypassBtn);
+            const evOnly = typeof world.getAnimations !== 'function';
+            setDebugStatus(evOnly ? 'AWAITING GENUINE ANIMATION… (EVENT-BASED DETECTION)' : 'AWAITING GENUINE ANIMATION…', 'wait');
+        }
+
+        function resumeSequence(preFixed) {
+            if (resumedOnce) return;
+            resumedOnce = true;
+            stopPoll();
+
+            hide(debugPanel); hide(failBadge); hide(bypassBtn);
+            settleEl.classList.remove('flicker');
+            app.classList.remove('failing', 'tense');
+            app.classList.add('resumed');
+            strangeWrap.classList.remove('recoil', 'surge');
+            strangeWrap.classList.add('casting');
+            settleEl.classList.add('settled');
+
+            FX.seam = false;
+            FX.strangeCast = true;
+            FX.strong = true;
+            FX.chaos = 1.1;
+
+            setState(State.SPELL_RESUMED);
+            setDebugStatus('TRANSITION DETECTED — REALITY ANCHORING', 'ok');
+            showCaption(preFixed ? 'The transition holds. Reality answers.' : 'The sequence resumes.');
+            AudioFX.chime();
+            AudioFX.anchor();
+            schedule(runWandaRestored, 8200);
+        }
+
+        function runWandaRestored() {
+            setState(State.WANDA_RESTORED);
+            app.classList.add('restored', 'calm');
+            strangeWrap.classList.remove('casting');
+            FX.strangeCast = false;
+            FX.strong = false;
+            FX.chaos = 0;
+            FX.restoreBurst();
+            FX.restoreGlow = 1;
+            schedule(() => { FX.restoreGlow = 0; }, 6000);
+            showCaption('The fracture lets go of her.');
+            AudioFX.restore();
+            schedule(runComplete, 11000);
+        }
+
+        function runComplete() {
+            setState(State.COMPLETE);
+            hideCaption();
+            app.classList.add('complete');
+            FX.restoreGlow = 0;
+            FX.ambient = true;
+            if (bypassUsed && bypassNote) bypassNote.hidden = false;
+            show(completeCard);
+        }
+
+        /* ---------- controls ---------- */
+
+        beginBtn.addEventListener('click', () => {
+            boot.classList.add('gone');
+            AudioFX.init();
+            beginRun();
+        });
+        playAgainBtn.addEventListener('click', beginRun);
+        restartBtn.addEventListener('click', beginRun);
+
+        if (!ENABLE_TEST_BYPASS) {
+            bypassBtn.remove();
+        } else {
+            bypassBtn.addEventListener('click', () => {
+                if (state !== State.DEBUG_PAUSE || bypassUsed) return;
+                bypassUsed = true;
+                bypassBtn.disabled = true;
+                console.log('TEST BYPASS USED — CSS BUG NOT FIXED');
+                resumeSequence(false);
+            });
+        }
+
+        rechannelBtn.addEventListener('click', () => {
+            if (state !== State.DEBUG_PAUSE) return;
+            world.classList.remove('spell-transition');
+            void world.offsetWidth;
+            world.classList.add('spell-transition');
+            setDebugStatus('RE-CHANNELLING…', 'wait');
+            schedule(() => {
+                if (!fixDetected && state === State.DEBUG_PAUSE) {
+                    setDebugStatus('STILL NO ANIMATION — THE NAME DOES NOT MATCH THE KEYFRAMES YET', 'wait');
+                }
+            }, 1000);
+        });
+
+        soundBtn.addEventListener('click', () => {
+            const muted = AudioFX.toggle();
+            soundBtn.classList.toggle('muted', muted);
+            soundBtn.setAttribute('aria-pressed', muted ? 'true' : 'false');
+        });
+
+        /* ---------- environment dressing ---------- */
+
+        (function makeStars() {
+            const g = $('stars');
+            let s = '';
+            for (let i = 0; i < 120; i++) {
+                const x = (Math.random() * 1600).toFixed(1);
+                const y = (Math.random() * 430).toFixed(1);
+                const r = (Math.random() * 1.1 + .4).toFixed(2);
+                const o = (Math.random() * .5 + .15).toFixed(2);
+                s += '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="#cbb8ee" opacity="' + o + '"/>';
+            }
+            for (let i = 0; i < 6; i++) {
+                const x = (Math.random() * 1500 + 50).toFixed(0);
+                const y = (Math.random() * 300).toFixed(0);
+                s += '<path d="M ' + x + ' ' + (y - 5) + ' L ' + x + ' ' + (+y + 5) + ' M ' + (x - 5) + ' ' + y + ' L ' + (+x + 5) + ' ' + y + '" stroke="#d8c8ff" stroke-width="0.8" opacity="0.5"/>';
+            }
+            g.innerHTML = s;
+        })();
+
+        (function makeDust() {
+            const fx = $('fx');
+            for (let i = 0; i < 18; i++) {
+                const d = document.createElement('i');
+                d.className = 'mote';
+                d.style.left = (Math.random() * 100) + '%';
+                d.style.bottom = (-5 + Math.random() * 30) + '%';
+                d.style.width = d.style.height = (1.5 + Math.random() * 2.5) + 'px';
+                d.style.setProperty('--dx', (Math.random() * 60 - 30) + 'px');
+                d.style.setProperty('--dr', (14 + Math.random() * 22) + 's');
+                d.style.setProperty('--dd', (-Math.random() * 30) + 's');
+                d.style.setProperty('--ds', (.1 + Math.random() * .2).toFixed(2));
+                fx.appendChild(d);
+            }
+            const spots = [[12, 40], [30, 62], [55, 30], [78, 55], [90, 35], [45, 74]];
+            spots.forEach((p, i) => {
+                const s = document.createElement('i');
+                s.className = 'shard';
+                s.style.left = p[0] + '%';
+                s.style.top = p[1] + '%';
+                s.style.setProperty('--sr', (42 + i * 9) + 's');
+                s.style.setProperty('--sd', (-i * 7) + 's');
+                fx.appendChild(s);
+            });
+        })();
+
+        /* ---------- master loop: parallax + particles ---------- */
+
+        const parallax = { on: false, layers: [], tx: 0, ty: 0, px: 0, py: 0 };
+
+        if (!REDUCED) {
+            parallax.layers = Array.prototype.slice.call(document.querySelectorAll('[data-depth]'));
+            if (window.matchMedia('(pointer: fine)').matches) {
+                parallax.on = true;
+                window.addEventListener('mousemove', e => {
+                    parallax.tx = (e.clientX / window.innerWidth - .5) * 2;
+                    parallax.ty = (e.clientY / window.innerHeight - .5) * 2;
+                }, { passive: true });
+            }
+            FX.init();
+            let lastT = performance.now();
+            requestAnimationFrame(function masterLoop(now) {
+                requestAnimationFrame(masterLoop);
+                if (document.hidden) { lastT = now; return; }
+                const dt = Math.min((now - lastT) / 1000, .05);
+                lastT = now;
+                if (parallax.on) {
+                    parallax.px += (parallax.tx - parallax.px) * .045;
+                    parallax.py += (parallax.ty - parallax.py) * .045;
+                    parallax.layers.forEach(l => {
+                        const d = parseFloat(l.dataset.depth) || 0;
+                        l.style.transform = 'translate(' + (parallax.px * d).toFixed(1) + 'px,' + (parallax.py * d * .6).toFixed(1) + 'px)';
+                    });
+                }
+                FX.step(dt);
+                FX.draw();
+            });
+        }
+    </script>
+</body>
+
+</html>
