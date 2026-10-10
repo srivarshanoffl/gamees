@@ -62,9 +62,9 @@ class ThorHammerGame extends GameEngine {
       new Image(),
       new Image()
     ];
-    this.traitorImages[0].src = 'assets/traitor1.jpg';
-    this.traitorImages[1].src = 'assets/traitor2.jpg';
-    this.traitorImages[2].src = 'assets/traitor3.jpg';
+    this.traitorImages[0].src = 'assets/traitor1.png';
+    this.traitorImages[1].src = 'assets/traitor2.png';
+    this.traitorImages[2].src = 'assets/traitor3.png';
 
     this.activeStrikes = [];
     this.groundY = window.innerHeight * 0.82;
@@ -138,6 +138,11 @@ class ThorHammerGame extends GameEngine {
   // ===========================================================================
   reset() {
     this.state = 'PLAYING';
+    this.powerLocked = true;
+    this.powerUnlocked = false;
+    this.civiliansRescued = false;
+    this.intrudersDefeated = false;
+    this.progressionState = 'powerLocked';
     this.missionState = 'SHIELDS_ACTIVE';
     this.terminalOpen = false;
     this.bugSolved = false;
@@ -308,47 +313,57 @@ class ThorHammerGame extends GameEngine {
   }
 
   // ===========================================================================
-  // STAGE 2 — SOLVE THE BUG
+  // STAGE 2 — SOLVE THE BUG & UNLOCK THUNDER
   // ===========================================================================
   solveCodingBug() {
-    if (this.missionState !== 'SHIELDS_ACTIVE' || this.bugSolved) return;
+    if (this.bugSolved) return;
 
     this.bugSolved = true;
+    this.powerLocked = false;
+    this.powerUnlocked = true;
+    this.progressionState = 'powerUnlocked';
     this.missionState = 'REPAIRING';
+
     this.playSound('powerup');
-    this.shake(8, 0.25);
-    this.showToast('BIFROST RESTORED');
+    this.shake(12, 0.35);
+    this.showToast('⚡ THUNDER UNLOCKED');
+
+    // Cinematic burst of electricity around Thor
+    this.spawnLightningStrike(this.thor.x, this.thor.y - 120);
+    this.spawnImpactParticles(this.thor.x, this.thor.y - 80, '#00f0ff', 24);
+    this.spawnImpactParticles(this.thor.x, this.thor.y - 80, '#ffd200', 20);
 
     // Golden & Cyan celebration burst
-    for (let i = 0; i < 28; i++) {
+    for (let i = 0; i < 32; i++) {
       const ang = Math.random() * Math.PI * 2;
-      const spd = Math.random() * 200 + 50;
+      const spd = Math.random() * 220 + 60;
       this.spawnParticle(
-        this.vWidth / 2, this.vHeight / 2,
+        this.thor.x, this.thor.y - 80,
         Math.cos(ang) * spd, Math.sin(ang) * spd,
         Math.random() > 0.5 ? '#ffd200' : '#00f0ff',
-        Math.random() * 4 + 2, 0.55
+        Math.random() * 4 + 2, 0.6
       );
     }
 
     this.updateHUD();
 
-    // Automatically initiate the thunder sequence after a brief confirmation
+    // Automatically initiate the civilian rescue thunder sequence after power restoration burst
     setTimeout(() => {
       this.startThunderSequence();
-    }, 600);
+    }, 750);
   }
 
   // ===========================================================================
   // STAGE 3 — CELESTIAL THUNDER & CIVILIAN EVACUATION
   // ===========================================================================
   startThunderSequence() {
-    if (this.missionState !== 'REPAIRING') return;
+    if (this.civiliansRescued) return;
 
     this.missionState = 'THUNDER_SEQUENCE';
     this.thunderTimer = 0;
     this.playSound('thunder');
     this.shake(16, 0.5);
+    this.showToast('⚡ RESCUING CIVILIANS...');
 
     // Initial massive lightning strikes over captured civilians
     this.civilians.forEach(civ => {
@@ -361,13 +376,15 @@ class ThorHammerGame extends GameEngine {
   }
 
   // ===========================================================================
-  // STAGE 4 — EXPOSE TRAITORS
+  // STAGE 4 — CIVILIANS RESCUED & INTRUDERS EXPOSED
   // ===========================================================================
   startTraitorExposure() {
+    this.civiliansRescued = true;
+    this.progressionState = 'civiliansRescued';
     this.missionState = 'TRAITORS_EXPOSED';
     this.playSound('powerup');
     this.shake(8, 0.25);
-    this.showToast('ALL CIVILIANS SAFE');
+    this.showToast('CIVILIANS SAFE! SMASH INTRUDERS!');
 
     this.traitors.forEach(t => {
       t.vulnerable = true;
@@ -379,7 +396,6 @@ class ThorHammerGame extends GameEngine {
     setTimeout(() => {
       if (this.missionState === 'TRAITORS_EXPOSED') {
         this.missionState = 'COMBAT';
-        this.showToast('ELIMINATE TRAITORS');
         this.updateHUD();
       }
     }, 700);
@@ -544,18 +560,20 @@ class ThorHammerGame extends GameEngine {
     this.checkCombatCollisions(dt);
     this.updateHUD();
 
-    // Check Victory Condition: All traitors eliminated and hammer caught
+    // Check Victory Condition: All intruders eliminated and hammer caught
     const allEliminated = this.traitors.every(t => t.eliminated);
-    if (allEliminated && this.hammer.state === 'IDLE' && this.missionState === 'COMBAT') {
+    if (allEliminated && this.hammer.state === 'IDLE' && (this.missionState === 'COMBAT' || this.progressionState === 'civiliansRescued')) {
+      this.intrudersDefeated = true;
+      this.progressionState = 'intrudersDefeated';
       this.missionState = 'VICTORY';
       this.playSound('victory');
-      this.triggerVictory('All traitors purged with divine thunder! All civilians defended.');
+      this.triggerVictory('All intruders defeated with divine thunder! All civilians rescued.');
     }
   }
 
   // ===========================================================================
   // INPUT & ATTACK HANDLING
-  // Strictly locked until Stage 5 (COMBAT)
+  // Strictly locked until Stage 4 (civiliansRescued & COMBAT)
   // ===========================================================================
   updateInput(dt) {
     if (this.terminalOpen) return;
@@ -567,8 +585,8 @@ class ThorHammerGame extends GameEngine {
       this.aimAngle = Math.atan2(dy, dx);
     }
 
-    // 2. Reject Hammer Attack if not in COMBAT stage
-    if (this.missionState !== 'COMBAT') {
+    // 2. Reject Hammer Attack if civilians not rescued or not in COMBAT stage
+    if (!this.civiliansRescued || this.missionState !== 'COMBAT') {
       this.isCharging = false;
       this.power = 0;
       return;
@@ -586,7 +604,7 @@ class ThorHammerGame extends GameEngine {
   }
 
   throwHammerAtTarget() {
-    if (this.hammer.state !== 'IDLE' || this.missionState !== 'COMBAT') return;
+    if (this.hammer.state !== 'IDLE' || !this.civiliansRescued || this.missionState !== 'COMBAT') return;
 
     this.isCharging = false;
     this.hammer.state = 'THROWN';
@@ -795,12 +813,17 @@ class ThorHammerGame extends GameEngine {
     const primaryBtn = document.getElementById('primaryActionBtn');
 
     if (primaryBtn) {
-      if (this.missionState === 'SHIELDS_ACTIVE') {
+      if (this.progressionState === 'powerLocked' || this.missionState === 'SHIELDS_ACTIVE') {
         primaryBtn.className = 'cinematic-action-btn solve-mode';
         primaryBtn.disabled = false;
-        primaryBtn.innerHTML = '<span>⚡ SOLVE BUG</span>';
+        primaryBtn.innerHTML = '<span>🛠️ DEBUG CODE</span>';
 
-      } else if (this.missionState === 'REPAIRING' || this.missionState === 'THUNDER_SEQUENCE') {
+      } else if (this.progressionState === 'powerUnlocked' && this.missionState === 'REPAIRING') {
+        primaryBtn.className = 'cinematic-action-btn solve-mode';
+        primaryBtn.disabled = false;
+        primaryBtn.innerHTML = '<span>⚡ CALL THUNDER</span>';
+
+      } else if (this.missionState === 'THUNDER_SEQUENCE') {
         primaryBtn.className = 'cinematic-action-btn';
         primaryBtn.disabled = true;
         primaryBtn.innerHTML = '<span>⚡ EVACUATING...</span>';
@@ -810,12 +833,12 @@ class ThorHammerGame extends GameEngine {
         primaryBtn.disabled = true;
         primaryBtn.innerHTML = '<span>🎯 TARGETING...</span>';
 
-      } else if (this.missionState === 'COMBAT') {
+      } else if (this.progressionState === 'civiliansRescued' || this.missionState === 'COMBAT') {
         primaryBtn.className = 'cinematic-action-btn combat-mode';
         primaryBtn.disabled = false;
-        primaryBtn.innerHTML = '<span>⚡ THROW MJÖLNIR</span>';
+        primaryBtn.innerHTML = '<span>🔨 THROW MJÖLNIR</span>';
 
-      } else if (this.missionState === 'VICTORY') {
+      } else if (this.progressionState === 'intrudersDefeated' || this.missionState === 'VICTORY') {
         primaryBtn.className = 'cinematic-action-btn';
         primaryBtn.disabled = true;
         primaryBtn.innerHTML = '<span>✓ REALM SECURED</span>';
@@ -981,7 +1004,12 @@ class ThorHammerGame extends GameEngine {
 
   // Helper to remove black image background so traitor artwork blends seamlessly as transparent sprites
   getFeatheredTraitor(img, w, h) {
-    if (!img._featheredCanvas && img.complete && img.naturalWidth > 0) {
+    if (!img || !img.complete || img.naturalWidth === 0) return null;
+    // Transparent PNG cutouts are drawn directly with full fidelity
+    if (img.src && img.src.includes('.png')) {
+      return img;
+    }
+    if (!img._featheredCanvas) {
       const c = document.createElement('canvas');
       c.width = img.naturalWidth;
       c.height = img.naturalHeight;
@@ -1389,6 +1417,9 @@ class ThorHammerGame extends GameEngine {
   // ===========================================================================
   triggerVictory(message = 'Mission Complete!') {
     this.state = 'VICTORY';
+    this.intrudersDefeated = true;
+    this.progressionState = 'intrudersDefeated';
+    this.missionState = 'VICTORY';
     if (window.soundFX) window.soundFX.victory();
     const overlay = document.getElementById('victoryOverlay');
     const msgEl = document.getElementById('victoryMessage');

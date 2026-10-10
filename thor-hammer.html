@@ -12,6 +12,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/hub.css">
   <link rel="stylesheet" href="css/game.css">
+  <!-- INTENTIONAL CODE DEFECT: BIFROST WARD MATRIX (INSPECT & EDIT IN DEVTOOLS) -->
+  <style id="bifrost-ward-css">
+    /* Asgardian Bifrost Barrier Defenses */
+    .bifrost-ward {
+      position: relative;
+      display: center; /* Defective CSS property value */
+      width: 100%;
+      border-radius: 8px;
+    }
+  </style>
+
   <style>
     * {
       box-sizing: border-box;
@@ -24,6 +35,7 @@
       padding: 0;
       width: 100vw;
       height: 100dvh;
+      min-height: 100svh;
       overflow: hidden;
       background-color: #03050a;
       font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -35,6 +47,7 @@
       inset: 0;
       width: 100vw;
       height: 100dvh;
+      min-height: 100svh;
       max-width: none;
       aspect-ratio: auto;
       border: none;
@@ -42,6 +55,93 @@
       box-shadow: none;
       overflow: hidden;
       background: #03050a;
+    }
+
+    /* CINEMATIC MISSION PANEL AT BOTTOM OF STARTING SCREEN */
+    .cinematic-mission-panel {
+      position: absolute;
+      left: 50%;
+      bottom: clamp(16px, 3vh, 36px);
+      bottom: calc(clamp(16px, 3vh, 36px) + env(safe-area-inset-bottom, 0px));
+      width: min(900px, calc(100% - 32px));
+      transform: translateX(-50%);
+      background: rgba(4, 10, 22, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(0, 240, 255, 0.35);
+      border-radius: 12px;
+      padding: clamp(16px, 2.2vh, 24px) clamp(20px, 3vw, 36px);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.85), 0 0 24px rgba(0, 240, 255, 0.15);
+      z-index: 25;
+      text-align: center;
+      pointer-events: auto;
+      opacity: 1;
+      animation: panelDescend 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.45s ease;
+    }
+
+    @keyframes panelDescend {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -24px);
+      }
+      100% {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+    }
+
+    .cinematic-mission-panel.exiting {
+      opacity: 0 !important;
+      transform: translate(-50%, 28px) !important;
+      pointer-events: none !important;
+    }
+
+    .cinematic-mission-panel.hidden {
+      display: none !important;
+      pointer-events: none !important;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .cinematic-mission-panel {
+        animation: none !important;
+        transition: opacity 0.15s ease !important;
+      }
+      .cinematic-mission-panel.exiting {
+        transform: translate(-50%, 0) !important;
+        opacity: 0 !important;
+      }
+    }
+
+    .mission-heading {
+      margin: 0 0 8px 0;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 900;
+      font-size: clamp(16px, 2vw, 22px);
+      letter-spacing: 2px;
+      color: #00f0ff;
+      text-transform: uppercase;
+      text-shadow: 0 0 16px rgba(0, 240, 255, 0.5);
+    }
+
+    .mission-description {
+      margin: 0 0 10px 0;
+      font-size: clamp(12px, 1.25vw, 15px);
+      line-height: 1.55;
+      color: #cbd5e1;
+    }
+
+    .mission-tagline {
+      margin: 0;
+      font-size: clamp(11px, 1.1vw, 14px);
+      color: #ffd200;
+      letter-spacing: 0.5px;
+    }
+
+    .mission-tagline em {
+      font-style: italic;
+      font-weight: 600;
+      text-shadow: 0 0 12px rgba(255, 210, 0, 0.35);
     }
 
     .canvas-wrapper::after {
@@ -115,6 +215,22 @@
       background: #ffd200;
       color: #03050a;
       box-shadow: 0 10px 32px rgba(255, 210, 0, 0.55);
+    }
+
+    .cinematic-action-btn.continue-mode {
+      background: rgba(0, 240, 255, 0.16);
+      border-color: #00f0ff;
+      color: #00f0ff;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 18px rgba(0, 240, 255, 0.35);
+      font-size: 15px;
+      letter-spacing: 2px;
+    }
+
+    .cinematic-action-btn.continue-mode:hover:not(:disabled) {
+      background: #00f0ff;
+      color: #03050a;
+      box-shadow: 0 10px 32px rgba(0, 240, 255, 0.6);
+      transform: translateY(-2px);
     }
 
     .cinematic-action-btn:disabled {
@@ -494,10 +610,23 @@
   <div class="canvas-wrapper" id="canvasWrapper" style="touch-action: none;">
     <canvas id="gameCanvas"></canvas>
 
+    <!-- LIVE BIFROST WARD MATRIX ELEMENT (FOR DEVTOOLS VERIFICATION) -->
+    <div id="bifrostWard" class="bifrost-ward" style="position: absolute; width:0; height:0; pointer-events: none; opacity:0;"></div>
+
+    <!-- CINEMATIC STORYLINE MISSION PANEL (STARTING SCREEN) -->
+    <div class="cinematic-mission-panel" id="missionPanel">
+      <h3 class="mission-heading">THOR: POWER RESTORATION PROTOCOL</h3>
+      <p class="mission-description">Thor's power has been locked by a hidden code bug, leaving civilians in danger as intruders take over. Debug the broken code to unleash the thunder, rescue the civilians first, and then wield Mjolnir to smash the intruders.</p>
+      <p class="mission-tagline"><em>Restore the thunder. Save the innocent. Strike down the invaders.</em></p>
+    </div>
+
     <!-- DISCREET ESSENTIAL CONTROLS (BOTTOM-RIGHT) -->
-    <div class="fs-controls-container">
-      <button class="cinematic-action-btn solve-mode" id="primaryActionBtn">
-        <span>⚡ SOLVE BUG</span>
+    <div class="fs-controls-container" id="fsControlsContainer">
+      <button class="cinematic-action-btn continue-mode" id="continueBtn">
+        <span>CONTINUE</span>
+      </button>
+      <button class="cinematic-action-btn solve-mode" id="primaryActionBtn" style="display: none;">
+        <span>🛠️ DEBUG CODE</span>
       </button>
     </div>
 
@@ -624,47 +753,107 @@
   <script>
     let game;
     document.addEventListener('DOMContentLoaded', () => {
-      game = new ThorHammerGame();
+      window.game = game = new ThorHammerGame();
       game.start();
-      game.state = 'PLAYING';
+      game.state = 'START';
+      game.progressionState = 'powerLocked';
 
+      // =========================================================================
+      // STARTING SCREEN & CONTINUE BUTTON HANDLER
+      // =========================================================================
+      let isTransitioning = false;
+
+      function handleContinue(e) {
+        if (e && e.stopPropagation) e.stopPropagation();
+        if (isTransitioning) return;
+        isTransitioning = true;
+        window.soundFX.init();
+        window.soundFX.play('click');
+
+        const panel = document.getElementById('missionPanel');
+        const continueBtn = document.getElementById('continueBtn');
+        const primaryActionBtn = document.getElementById('primaryActionBtn');
+
+        if (panel) {
+          panel.classList.add('exiting');
+        }
+
+        if (continueBtn) {
+          continueBtn.style.opacity = '0';
+          continueBtn.style.transform = 'translateY(12px)';
+          continueBtn.style.pointerEvents = 'none';
+        }
+
+        setTimeout(() => {
+          if (panel) {
+            panel.classList.add('hidden');
+            panel.classList.remove('exiting');
+          }
+          if (continueBtn) {
+            continueBtn.style.display = 'none';
+          }
+          if (primaryActionBtn) {
+            primaryActionBtn.style.display = 'inline-flex';
+            primaryActionBtn.style.opacity = '1';
+          }
+          isTransitioning = false;
+
+          if (game) {
+            game.state = 'PLAYING';
+            game.updateHUD();
+          }
+        }, 450);
+      }
+
+      const continueBtn = document.getElementById('continueBtn');
+      if (continueBtn) {
+        continueBtn.addEventListener('click', handleContinue);
+      }
+
+      const startMissionBtn = document.getElementById('startMissionBtn');
+      if (startMissionBtn) {
+        startMissionBtn.addEventListener('click', handleContinue);
+      }
+
+      // =========================================================================
+      // PRIMARY GAMEPLAY ACTION BUTTON
+      // =========================================================================
       const primaryActionBtn = document.getElementById('primaryActionBtn');
       if (primaryActionBtn) {
         primaryActionBtn.addEventListener('click', (e) => {
           e.stopPropagation();
           if (!game) return;
-          if (game.missionState === 'SHIELDS_ACTIVE') {
-            executeAutoSolve();
-          } else if (game.missionState === 'COMBAT') {
+
+          if (game.progressionState === 'powerLocked') {
+            game.openDebugTerminal();
+          } else if (game.progressionState === 'powerUnlocked') {
+            game.startThunderSequence();
+          } else if (game.progressionState === 'civiliansRescued' || game.missionState === 'COMBAT') {
             game.throwHammerAtTarget();
           }
         });
       }
 
-      // Keyboard events
+      // =========================================================================
+      // KEYBOARD ACCESSIBILITY & SHORTCUTS
+      // =========================================================================
       window.addEventListener('keydown', (e) => {
         if (e.code === 'Escape' && game && game.terminalOpen) {
           game.closeDebugTerminal();
+        } else if ((e.code === 'Space' || e.code === 'Enter') && !game.terminalOpen) {
+          const continueBtn = document.getElementById('continueBtn');
+          if (continueBtn && continueBtn.style.display !== 'none' && !isTransitioning) {
+            e.preventDefault();
+            handleContinue();
+          } else if (game && game.progressionState === 'powerUnlocked' && game.missionState === 'REPAIRING') {
+            e.preventDefault();
+            game.startThunderSequence();
+          } else if (game && (game.progressionState === 'civiliansRescued' || game.missionState === 'COMBAT')) {
+            e.preventDefault();
+            game.throwHammerAtTarget();
+          }
         }
       });
-
-      // Start mission button in briefing
-      document.getElementById('startMissionBtn').addEventListener('click', () => {
-        window.soundFX.init();
-        document.getElementById('readyOverlay').classList.add('hidden');
-        game.state = 'PLAYING';
-      });
-
-      // Solve web bug first button in briefing
-      const solveBugFirstBtn = document.getElementById('solveBugFirstBtn');
-      if (solveBugFirstBtn) {
-        solveBugFirstBtn.addEventListener('click', () => {
-          window.soundFX.init();
-          document.getElementById('readyOverlay').classList.add('hidden');
-          game.state = 'PLAYING';
-          game.openDebugTerminal();
-        });
-      }
 
       // Briefing Auto-solve & Commence
       const briefingSolveBugBtn = document.getElementById('briefingSolveBugBtn');
@@ -672,24 +861,47 @@
         briefingSolveBugBtn.addEventListener('click', () => {
           window.soundFX.init();
           document.getElementById('readyOverlay').classList.add('hidden');
-          game.state = 'PLAYING';
-          executeAutoSolve();
+          handleContinue();
+          applyBugFixSuccess();
         });
       }
 
-      // Victory Restart
+      // Victory Restart Button
       const victoryRestartBtn = document.getElementById('victoryRestartBtn');
       if (victoryRestartBtn) {
         victoryRestartBtn.addEventListener('click', () => {
           document.getElementById('victoryOverlay').classList.add('hidden');
           resetTerminalUI();
           game.reset();
-          game.state = 'PLAYING';
+          game.state = 'START';
+
+          // Restore Bifrost live CSS defect for the new session
+          const styleEl = document.getElementById('bifrost-ward-css');
+          if (styleEl) {
+            styleEl.textContent = '/* Asgardian Bifrost Barrier Defenses */\n.bifrost-ward {\n  position: relative;\n  display: center;\n  width: 100%;\n  border-radius: 8px;\n}';
+          }
+
+          // Return cleanly to starting screen with mission panel and CONTINUE button
+          const panel = document.getElementById('missionPanel');
+          const continueBtn = document.getElementById('continueBtn');
+          const primaryActionBtn = document.getElementById('primaryActionBtn');
+          if (panel) {
+            panel.classList.remove('hidden', 'exiting');
+          }
+          if (continueBtn) {
+            continueBtn.style.display = 'inline-flex';
+            continueBtn.style.opacity = '1';
+            continueBtn.style.transform = '';
+            continueBtn.style.pointerEvents = 'auto';
+          }
+          if (primaryActionBtn) {
+            primaryActionBtn.style.display = 'none';
+          }
         });
       }
 
       // =========================================================================
-      // INTERACTIVE DEBUGGING TERMINAL LOGIC
+      // INTERACTIVE DEBUGGING TERMINAL & DEVTOOLS BUG OBSERVATION
       // =========================================================================
       let selectedLine = null;
       let selectedFix = null;
@@ -721,6 +933,70 @@
           codeLine4Val.style.color = '#f59e0b';
         }
       }
+
+      function applyBugFixSuccess() {
+        if (!game || game.bugSolved) return;
+        window.soundFX.init();
+
+        // Update live stylesheet so DevTools reflects valid CSS
+        const styleEl = document.getElementById('bifrost-ward-css');
+        if (styleEl && !/display\s*:\s*flex\b/i.test(styleEl.textContent)) {
+          styleEl.textContent = styleEl.textContent.replace(/display\s*:\s*center/i, 'display: flex');
+        }
+
+        // Update terminal visual editor
+        if (codeLine4Val) {
+          codeLine4Val.textContent = 'flex';
+          codeLine4Val.style.color = '#00ff88';
+        }
+        if (verifyPatchBtn) {
+          verifyPatchBtn.disabled = true;
+          verifyPatchBtn.textContent = '✓ BUG FIXED';
+        }
+        if (terminalStatusMsg) {
+          terminalStatusMsg.className = 'terminal-status-msg success';
+          terminalStatusMsg.innerHTML = '⚡ <b>BUG FIXED!</b> <code>display: flex;</code> deployed! Celestial Thunder unlocked!';
+        }
+
+        // Trigger Thor power restoration sequence
+        game.solveCodingBug();
+
+        setTimeout(() => {
+          if (game) game.closeDebugTerminal();
+        }, 700);
+      }
+
+      // Real Developer Tools live inspection observer
+      function checkDevToolsFix() {
+        if (!game || game.bugSolved || game.progressionState !== 'powerLocked') return;
+        const styleEl = document.getElementById('bifrost-ward-css');
+        const testEl = document.getElementById('bifrostWard');
+        let fixed = false;
+
+        if (styleEl) {
+          const cssCode = styleEl.textContent.replace(/\/\*[\s\S]*?\*\//g, '');
+          if (/display\s*:\s*flex\b/i.test(cssCode)) {
+            fixed = true;
+          }
+        }
+        if (testEl && window.getComputedStyle(testEl).display === 'flex') {
+          fixed = true;
+        }
+
+        if (fixed) {
+          applyBugFixSuccess();
+        }
+      }
+
+      const styleEl = document.getElementById('bifrost-ward-css');
+      if (styleEl && window.MutationObserver) {
+        const observer = new MutationObserver(() => checkDevToolsFix());
+        observer.observe(styleEl, { childList: true, characterData: true, subtree: true });
+      }
+      setInterval(checkDevToolsFix, 500);
+
+      window.fixThorBug = applyBugFixSuccess;
+      window.solveCodingBug = applyBugFixSuccess;
 
       // Code line click handling
       codeLines.forEach(lineEl => {
@@ -773,24 +1049,7 @@
       verifyPatchBtn.addEventListener('click', () => {
         window.soundFX.init();
         if (selectedLine === 4 && selectedFix === 'flex') {
-          terminalStatusMsg.className = 'terminal-status-msg success';
-          terminalStatusMsg.innerHTML = '✓ BUG FIXED! <code>display: flex;</code> deployed! Celestial Thunder incoming!';
-          verifyPatchBtn.disabled = true;
-          verifyPatchBtn.textContent = '✓ BUG FIXED';
-          if (codeLine4Val) {
-            codeLine4Val.textContent = 'flex';
-            codeLine4Val.style.color = '#00ff88';
-          }
-          window.soundFX.play('collect');
-
-          if (game) {
-            game.solveCodingBug();
-          }
-
-          setTimeout(() => {
-            if (game) game.closeDebugTerminal();
-          }, 900);
-
+          applyBugFixSuccess();
         } else {
           terminalStatusMsg.className = 'terminal-status-msg error';
           if (selectedLine !== 4) {
@@ -810,51 +1069,22 @@
         });
       }
 
-      // Auto solve logic
-      function executeAutoSolve() {
-        window.soundFX.init();
-        selectedLine = 4;
-        selectedFix = 'flex';
-        if (selectedLineNumSpan) selectedLineNumSpan.textContent = 4;
-        codeLines.forEach(l => l.classList.remove('selected'));
-        const line4El = document.querySelector('.code-line[data-line="4"]');
-        if (line4El) line4El.classList.add('selected');
-        if (fixSelectionArea) fixSelectionArea.style.display = 'flex';
-        fixOptionBtns.forEach(b => {
-          b.classList.toggle('active', b.getAttribute('data-fix') === 'flex');
-        });
-
-        if (codeLine4Val) {
-          codeLine4Val.textContent = 'flex';
-          codeLine4Val.style.color = '#00ff88';
-        }
-        if (verifyPatchBtn) {
-          verifyPatchBtn.disabled = true;
-          verifyPatchBtn.textContent = '✓ BUG FIXED';
-        }
-        if (terminalStatusMsg) {
-          terminalStatusMsg.className = 'terminal-status-msg success';
-          terminalStatusMsg.innerHTML = '⚡ <b>BUG FIXED!</b> <code>display: flex;</code> deployed! Celestial Thunder incoming!';
-        }
-        window.soundFX.play('powerup');
-
-        if (game) {
-          game.solveCodingBug();
-          setTimeout(() => {
-            game.closeDebugTerminal();
-          }, 500);
-        }
-      }
-
+      // In-terminal auto-solve button
       const terminalSolveBtn = document.getElementById('terminalSolveBtn');
       if (terminalSolveBtn) {
-        terminalSolveBtn.addEventListener('click', executeAutoSolve);
+        terminalSolveBtn.addEventListener('click', () => {
+          selectedLine = 4;
+          selectedFix = 'flex';
+          applyBugFixSuccess();
+        });
       }
 
-      // Shortcut keys: 'B' or 'S' to auto-solve for quick testing
+      // Shortcut keys: 'B' or 'S' to auto-solve for quick verification
       window.addEventListener('keydown', (e) => {
-        if ((e.code === 'KeyB' || e.code === 'KeyS') && !e.ctrlKey && !e.metaKey && game && game.missionState === 'SHIELDS_ACTIVE') {
-          executeAutoSolve();
+        if ((e.code === 'KeyB' || e.code === 'KeyS') && !e.ctrlKey && !e.metaKey && game && game.progressionState === 'powerLocked') {
+          selectedLine = 4;
+          selectedFix = 'flex';
+          applyBugFixSuccess();
         }
       });
     });
