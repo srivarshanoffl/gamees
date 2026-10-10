@@ -34,6 +34,30 @@ class SoundFX {
     return this.muted;
   }
 
+  play(name) {
+    if (typeof this[name] === 'function') {
+      try { this[name](); } catch (e) {}
+    }
+  }
+
+  click() {
+    if (this.muted || !this.ctx) return;
+    try {
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(800, t);
+      osc.frequency.exponentialRampToValueAtTime(400, t + 0.04);
+      gain.gain.setValueAtTime(0.15, t);
+      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.04);
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(t);
+      osc.stop(t + 0.05);
+    } catch (e) {}
+  }
+
   // Spider-Man Web Thwip
   thwip() {
     if (this.muted || !this.ctx) return;

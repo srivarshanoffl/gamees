@@ -1,14 +1,23 @@
 /**
  * thor-hammer.js
- * MJOLNIR RETURN — SHADOW REALM & DYNAMIC ILLUMINATION V4
+ * MJOLNIR RETURN — HIGH-FIDELITY WEB DEBUGGING GAMEPLAY
  * 
- * New Gameplay & Visual Mechanic:
- * - Environment is shrouded in atmospheric pitch-black darkness.
- * - Sinister glowing eyes of Frost Giants pierce the shadows.
- * - When Mjolnir is hurled, divine lightning radiates from the hammer,
- *   dynamically illuminating the entire arena as it flies.
- * - Targets are completely static for clean, strategic precision aiming.
- * - Smashes targets on both the outgoing and returning paths.
+ * Correct Progression:
+ *   SOLVE WEB BUG
+ *        ↓
+ *   UNLOCK THUNDER POWER
+ *        ↓
+ *   PRESS THUNDER BUTTON
+ *        ↓
+ *   REVEAL CIVILIANS AND CREATURES FOR 30 SECONDS
+ *        ↓
+ *   THROW MJOLNIR AT CREATURES
+ *        ↓
+ *   DEFEAT CREATURES
+ *        ↓
+ *   THUNDER REVEAL EXPIRES
+ *        ↓
+ *   PRESS THUNDER AGAIN WHEN READY
  */
 
 class ThorHammerGame extends GameEngine {
@@ -16,9 +25,9 @@ class ThorHammerGame extends GameEngine {
     super('gameCanvas');
     this.gameId = 'thorhammer';
     this.groundY = 460;
-    this.bgColor = '#03050a'; // Deep mystical pitch darkness
-    
-    // Create light mask offscreen canvas for dynamic 2D illumination
+    this.bgColor = '#03050a';
+
+    // Offscreen illumination mask canvas for dynamic 2D lighting
     try {
       if (typeof document !== 'undefined' && document.createElement) {
         this.lightCanvas = document.createElement('canvas');
@@ -30,14 +39,26 @@ class ThorHammerGame extends GameEngine {
       this.lightCanvas = null;
       this.lightCtx = null;
     }
-    
-    this.thunderCooldown = 0;
-    this.thunderMaxCooldown = 5.0;
-    this.thunderActiveTimer = 0;
-    this.civilianCasualties = 0;
-    this.maxCasualties = 1;
-    this.civilians = [];
-    
+
+    // Atmospheric stormy rain mist
+    this.ambientStorm = [];
+    for (let i = 0; i < 48; i++) {
+      this.ambientStorm.push({
+        x: Math.random() * 960,
+        y: Math.random() * 540,
+        speedX: -75 - Math.random() * 50,
+        speedY: 190 + Math.random() * 110,
+        len: Math.random() * 14 + 8,
+        alpha: Math.random() * 0.35 + 0.15
+      });
+    }
+
+    // Realistic Thor character image asset
+    this.thorImg = new Image();
+    const isSubdir = typeof window !== 'undefined' && window.location.pathname.includes('/games/');
+    this.thorImg.src = isSubdir ? '../assets/thor.png' : 'assets/thor.png';
+
+    this.activeStrikes = [];
     this.reset();
   }
 
@@ -49,58 +70,29 @@ class ThorHammerGame extends GameEngine {
     } catch (e) {}
   }
 
-  triggerThunder() {
-    if (this.state !== 'PLAYING') return;
-    if (this.thunderCooldown > 0) return;
-
-    this.thunderCooldown = this.thunderMaxCooldown;
-    this.thunderActiveTimer = 2.4; // Illuminates darkness and exposes civilians for 2.4 seconds
-    this.shake(12, 0.35);
-    this.playSound('thunder');
-    this.spawnComicText("KRAKK-THOOM!", 480, 140, '#ffd200');
-
-    // Reveal innocent civilians briefly during thunder!
-    for (const civ of this.civilians) {
-      if (civ.active) {
-        this.spawnComicText("HELP!", civ.x, civ.y - 45, '#00ff88');
-      }
-    }
-    this.spawnScorePopup("INNOCENTS EXPOSED!", 480, 190, '#00ff88');
-
-    // Spawn celestial sparks across the sky
-    for (let i = 0; i < 35; i++) {
-      this.spawnParticle(
-        Math.random() * 960,
-        Math.random() * 460,
-        (Math.random() - 0.5) * 220,
-        (Math.random() - 0.5) * 220,
-        Math.random() > 0.4 ? '#00f0ff' : '#ffd200',
-        Math.random() * 4 + 2,
-        0.5
-      );
-    }
-  }
-
   reset() {
-    this.stage = 1;
-    this.maxStages = 5;
+    this.stage = 2;
+    this.maxStages = 2;
     this.score = 0;
-    
-    this.setupLevel(this.stage);
+    this.setupLevel(2);
   }
 
-  setupLevel(levelIndex) {
+  setupLevel(levelIndex = 2) {
     this.state = 'PLAYING';
-    
+    this.stage = 2;
+    this.terminalOpen = false;
+
+    // Thor character position & state
     this.thor = {
       x: 120,
       y: this.groundY,
-      handX: 145,
-      handY: this.groundY - 72,
+      handX: 148,
+      handY: this.groundY - 65,
       hp: 100,
       maxHp: 100
     };
 
+    // Mjolnir hammer state
     this.hammer = {
       state: 'IDLE', // 'IDLE', 'THROWN', 'RETURNING'
       x: this.thor.handX,
@@ -112,77 +104,62 @@ class ThorHammerGame extends GameEngine {
       speed: 0,
       maxRange: 1300,
       distanceTraveled: 0,
-      radius: 20,
+      radius: 18,
       rotation: 0
     };
 
     this.power = 0;
     this.isCharging = false;
     this.aimAngle = 0;
-
-    this.targets = [];
-    this.obstacles = [];
-    this.runes = [];
-    this.particles = [];
-    this.civilians = [];
-    this.civilianCasualties = 0;
-    this.thunderActiveTimer = 0;
-    this.thunderCooldown = 0;
     this.lightningTimer = 0;
-    
-    // LEVEL DESIGNS: TARGETS & INNOCENT CIVILIANS TO PROTECT (INVISIBLE UNTIL THUNDER)
-    if (levelIndex === 1) {
-      // Level 1: Solitary Frost Giant Sentinel + 1 innocent villager on the ground
-      this.targets.push({ x: 720, y: 360, r: 32, type: 'minion', hp: 1, maxHp: 1, active: true, hitTimer: 0 });
-      this.runes.push({ x: 440, y: 370, r: 18, collected: false });
-      this.civilians.push({ x: 460, y: 440, r: 20, active: true, name: 'Villager', revealed: false });
 
-    } else if (levelIndex === 2) {
-      // Level 2: Three static minions in defensive triangle + 1 Asgardian right in the middle
-      this.targets.push({ x: 520, y: 240, r: 28, type: 'minion', hp: 1, maxHp: 1, active: true, hitTimer: 0 });
-      this.targets.push({ x: 680, y: 380, r: 28, type: 'minion', hp: 1, maxHp: 1, active: true, hitTimer: 0 });
-      this.targets.push({ x: 820, y: 180, r: 28, type: 'minion', hp: 1, maxHp: 1, active: true, hitTimer: 0 });
-      this.runes.push({ x: 600, y: 180, r: 18, collected: false });
-      this.civilians.push({ x: 630, y: 280, r: 20, active: true, name: 'Asgardian', revealed: false });
+    this.particles = [];
+    this.activeStrikes = [];
 
-    } else if (levelIndex === 3) {
-      // Level 3: Breakable Wall, backline targets, and 2 trapped civilians
-      this.obstacles.push({ x: 460, y: 160, w: 36, h: 260, hp: 1, maxHp: 1, active: true });
-      this.targets.push({ x: 660, y: 120, r: 28, type: 'minion', hp: 1, maxHp: 1, active: true, hitTimer: 0 });
-      this.targets.push({ x: 660, y: 400, r: 28, type: 'minion', hp: 1, maxHp: 1, active: true, hitTimer: 0 });
-      this.targets.push({ x: 840, y: 260, r: 30, type: 'minion', hp: 1, maxHp: 1, active: true, hitTimer: 0 });
-      this.runes.push({ x: 760, y: 140, r: 18, collected: false });
-      this.civilians.push({ x: 560, y: 260, r: 20, active: true, name: 'Scholar', revealed: false });
-      this.civilians.push({ x: 740, y: 390, r: 20, active: true, name: 'Villager', revealed: false });
+    // =========================================================================
+    // 1. WEB BUG & THUNDER UNLOCK STATE
+    // =========================================================================
+    this.bugSolved = false;         // Locked until CSS syntax error is patched
+    this.thunderUnlocked = false;   // Unlocked exactly once when bug is solved
 
-    } else if (levelIndex === 4) {
-      // Level 4: Four static frost giants with 2 innocents caught in the crossfire
-      this.targets.push({ x: 480, y: 180, r: 28, type: 'minion', hp: 1, maxHp: 1, active: true, hitTimer: 0 });
-      this.targets.push({ x: 640, y: 350, r: 28, type: 'minion', hp: 1, maxHp: 1, active: true, hitTimer: 0 });
-      this.targets.push({ x: 750, y: 140, r: 28, type: 'minion', hp: 1, maxHp: 1, active: true, hitTimer: 0 });
-      this.targets.push({ x: 860, y: 300, r: 28, type: 'minion', hp: 1, maxHp: 1, active: true, hitTimer: 0 });
-      this.runes.push({ x: 570, y: 380, r: 18, collected: false });
-      this.runes.push({ x: 760, y: 120, r: 18, collected: false });
-      this.civilians.push({ x: 580, y: 190, r: 20, active: true, name: 'Elder', revealed: false });
-      this.civilians.push({ x: 700, y: 260, r: 20, active: true, name: 'Priest', revealed: false });
+    // =========================================================================
+    // 2. 30-SECOND REVEAL STATE
+    // =========================================================================
+    this.isRevealed = false;        // Civilians and creatures 100% invisible when false
+    this.revealTimer = 0;           // Counts down from 30.0s to 0.0s
+    this.revealDuration = 30.0;     // Exactly 30 seconds
+    this.thunderActiveTimer = 0;    // Environmental flash duration on strike
 
-    } else if (levelIndex === 5) {
-      // Level 5: Throne Room — Frost Giant Lord, bodyguards, and 2 chained captives
-      this.obstacles.push({ x: 420, y: 220, w: 32, h: 90, hp: 1, maxHp: 1, active: true });
-      this.targets.push({ x: 560, y: 150, r: 24, type: 'minion', hp: 1, maxHp: 1, active: true, hitTimer: 0 });
-      this.targets.push({ x: 560, y: 360, r: 24, type: 'minion', hp: 1, maxHp: 1, active: true, hitTimer: 0 });
-      this.targets.push({ x: 800, y: 260, r: 52, type: 'boss', hp: 4, maxHp: 4, active: true, hitTimer: 0 });
-      this.runes.push({ x: 700, y: 100, r: 18, collected: false });
-      this.runes.push({ x: 700, y: 420, r: 18, collected: false });
-      this.civilians.push({ x: 640, y: 260, r: 20, active: true, name: 'Captive', revealed: false });
-      this.civilians.push({ x: 770, y: 140, r: 20, active: true, name: 'Captive', revealed: false });
-    }
+    // =========================================================================
+    // 3. PERSISTENT HOSTILE CREATURES
+    // Invisibility does not remove them from the world; positions never regenerate
+    // =========================================================================
+    this.creatures = [
+      { id: 'c1', name: 'Glitch Corruptor', x: 490, y: 220, r: 26, hp: 1, maxHp: 1, defeated: false, type: 'minion', hitTimer: 0, fade: 0 },
+      { id: 'c2', name: 'Frost Bot Stalker', x: 670, y: 370, r: 28, hp: 1, maxHp: 1, defeated: false, type: 'minion', hitTimer: 0, fade: 0 },
+      { id: 'c3', name: 'Cyber Void Drake', x: 820, y: 170, r: 28, hp: 1, maxHp: 1, defeated: false, type: 'minion', hitTimer: 0, fade: 0 },
+      { id: 'c4', name: 'Glitch Titan Lord', x: 790, y: 380, r: 36, hp: 2, maxHp: 2, defeated: false, type: 'boss', hitTimer: 0, fade: 0 }
+    ];
 
-    // Default aim towards first target
-    const firstTarget = this.targets[0];
-    if (firstTarget) {
-      const dx = firstTarget.x - this.thor.handX;
-      const dy = firstTarget.y - this.thor.handY;
+    // =========================================================================
+    // 4. PERSISTENT INNOCENT CIVILIANS
+    // Never attack targets! Zero damage, zero points, safe always
+    // =========================================================================
+    this.civilians = [
+      { id: 'civ1', name: 'Lady Sigrid (Healer)', x: 390, y: 390, r: 22, tunicColor: '#1e824c', hairColor: '#5c3a21', fade: 0, shieldGlow: 0 },
+      { id: 'civ2', name: 'Asgardian Scholar', x: 610, y: 190, r: 22, tunicColor: '#2980b9', hairColor: '#d35400', fade: 0, shieldGlow: 0 },
+      { id: 'civ3', name: 'Realm Villager', x: 880, y: 280, r: 22, tunicColor: '#8e44ad', hairColor: '#f39c12', fade: 0, shieldGlow: 0 }
+    ];
+
+    // Bonus Collectible Rune
+    this.runes = [
+      { x: 540, y: 130, r: 18, collected: false }
+    ];
+
+    // Aim initially towards first creature
+    if (this.creatures[0]) {
+      const dx = this.creatures[0].x - this.thor.handX;
+      const dy = this.creatures[0].y - this.thor.handY;
       this.aimAngle = Math.atan2(dy, dx);
     }
 
@@ -190,101 +167,298 @@ class ThorHammerGame extends GameEngine {
   }
 
   nextLevel() {
-    this.stage++;
-    if (this.stage > this.maxStages) {
-      this.triggerVictory('SHADOW REALM PURIFIED');
-    } else {
-      this.setupLevel(this.stage);
-    }
+    this.triggerVictory('ALL CREATURES DEFEATED — ASGARD DEFENDED!');
   }
 
   resetLevel() {
-    this.setupLevel(this.stage);
+    this.setupLevel(2);
   }
 
+  // ===========================================================================
+  // DEBUG TERMINAL INTERACTION
+  // ===========================================================================
+  openDebugTerminal() {
+    this.terminalOpen = true;
+    const overlay = document.getElementById('debugTerminalOverlay');
+    if (overlay) {
+      overlay.classList.remove('hidden');
+    }
+    this.playSound('click');
+  }
+
+  closeDebugTerminal() {
+    this.terminalOpen = false;
+    const overlay = document.getElementById('debugTerminalOverlay');
+    if (overlay) {
+      overlay.classList.add('hidden');
+    }
+  }
+
+  // Called when the player genuinely selects Line 4 and deploys 'display: flex;'
+  solveCodingBug() {
+    if (this.bugSolved) return;
+
+    this.bugSolved = true;
+    this.thunderUnlocked = true;
+
+    // Award Bug Solving Score
+    this.score += 500;
+    this.playSound('powerup');
+    this.shake(8, 0.25);
+    this.spawnScorePopup("+500 CSS BUG FIXED!", 480, 180, '#00ff88');
+    this.spawnComicText("THUNDER UNLOCKED!", 480, 140, '#ffd200');
+
+    // Golden & Cyan celebration burst
+    for (let i = 0; i < 28; i++) {
+      const ang = Math.random() * Math.PI * 2;
+      const spd = Math.random() * 200 + 40;
+      this.spawnParticle(
+        480, 160,
+        Math.cos(ang) * spd, Math.sin(ang) * spd,
+        Math.random() > 0.5 ? '#ffd200' : '#00f0ff',
+        Math.random() * 4 + 2, 0.55
+      );
+    }
+
+    this.updateHUD();
+  }
+
+  // ===========================================================================
+  // THUNDER ACTIVATION — REVEALS ENTITIES FOR EXACTLY 30 SECONDS
+  // ===========================================================================
+  triggerThunder() {
+    if (this.state !== 'PLAYING' || this.terminalOpen) return;
+
+    // Rule 2: Thunder is unavailable before the bug is solved
+    if (!this.thunderUnlocked) {
+      this.playSound('hit');
+      this.shake(5, 0.15);
+      this.spawnComicText("LOCKED!", this.thor.x + 30, this.thor.y - 80, '#ff1744');
+      this.openDebugTerminal();
+      return;
+    }
+
+    // Rule 4: Prevent overlapping timers and duplicate reveal sequences
+    if (this.isRevealed) {
+      return;
+    }
+
+    // Activate 30-Second Reveal Window
+    this.isRevealed = true;
+    this.revealTimer = this.revealDuration; // Exactly 30 seconds
+    this.thunderActiveTimer = 0.8;           // Brief intense environmental illumination flash
+    this.shake(14, 0.35);
+    this.playSound('thunder');
+
+    // Spawn powerful blue-white procedural branched lightning strikes
+    this.spawnLightningStrike(380, 240);
+    this.spawnLightningStrike(660, 280);
+    this.spawnLightningStrike(820, 220);
+
+    this.spawnComicText("THUNDER REVEAL!", 480, 80, '#00f0ff');
+
+    // Burst of lightning crackles around all revealed living creatures
+    for (const c of this.creatures) {
+      if (!c.defeated) {
+        this.spawnImpactParticles(c.x, c.y, '#00f0ff', 10);
+      }
+    }
+    // Protective green shimmer around innocent civilians
+    for (const civ of this.civilians) {
+      this.spawnImpactParticles(civ.x, civ.y, '#00ff88', 8);
+    }
+
+    this.updateHUD();
+  }
+
+  spawnLightningStrike(x, y) {
+    const segments = [];
+    const startX = x + (Math.random() - 0.5) * 60;
+    const startY = -20;
+
+    segments.push({ x: startX, y: startY });
+    let currX = startX;
+    let currY = startY;
+    const steps = 10;
+    const dy = (y - startY) / steps;
+
+    for (let i = 1; i < steps; i++) {
+      currY += dy;
+      currX += (x - currX) * 0.25 + (Math.random() - 0.5) * 55;
+      segments.push({ x: currX, y: currY });
+    }
+    segments.push({ x: x, y: y });
+
+    // Procedural side branches
+    const branches = [];
+    for (let i = 2; i < steps - 1; i += 2) {
+      const bSeg = [];
+      let bx = segments[i].x;
+      let by = segments[i].y;
+      const branchDir = Math.random() > 0.5 ? 1 : -1;
+      for (let j = 0; j < 3; j++) {
+        bx += (Math.random() * 30 + 15) * branchDir;
+        by += Math.random() * 25 + 12;
+        bSeg.push({ x: bx, y: by });
+      }
+      branches.push({ from: segments[i], path: bSeg });
+    }
+
+    this.activeStrikes.push({
+      x: x,
+      y: y,
+      segments: segments,
+      branches: branches,
+      timer: 0.35,
+      maxTimer: 0.35
+    });
+
+    // Impact sparks on ground
+    this.spawnImpactParticles(x, y, '#00f0ff', 14);
+    this.spawnImpactParticles(x, y, '#ffffff', 8);
+  }
+
+  spawnImpactParticles(x, y, color, count = 16) {
+    for (let i = 0; i < count; i++) {
+      const ang = Math.random() * Math.PI * 2;
+      const spd = Math.random() * 240 + 40;
+      this.spawnParticle(
+        x, y,
+        Math.cos(ang) * spd, Math.sin(ang) * spd,
+        color, Math.random() * 4 + 2, 0.4
+      );
+    }
+  }
+
+  // ===========================================================================
+  // GAME UPDATE LOOP
+  // ===========================================================================
   update(dt) {
     if (this.state !== 'PLAYING') return;
 
-    if (this.thunderCooldown > 0) {
-      this.thunderCooldown = Math.max(0, this.thunderCooldown - dt);
-    }
+    this.lightningTimer += dt;
+
     if (this.thunderActiveTimer > 0) {
       this.thunderActiveTimer = Math.max(0, this.thunderActiveTimer - dt);
     }
 
+    // 30-Second Countdown logic
+    if (this.isRevealed) {
+      this.revealTimer = Math.max(0, this.revealTimer - dt);
+      if (this.revealTimer <= 0) {
+        // 30 seconds expired: Hide all entities again, preserve defeated creatures
+        this.isRevealed = false;
+        this.revealTimer = 0;
+        this.playSound('shieldBounce');
+        this.spawnComicText("REVEAL EXPIRED!", 480, 100, '#ff9900');
+      }
+    }
+
+    // Smooth visibility fade transitions for creatures and civilians
+    for (const c of this.creatures) {
+      if (this.isRevealed && !c.defeated) {
+        c.fade = Math.min(1.0, c.fade + dt * 4.0);
+      } else {
+        c.fade = Math.max(0.0, c.fade - dt * 4.0);
+      }
+      if (c.hitTimer > 0) c.hitTimer -= dt;
+    }
+
+    for (const civ of this.civilians) {
+      if (this.isRevealed) {
+        civ.fade = Math.min(1.0, civ.fade + dt * 4.0);
+      } else {
+        civ.fade = Math.max(0.0, civ.fade - dt * 4.0);
+      }
+      if (civ.shieldGlow > 0) {
+        civ.shieldGlow = Math.max(0, civ.shieldGlow - dt * 2.5);
+      }
+    }
+
+    // Ambient storm weather animation
+    for (const drop of this.ambientStorm) {
+      drop.x += drop.speedX * dt;
+      drop.y += drop.speedY * dt;
+      if (drop.y > 540) {
+        drop.y = -10;
+        drop.x = Math.random() * 960 + 100;
+      }
+      if (drop.x < 0) {
+        drop.x = 960;
+      }
+    }
+
+    // Active lightning strikes decay
+    for (let i = this.activeStrikes.length - 1; i >= 0; i--) {
+      this.activeStrikes[i].timer -= dt;
+      if (this.activeStrikes[i].timer <= 0) {
+        this.activeStrikes.splice(i, 1);
+      }
+    }
+
+    // Input & Mjolnir update
     this.updateInput(dt);
     this.updateHammer(dt);
-    this.updateTargets(dt);
     this.checkCollisions(dt);
     this.updateHUD();
-    
-    // Check win condition
-    if (this.hammer.state === 'IDLE' && this.targets.every(t => !t.active)) {
+
+    // Check Victory Condition: All creatures defeated and hammer returned
+    const allDefeated = this.creatures.every(c => c.defeated);
+    if (allDefeated && this.hammer.state === 'IDLE' && !this.terminalOpen) {
       this.state = 'STAGE_CLEAR';
       this.playSound('victory');
-      
-      const overlay = document.getElementById('levelCompleteOverlay');
-      if (overlay) {
-        document.getElementById('levelCompleteScore').textContent = `Score: ${this.score}`;
-        if (this.stage === this.maxStages) {
-          this.triggerVictory();
-        } else {
-          overlay.classList.remove('hidden');
-        }
-      }
+      this.triggerVictory('ALL CREATURES DEFEATED — ASGARD DEFENDED!');
     }
   }
 
   updateInput(dt) {
+    if (this.terminalOpen) return;
+
     const powerMeterEl = document.getElementById('powerMeterContainer');
     const powerFillEl = document.getElementById('powerMeterFill');
 
-    // 1. DYNAMIC AIMING: Continuously track mouse or touch cursor
+    // 1. Aiming angle calculation
     if (this.pointer && (this.pointer.x > 0 || this.pointer.y > 0)) {
       const dx = Math.max(35, this.pointer.x - this.thor.handX);
       const dy = this.pointer.y - this.thor.handY;
       this.aimAngle = Math.atan2(dy, dx);
     }
 
-    // 2. CHARGE & THROW LOGIC
+    // 2. Throw Mjolnir (Charge & Release)
     if (this.hammer.state === 'IDLE') {
       if (this.pointer.isDown) {
         this.isCharging = true;
-        this.power = Math.min(1.0, this.power + dt * 2.0);
-        
+        this.power = Math.min(1.0, this.power + dt * 1.6);
+
         if (powerMeterEl) powerMeterEl.classList.add('active');
         if (powerFillEl) powerFillEl.style.width = `${Math.round(this.power * 100)}%`;
-        
       } else if (this.isCharging && (this.pointer.justReleased || !this.pointer.isDown)) {
-        // EXECUTE THROW!
         this.isCharging = false;
         if (powerMeterEl) powerMeterEl.classList.remove('active');
-        
+
         this.hammer.state = 'THROWN';
         this.hammer.prevX = this.hammer.x;
         this.hammer.prevY = this.hammer.y;
         this.hammer.distanceTraveled = 0;
-        
-        // Fast, high-impact throw speed
-        const speed = 1050 + (this.power * 550);
-        this.hammer.maxRange = 1300; // Across full arena
-        
+
+        const speed = 1100 + (this.power * 600);
+        this.hammer.maxRange = 1300;
+
         this.hammer.vx = Math.cos(this.aimAngle) * speed;
         this.hammer.vy = Math.sin(this.aimAngle) * speed;
-        
+
         this.shake(5, 0.18);
         this.playSound('thwip');
-        
-        // Thunder burst at Thor's hand
-        for (let i = 0; i < 14; i++) {
+
+        for (let i = 0; i < 12; i++) {
           const ang = Math.random() * Math.PI * 2;
           this.spawnParticle(
             this.hammer.x, this.hammer.y,
-            Math.cos(ang) * 150, Math.sin(ang) * 150,
+            Math.cos(ang) * 140, Math.sin(ang) * 140,
             '#00f0ff', Math.random() * 3 + 2, 0.35
           );
         }
-        
+
         this.power = 0;
       }
     } else {
@@ -294,25 +468,23 @@ class ThorHammerGame extends GameEngine {
 
   updateHammer(dt) {
     if (this.hammer.state === 'IDLE') {
-      // Hover in Thor's ready hand
-      this.lightningTimer += dt;
       this.hammer.x = this.thor.handX;
       this.hammer.y = this.thor.handY + Math.sin(this.lightningTimer * 4) * 4;
       this.hammer.prevX = this.hammer.x;
       this.hammer.prevY = this.hammer.y;
       this.hammer.rotation = 0;
-      
+
     } else if (this.hammer.state === 'THROWN') {
       const stepDist = Math.hypot(this.hammer.vx, this.hammer.vy) * dt;
       this.hammer.prevX = this.hammer.x;
       this.hammer.prevY = this.hammer.y;
-      
+
       this.hammer.x += this.hammer.vx * dt;
       this.hammer.y += this.hammer.vy * dt;
       this.hammer.distanceTraveled += stepDist;
-      this.hammer.rotation += dt * 28; // Spin
-      
-      // Ricochet off ceiling and ground
+      this.hammer.rotation += dt * 30;
+
+      // Arena boundary bounces
       if (this.hammer.y <= 25 && this.hammer.vy < 0) {
         this.hammer.y = 25;
         this.hammer.vy = -this.hammer.vy;
@@ -324,46 +496,44 @@ class ThorHammerGame extends GameEngine {
         this.shake(3, 0.1);
         this.playSound('hit');
       }
-      
-      // Radiant electric lightning particles
+
+      // Electric spark trail
       this.spawnParticle(
-        this.hammer.x + (Math.random() - 0.5) * 20, 
-        this.hammer.y + (Math.random() - 0.5) * 20, 
-        -this.hammer.vx * 0.08 + (Math.random() - 0.5) * 30, 
-        -this.hammer.vy * 0.08 + (Math.random() - 0.5) * 30, 
+        this.hammer.x + (Math.random() - 0.5) * 16,
+        this.hammer.y + (Math.random() - 0.5) * 16,
+        -this.hammer.vx * 0.08 + (Math.random() - 0.5) * 30,
+        -this.hammer.vy * 0.08 + (Math.random() - 0.5) * 30,
         '#00f0ff', Math.random() * 4 + 2, 0.3
       );
-      
-      // Reached far screen boundary -> trigger return!
+
       if (this.hammer.x >= 930 || this.hammer.distanceTraveled >= this.hammer.maxRange) {
         this.startReturning();
       }
-      
+
     } else if (this.hammer.state === 'RETURNING') {
       this.hammer.prevX = this.hammer.x;
       this.hammer.prevY = this.hammer.y;
-      
+
       const dx = this.thor.handX - this.hammer.x;
       const dy = this.thor.handY - this.hammer.y;
       const dist = Math.hypot(dx, dy);
-      
-      this.hammer.rotation -= dt * 28; // Reverse spin
-      
-      const returnSpeed = 1150;
+
+      this.hammer.rotation -= dt * 30;
+
+      const returnSpeed = 1200;
       const step = returnSpeed * dt;
-      
-      // Direct homing vector to Thor
+
       const targetVx = (dx / dist) * returnSpeed;
       const targetVy = (dy / dist) * returnSpeed;
-      
-      const blend = Math.min(1.0, dt * 16);
+
+      const blend = Math.min(1.0, dt * 18);
       this.hammer.vx += (targetVx - this.hammer.vx) * blend;
       this.hammer.vy += (targetVy - this.hammer.vy) * blend;
-      
+
       this.hammer.x += this.hammer.vx * dt;
       this.hammer.y += this.hammer.vy * dt;
-      
-      // Catch Condition: Caught in Thor's hand
+
+      // Catch Condition
       if (dist < 42 || dist <= step * 1.5) {
         this.hammer.state = 'IDLE';
         this.hammer.x = this.thor.handX;
@@ -373,10 +543,9 @@ class ThorHammerGame extends GameEngine {
         this.hammer.vx = 0;
         this.hammer.vy = 0;
         this.shake(6, 0.2);
-        this.playSound('heavyPunch');
-        
-        // Thunder burst upon catch
-        for (let i = 0; i < 22; i++) {
+        this.playSound('thunder');
+
+        for (let i = 0; i < 20; i++) {
           const ang = Math.random() * Math.PI * 2;
           const spd = Math.random() * 160 + 60;
           this.spawnParticle(
@@ -386,11 +555,10 @@ class ThorHammerGame extends GameEngine {
           );
         }
       } else {
-        // Golden lightning return trail
         this.spawnParticle(
-          this.hammer.x + (Math.random() - 0.5) * 16, 
-          this.hammer.y + (Math.random() - 0.5) * 16, 
-          (Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20, 
+          this.hammer.x + (Math.random() - 0.5) * 16,
+          this.hammer.y + (Math.random() - 0.5) * 16,
+          (Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20,
           '#ffd200', Math.random() * 4 + 2, 0.25
         );
       }
@@ -400,31 +568,10 @@ class ThorHammerGame extends GameEngine {
   startReturning() {
     if (this.hammer.state === 'RETURNING') return;
     this.hammer.state = 'RETURNING';
-    
     this.shake(4, 0.15);
     this.playSound('thunder');
-    
-    // Apex burst particles
-    for (let i = 0; i < 16; i++) {
-      const ang = Math.random() * Math.PI * 2;
-      this.spawnParticle(
-        this.hammer.x, this.hammer.y, 
-        Math.cos(ang) * 120, Math.sin(ang) * 120, 
-        '#ffffff', Math.random() * 3 + 2, 0.3
-      );
-    }
   }
 
-  updateTargets(dt) {
-    this.lightningTimer += dt;
-    // Targets are static; only update their damage cooldowns
-    for (const t of this.targets) {
-      if (!t.active) continue;
-      if (t.hitTimer > 0) t.hitTimer -= dt;
-    }
-  }
-
-  // Point-to-Line-Segment Distance for Continuous Collision Detection (CCD)
   distToSegment(px, py, x1, y1, x2, y2) {
     const dx = x2 - x1;
     const dy = y2 - y1;
@@ -436,6 +583,9 @@ class ThorHammerGame extends GameEngine {
     return Math.hypot(px - projX, py - projY);
   }
 
+  // ===========================================================================
+  // COMBAT & COLLISION HANDLING
+  // ===========================================================================
   checkCollisions(dt) {
     if (this.hammer.state === 'IDLE') return;
 
@@ -444,720 +594,928 @@ class ThorHammerGame extends GameEngine {
     const x2 = this.hammer.x;
     const y2 = this.hammer.y;
 
-    // 1. BREAKABLE OBSTACLES
-    for (const obs of this.obstacles) {
-      if (!obs.active) continue;
-      
-      const testX = Math.max(obs.x, Math.min(this.hammer.x, obs.x + obs.w));
-      const testY = Math.max(obs.y, Math.min(this.hammer.y, obs.y + obs.h));
-      const dist = Math.hypot(this.hammer.x - testX, this.hammer.y - testY);
-      
-      if (dist <= this.hammer.radius) {
-        if (this.hammer.state === 'THROWN') {
-          // Smash obstacle
-          obs.hp--;
-          this.shake(8, 0.2);
-          this.playSound('thunder');
-          
-          // Rubble debris
-          for (let i = 0; i < 14; i++) {
-            this.spawnParticle(
-              testX, testY, 
-              (Math.random() - 0.5) * 240, (Math.random() - 0.5) * 240, 
-              '#556677', Math.random() * 5 + 3, 0.4
-            );
-          }
-          
-          if (obs.hp <= 0) {
-            obs.active = false;
-            this.score += 200;
-            this.spawnScorePopup("+200 WALL SMASH", testX, testY - 20, '#00f0ff');
-            this.spawnComicText("CRUSH!", testX, testY - 40);
-          }
-        } else if (this.hammer.state === 'RETURNING') {
-          if (Math.random() > 0.5) {
-            this.spawnParticle(this.hammer.x, this.hammer.y, (Math.random() - 0.5) * 80, (Math.random() - 0.5) * 80, '#ffd200', 3, 0.2);
-          }
-        }
-      }
-    }
-
-    // 2. BONUS LIGHTNING RUNES
+    // 1. Bonus Asgardian Runes
     for (const rune of this.runes) {
       if (rune.collected) continue;
       const dist = this.distToSegment(rune.x, rune.y, x1, y1, x2, y2);
-      
       if (dist < this.hammer.radius + rune.r) {
         rune.collected = true;
         this.score += 300;
         this.spawnScorePopup("+300 THUNDER RUNE", rune.x, rune.y - 20, '#ffd200');
         this.playSound('collect');
-        
-        for (let i = 0; i < 16; i++) {
-          const ang = Math.random() * Math.PI * 2;
-          this.spawnParticle(
-            rune.x, rune.y, 
-            Math.cos(ang) * 140, Math.sin(ang) * 140, 
-            '#ffd200', Math.random() * 4 + 2, 0.35
-          );
-        }
       }
     }
 
-    // 3. STATIC TARGETS (Minions & Boss) — Smashed on both throw and return!
-    for (const t of this.targets) {
-      if (!t.active) continue;
-      if (t.hitTimer > 0) continue; // 250ms cooldown prevents multi-hits on adjacent frames
-      
-      const dist = this.distToSegment(t.x, t.y, x1, y1, x2, y2);
-      
-      if (dist < this.hammer.radius + t.r) {
-        // Strike target!
-        t.hp--;
-        t.hitTimer = 0.25;
-        
-        this.playSound('hit');
-        this.shake(7, 0.18);
-        
-        const impactColor = t.type === 'boss' ? '#8800ff' : '#00f0ff';
-        for (let i = 0; i < 24; i++) {
-          this.spawnParticle(
-            t.x, t.y, 
-            (Math.random() - 0.5) * 320, (Math.random() - 0.5) * 320, 
-            impactColor, Math.random() * 5 + 2, 0.45
-          );
-        }
-        
-        if (t.hp <= 0) {
-          t.active = false;
-          const pts = t.type === 'boss' ? 1200 : 150;
-          this.score += pts;
-          this.spawnScorePopup(`+${pts}`, t.x, t.y - 30, '#00f0ff');
-          this.spawnComicText(t.type === 'boss' ? "KRAKKOOM!" : "SMASH!", t.x, t.y - 50);
-          this.playSound('thunder');
-        } else {
-          // Boss damaged
-          this.score += 75;
-          this.spawnScorePopup("+75 HIT!", t.x, t.y - 30, '#ffd200');
-          this.spawnComicText("THWACK!", t.x, t.y - 45);
-        }
-      }
-    }
-
-    // 4. INNOCENT CIVILIANS (Avoid hitting with Mjolnir!)
+    // 2. CIVILIANS (Rule 6: Civilians must NEVER be attack targets)
+    // Civilians take zero damage, award zero defeat points, and are protected!
     for (const civ of this.civilians) {
-      if (!civ.active) continue;
       const dist = this.distToSegment(civ.x, civ.y, x1, y1, x2, y2);
+      if (dist < this.hammer.radius + civ.r + 10) {
+        civ.shieldGlow = 1.0;
+        // Hammer passes harmlessly by the civilian without hurting them
+      }
+    }
 
-      if (dist < this.hammer.radius + civ.r) {
-        civ.active = false;
-        this.civilianCasualties++;
-        this.score = Math.max(0, this.score - 500);
-        this.shake(14, 0.4);
-        this.playSound('defeat');
-        this.spawnScorePopup("-500 CASUALTY", civ.x, civ.y - 30, '#ff1744');
-        this.spawnComicText("CASUALTY!", civ.x, civ.y - 50, '#ff1744');
+    // 3. HOSTILE CREATURES (Only attackable when revealed by Thunder!)
+    if (this.isRevealed) {
+      for (const c of this.creatures) {
+        if (c.defeated) continue;
+        if (c.hitTimer > 0) continue;
 
-        // Distress particles
-        for (let i = 0; i < 24; i++) {
-          this.spawnParticle(
-            civ.x, civ.y,
-            (Math.random() - 0.5) * 260,
-            (Math.random() - 0.5) * 260,
-            '#ff1744', Math.random() * 4 + 2, 0.4
-          );
-        }
+        const dist = this.distToSegment(c.x, c.y, x1, y1, x2, y2);
+        if (dist < this.hammer.radius + c.r) {
+          // Genuine hit detected on targeted creature!
+          c.hp -= 1;
+          c.hitTimer = 0.25;
 
-        if (this.civilianCasualties >= this.maxCasualties) {
-          this.triggerGameOver("An innocent civilian was struck by Mjolnir!");
-          return;
+          this.playSound('hit');
+          this.shake(8, 0.22);
+          this.spawnImpactParticles(c.x, c.y, c.type === 'boss' ? '#ff0055' : '#00f0ff', 20);
+
+          if (c.hp <= 0) {
+            c.defeated = true;
+            const pts = c.type === 'boss' ? 1000 : 350;
+            this.score += pts;
+            this.spawnScorePopup(`+${pts} ${c.name.toUpperCase()} DEFEATED!`, c.x, c.y - 30, '#ffd200');
+            this.spawnComicText("CRUSHED!", c.x, c.y - 55, '#ffd200');
+
+            // Explosion sparks
+            for (let i = 0; i < 24; i++) {
+              const ang = Math.random() * Math.PI * 2;
+              const spd = Math.random() * 220 + 50;
+              this.spawnParticle(
+                c.x, c.y,
+                Math.cos(ang) * spd, Math.sin(ang) * spd,
+                c.type === 'boss' ? '#ff0055' : '#00f0ff',
+                Math.random() * 4 + 2, 0.45
+              );
+            }
+          } else {
+            this.spawnComicText("STRIKE!", c.x, c.y - 35, '#00f0ff');
+          }
+
+          // Hammer rebounds and returns
+          this.startReturning();
+          break;
         }
       }
     }
   }
 
+  // ===========================================================================
+  // HUD UPDATES
+  // ===========================================================================
   updateHUD() {
     const scoreEl = document.getElementById('hudScore');
     const phaseEl = document.getElementById('hudPhase');
-    const casualtiesEl = document.getElementById('hudCasualties');
-    const civHealthFill = document.getElementById('civHealthFill');
+    const bugBadgeEl = document.getElementById('hudBugBadge');
     const thunderBtn = document.getElementById('thunderBtn');
+    const thunderBtnIcon = document.getElementById('thunderBtnIcon');
+    const thunderBtnLabel = document.getElementById('thunderBtnLabel');
+    const thunderBtnHint = document.getElementById('thunderBtnHint');
     const thunderOverlay = document.getElementById('thunderCooldownOverlay');
-    
-    if (scoreEl) scoreEl.textContent = `${this.score} PTS`;
-    if (phaseEl) phaseEl.textContent = `LEVEL ${this.stage}`;
+    const revealTimerBox = document.getElementById('revealTimerBox');
+    const revealTimerNum = document.getElementById('revealTimerNum');
+    const revealTimerFill = document.getElementById('revealTimerFill');
+    const creaturesCountEl = document.getElementById('hudCreaturesCount');
+    const creaturesBarFill = document.getElementById('creaturesBarFill');
+    const civiliansStatusEl = document.getElementById('hudCiviliansStatus');
 
-    if (casualtiesEl) {
-      if (this.civilianCasualties >= this.maxCasualties) {
-        casualtiesEl.textContent = `CASUALTY (${this.civilianCasualties}/${this.maxCasualties})`;
-        casualtiesEl.style.color = '#ff1744';
+    if (scoreEl) scoreEl.textContent = `${this.score.toLocaleString()} PTS`;
+    if (phaseEl) phaseEl.textContent = `GLITCH PURGE`;
+
+    // Web Bug Indicator
+    if (bugBadgeEl) {
+      if (this.bugSolved) {
+        bugBadgeEl.textContent = '✓ CSS BUG RESOLVED';
+        bugBadgeEl.className = 'hud-bug-badge success';
       } else {
-        casualtiesEl.textContent = `SAFE (${this.civilianCasualties}/${this.maxCasualties})`;
-        casualtiesEl.style.color = '#00ff88';
+        bugBadgeEl.textContent = '🔒 CSS BUG: bifrost-ward.css';
+        bugBadgeEl.className = 'hud-bug-badge error';
       }
     }
 
-    if (civHealthFill) {
-      const remaining = Math.max(0, this.maxCasualties - this.civilianCasualties);
-      const pct = (remaining / this.maxCasualties) * 100;
-      civHealthFill.style.width = `${pct}%`;
-      if (pct <= 0) {
-        civHealthFill.classList.add('danger');
+    // Hostile Creatures Counter & Health Track
+    const livingCreatures = this.creatures.filter(c => !c.defeated);
+    if (creaturesCountEl) {
+      creaturesCountEl.textContent = `${livingCreatures.length} / ${this.creatures.length} ALIVE`;
+      creaturesCountEl.style.color = livingCreatures.length === 0 ? '#00ff88' : '#ff1744';
+    }
+    if (creaturesBarFill) {
+      const pct = (livingCreatures.length / this.creatures.length) * 100;
+      creaturesBarFill.style.width = `${pct}%`;
+    }
+
+    // Civilians status
+    if (civiliansStatusEl) {
+      civiliansStatusEl.textContent = `🛡️ ASGARDIAN CIVILIANS: ${this.civilians.length} IN SECTOR (SAFE)`;
+    }
+
+    // 30-Second Reveal Timer Display in HUD
+    if (revealTimerBox && revealTimerNum && revealTimerFill) {
+      if (this.isRevealed) {
+        revealTimerBox.classList.remove('hidden');
+        revealTimerNum.textContent = `${this.revealTimer.toFixed(1)}s`;
+        const pct = (this.revealTimer / this.revealDuration) * 100;
+        revealTimerFill.style.width = `${pct}%`;
+        if (this.revealTimer <= 5) {
+          revealTimerBox.classList.add('urgent');
+        } else {
+          revealTimerBox.classList.remove('urgent');
+        }
       } else {
-        civHealthFill.classList.remove('danger');
+        revealTimerBox.classList.add('hidden');
+        revealTimerBox.classList.remove('urgent');
       }
     }
 
-    if (thunderBtn && thunderOverlay) {
-      if (this.thunderCooldown > 0) {
+    // Thunder Button States: Locked vs Ready vs Active
+    if (thunderBtn) {
+      thunderBtn.classList.remove('locked', 'ready', 'active');
+
+      if (!this.thunderUnlocked) {
+        // STATE 1: LOCKED BEFORE WEB BUG IS SOLVED
+        thunderBtn.classList.add('locked');
+        thunderBtn.disabled = false; // Enabled to click so it informs & opens terminal
+        if (thunderBtnIcon) thunderBtnIcon.textContent = '🔒';
+        if (thunderBtnLabel) thunderBtnLabel.textContent = 'THUNDER LOCKED';
+        if (thunderBtnHint) thunderBtnHint.textContent = 'SOLVE BUG';
+        if (thunderOverlay) thunderOverlay.style.height = '100%';
+
+      } else if (this.isRevealed) {
+        // STATE 2: ACTIVE 30-SECOND REVEAL IN PROGRESS
+        thunderBtn.classList.add('active');
         thunderBtn.disabled = true;
-        const pct = (this.thunderCooldown / this.thunderMaxCooldown) * 100;
-        thunderOverlay.style.height = `${pct}%`;
+        const remainingSec = Math.ceil(this.revealTimer);
+        if (thunderBtnIcon) thunderBtnIcon.textContent = '⚡';
+        if (thunderBtnLabel) thunderBtnLabel.textContent = `REVEAL ACTIVE (${remainingSec}s)`;
+        if (thunderBtnHint) thunderBtnHint.textContent = `${remainingSec}s`;
+        if (thunderOverlay) {
+          const drainPct = ((this.revealDuration - this.revealTimer) / this.revealDuration) * 100;
+          thunderOverlay.style.height = `${drainPct}%`;
+        }
+
       } else {
+        // STATE 3: READY TO TRIGGER 30-SECOND REVEAL
+        thunderBtn.classList.add('ready');
         thunderBtn.disabled = false;
-        thunderOverlay.style.height = '0%';
+        if (thunderBtnIcon) thunderBtnIcon.textContent = '⚡';
+        if (thunderBtnLabel) thunderBtnLabel.textContent = 'THUNDER REVEAL';
+        if (thunderBtnHint) thunderBtnHint.textContent = 'SPACE';
+        if (thunderOverlay) thunderOverlay.style.height = '0%';
       }
     }
   }
 
+  // ===========================================================================
+  // CINEMATIC GRAPHICS RENDERING
+  // ===========================================================================
   render(ctx) {
-    // ==========================================
-    // 1. DRAW BASE AMBIENT SCENE (Atmospheric Dark Realm)
-    // ==========================================
-    
-    // Distant cosmic Asgardian sky with misty nebulas
+    // 1. SKY & DISTANT MOUNTAINS
     const skyGrad = ctx.createLinearGradient(0, 0, 0, 460);
-    skyGrad.addColorStop(0, '#060914');
-    skyGrad.addColorStop(0.5, '#0c1224');
-    skyGrad.addColorStop(1, '#070a14');
+    skyGrad.addColorStop(0, '#040714');
+    skyGrad.addColorStop(0.4, '#081226');
+    skyGrad.addColorStop(1, '#050a18');
     ctx.fillStyle = skyGrad;
     ctx.fillRect(0, 0, 960, 540);
 
-    // Distant mountain & Jotunheim monolith silhouettes
-    ctx.fillStyle = 'rgba(16, 24, 42, 0.65)';
+    // Rolling stormy cloud banks
+    ctx.save();
+    ctx.fillStyle = 'rgba(16, 28, 54, 0.45)';
+    ctx.beginPath();
+    ctx.arc(280, 80, 160, 0, Math.PI * 2);
+    ctx.arc(620, 110, 200, 0, Math.PI * 2);
+    ctx.arc(840, 70, 150, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Distant Jotunheim mountain peaks
+    ctx.fillStyle = 'rgba(12, 18, 34, 0.85)';
     ctx.beginPath();
     ctx.moveTo(0, 460);
-    ctx.lineTo(70, 370);
-    ctx.lineTo(150, 410);
-    ctx.lineTo(260, 330);
-    ctx.lineTo(380, 420);
-    ctx.lineTo(510, 340);
-    ctx.lineTo(650, 410);
-    ctx.lineTo(780, 320);
-    ctx.lineTo(960, 380);
+    ctx.lineTo(80, 360);
+    ctx.lineTo(170, 410);
+    ctx.lineTo(290, 320);
+    ctx.lineTo(410, 420);
+    ctx.lineTo(540, 310);
+    ctx.lineTo(670, 400);
+    ctx.lineTo(810, 300);
+    ctx.lineTo(960, 370);
     ctx.lineTo(960, 460);
     ctx.closePath();
     ctx.fill();
 
-    // Ancient Norse stone pillars in background
-    ctx.fillStyle = 'rgba(22, 32, 54, 0.55)';
-    ctx.fillRect(220, 300, 22, 160);
-    ctx.fillRect(560, 320, 26, 140);
-    ctx.fillRect(860, 290, 30, 170);
+    // Background Norse stone pillars with glowing ancient runes
+    this.drawStonePillar(ctx, 210, 280, 32, 180, 'ᚦ');
+    this.drawStonePillar(ctx, 890, 270, 40, 190, 'ᚱ');
 
-    // Draw Rocky Arena Ground with Inscribed Runes
-    ctx.fillStyle = '#0a0f1c';
+    // Rocky arena ground
+    const groundGrad = ctx.createLinearGradient(0, this.groundY, 0, 540);
+    groundGrad.addColorStop(0, '#0c1322');
+    groundGrad.addColorStop(1, '#060a12');
+    ctx.fillStyle = groundGrad;
     ctx.fillRect(0, this.groundY, 960, 540 - this.groundY);
-    ctx.strokeStyle = '#00a6ff';
+
+    // Glowing Bifrost circuitry on arena ground
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.6)';
     ctx.lineWidth = 2.5;
+    ctx.shadowColor = '#00f0ff';
+    ctx.shadowBlur = 8;
     ctx.beginPath();
     ctx.moveTo(0, this.groundY);
     ctx.lineTo(960, this.groundY);
     ctx.stroke();
+    ctx.shadowBlur = 0;
 
-    // Subtle Bifrost energy lines running along the stone ground
-    ctx.strokeStyle = 'rgba(0, 240, 255, 0.2)';
-    ctx.lineWidth = 1;
-    for (let gx = 40; gx < 940; gx += 90) {
-      ctx.strokeRect(gx, this.groundY + 12, 18, 8);
-    }
-
-    // Draw Breakable Obstacles
-    for (const obs of this.obstacles) {
-      if (!obs.active) continue;
-      ctx.save();
-      ctx.fillStyle = obs.hp === 1 ? '#2c3648' : '#1b2230';
-      ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
-      
-      if (obs.hp === 1) {
-        ctx.strokeStyle = '#ffd200';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(obs.x + 5, obs.y + 20);
-        ctx.lineTo(obs.x + obs.w - 8, obs.y + obs.h / 2);
-        ctx.lineTo(obs.x + 10, obs.y + obs.h - 30);
-        ctx.stroke();
-      }
-      
-      ctx.strokeStyle = '#3e4d66';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(obs.x, obs.y, obs.w, obs.h);
-      ctx.restore();
-    }
-
-    // Draw Lightning Runes (Bonus Collectibles)
-    for (const rune of this.runes) {
-      if (rune.collected) continue;
-      ctx.save();
-      ctx.translate(rune.x, rune.y);
-      
-      const pulse = Math.sin(this.lightningTimer * 5) * 4;
-      ctx.fillStyle = 'rgba(255, 210, 0, 0.25)';
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.22)';
+    ctx.lineWidth = 1.5;
+    for (let gx = 35; gx < 940; gx += 80) {
+      ctx.strokeRect(gx, this.groundY + 14, 24, 10);
       ctx.beginPath();
-      ctx.arc(0, 0, rune.r + pulse + 4, 0, Math.PI * 2);
-      ctx.fill();
-      
-      ctx.fillStyle = '#ffd200';
-      ctx.beginPath();
-      ctx.arc(0, 0, rune.r, 0, Math.PI * 2);
-      ctx.fill();
-      
-      // Lightning bolt icon
-      ctx.fillStyle = '#000000';
-      ctx.beginPath();
-      ctx.moveTo(-3, -10);
-      ctx.lineTo(6, -2);
-      ctx.lineTo(0, 0);
-      ctx.lineTo(4, 10);
-      ctx.lineTo(-5, 1);
-      ctx.lineTo(-1, -1);
-      ctx.fill();
-      
-      ctx.restore();
+      ctx.moveTo(gx + 12, this.groundY + 24);
+      ctx.lineTo(gx + 12, this.groundY + 44);
+      ctx.stroke();
     }
 
-    // Draw Static Targets (Frost Giants & Boss)
-    for (const t of this.targets) {
-      if (!t.active) continue;
-      
-      ctx.save();
-      ctx.translate(t.x, t.y);
-      
-      if (t.type === 'minion') {
-        // Frost Giant Minion Body
-        ctx.fillStyle = '#0a3d62';
-        ctx.beginPath();
-        ctx.arc(0, 0, t.r, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.lineWidth = 2.5;
-        ctx.strokeStyle = '#00a6ff';
-        ctx.stroke();
-        
-        // Ice Spikes / Horns
-        ctx.fillStyle = '#3c6382';
-        ctx.beginPath();
-        ctx.moveTo(-t.r + 5, -5);
-        ctx.lineTo(-t.r - 8, -12);
-        ctx.lineTo(-t.r + 8, -15);
-        ctx.moveTo(t.r - 5, -5);
-        ctx.lineTo(t.r + 8, -12);
-        ctx.lineTo(t.r - 8, -15);
-        ctx.fill();
-        
-      } else if (t.type === 'boss') {
-        // Frost Giant Overlord Boss
-        ctx.fillStyle = '#2c0b4d';
-        ctx.beginPath();
-        ctx.arc(0, 0, t.r, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.lineWidth = 4;
-        ctx.strokeStyle = '#6a0dad';
-        ctx.stroke();
-        
-        // Boss Crown
-        ctx.fillStyle = '#ffd200';
-        ctx.beginPath();
-        ctx.moveTo(-24, -t.r + 5);
-        ctx.lineTo(-36, -t.r - 22);
-        ctx.lineTo(0, -t.r - 6);
-        ctx.lineTo(36, -t.r - 22);
-        ctx.lineTo(24, -t.r + 5);
-        ctx.fill();
-        
-        // Boss HP Bar
-        ctx.fillStyle = 'rgba(0,0,0,0.6)';
-        ctx.fillRect(-t.r, -t.r - 32, t.r * 2, 8);
-        ctx.fillStyle = '#ff2244';
-        ctx.fillRect(-t.r, -t.r - 32, t.r * 2, 8);
-        ctx.fillStyle = '#00ff88';
-        ctx.fillRect(-t.r, -t.r - 32, (t.r * 2) * (t.hp / t.maxHp), 8);
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(-t.r, -t.r - 32, t.r * 2, 8);
-      }
-      
-      ctx.restore();
-    }
-
-    // Draw Innocent Civilians (ONLY VISIBLE DURING THUNDER EFFECT — INVISIBLE BEFORE & AFTER!)
-    if (this.thunderActiveTimer > 0) {
-      const civAlpha = Math.min(1.0, this.thunderActiveTimer / 0.4);
-      for (const civ of this.civilians) {
-        if (!civ.active) continue;
-
-        ctx.save();
-        ctx.globalAlpha = civAlpha;
-        ctx.translate(civ.x, civ.y);
-
-        // Villager body / robe
-        ctx.fillStyle = '#2e7d32';
-        ctx.beginPath();
-        ctx.arc(0, 4, civ.r - 4, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Head
-        ctx.fillStyle = '#ffe0b2';
-        ctx.beginPath();
-        ctx.arc(0, -12, 9, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Hair
-        ctx.fillStyle = '#5d4037';
-        ctx.beginPath();
-        ctx.arc(0, -15, 9, Math.PI, Math.PI * 2);
-        ctx.fill();
-
-        // Glowing Golden Lantern held in hand
-        const breath = Math.sin(this.lightningTimer * 6) * 2;
-        ctx.fillStyle = '#ffd54f';
-        ctx.beginPath();
-        ctx.arc(14, 2 + breath, 6, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#ff8f00';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-
-        ctx.restore();
-      }
-    }
-
-    // Draw Thor
+    // 2. AMBIENT STORM WEATHER
     ctx.save();
-    ctx.translate(this.thor.x, this.thor.y);
-    
-    // Flowing Cape
-    ctx.fillStyle = '#990000';
-    ctx.beginPath();
-    ctx.moveTo(-16, -72);
-    ctx.lineTo(-40, -10 + Math.sin(this.lightningTimer * 6) * 5);
-    ctx.lineTo(-14, 0);
-    ctx.fill();
-    
-    // Armor
-    ctx.fillStyle = '#1c212c';
-    ctx.fillRect(-18, -72, 36, 72);
-    // Silver Plates
-    ctx.fillStyle = '#636e72';
-    ctx.beginPath();
-    ctx.arc(-7, -54, 6, 0, Math.PI * 2);
-    ctx.arc(7, -54, 6, 0, Math.PI * 2);
-    ctx.arc(-7, -34, 6, 0, Math.PI * 2);
-    ctx.arc(7, -34, 6, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Thor Head & Beard
-    ctx.fillStyle = '#f5c6a5';
-    ctx.beginPath();
-    ctx.arc(0, -88, 15, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#d49b10';
-    ctx.fillRect(-12, -88, 5, 20);
-    ctx.fillRect(7, -88, 5, 20);
-    ctx.fillRect(-8, -77, 16, 10);
-    
-    // Helmet
-    ctx.fillStyle = '#b2bec3';
-    ctx.beginPath();
-    ctx.arc(0, -88, 16, Math.PI, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.moveTo(-14, -92); ctx.lineTo(-24, -108); ctx.lineTo(-10, -96);
-    ctx.moveTo(14, -92); ctx.lineTo(24, -108); ctx.lineTo(10, -96);
-    ctx.fill();
-    
-    // Outstretched arm if returning
-    if (this.hammer.state === 'RETURNING') {
-      ctx.strokeStyle = '#1c212c';
-      ctx.lineWidth = 8;
+    ctx.strokeStyle = 'rgba(160, 220, 255, 0.25)';
+    ctx.lineWidth = 1;
+    for (const drop of this.ambientStorm) {
       ctx.beginPath();
-      ctx.moveTo(10, -60);
-      ctx.lineTo(26, -68);
+      ctx.moveTo(drop.x, drop.y);
+      ctx.lineTo(drop.x + (drop.speedX * 0.04), drop.y + (drop.speedY * 0.04));
       ctx.stroke();
     }
     ctx.restore();
 
-    // =========================================================================
-    // 2. DYNAMIC 2D LIGHTING & ILLUMINATION (DARK ENVIRONMENT + RADIANT GLOW)
-    // =========================================================================
-    if (this.lightCtx) {
-      // Clear offscreen light mask
-      this.lightCtx.globalCompositeOperation = 'source-over';
-      // Dense mysterious darkness covering the realm (atmospherically deep)
-      this.lightCtx.fillStyle = 'rgba(4, 7, 16, 0.84)';
-      this.lightCtx.fillRect(0, 0, 960, 540);
-
-      // Switch to cut-out mode (creates transparent glowing holes where light shines)
-      this.lightCtx.globalCompositeOperation = 'destination-out';
-
-      // (0) THUNDER FLASH ILLUMINATION (FLOODS THE ENTIRE REALM WITH RADIANT LIGHT)
-      if (this.thunderActiveTimer > 0) {
-        const flashAlpha = Math.min(1.0, this.thunderActiveTimer / 0.5);
-        this.lightCtx.fillStyle = `rgba(0, 0, 0, ${flashAlpha})`;
-        this.lightCtx.fillRect(0, 0, 960, 540);
-      }
-
-      // (A) Thor's personal aura (subtle divine glow around Thor)
-      const thorGlow = this.lightCtx.createRadialGradient(
-        this.thor.x, this.thor.y - 45, 10,
-        this.thor.x, this.thor.y - 45, 95
-      );
-      thorGlow.addColorStop(0, 'rgba(0, 0, 0, 1)');
-      thorGlow.addColorStop(0.6, 'rgba(0, 0, 0, 0.7)');
-      thorGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      this.lightCtx.fillStyle = thorGlow;
-      this.lightCtx.beginPath();
-      this.lightCtx.arc(this.thor.x, this.thor.y - 45, 95, 0, Math.PI * 2);
-      this.lightCtx.fill();
-
-      // (B) Civilians' warm lantern glow (revealed ONLY during thunder effect)
-      if (this.thunderActiveTimer > 0) {
-        const glowAlpha = Math.min(1.0, this.thunderActiveTimer / 0.4);
-        for (const civ of this.civilians) {
-          if (!civ.active) continue;
-
-          const civGlow = this.lightCtx.createRadialGradient(civ.x, civ.y, 5, civ.x, civ.y, 85);
-          civGlow.addColorStop(0, `rgba(0, 0, 0, ${0.85 * glowAlpha})`);
-          civGlow.addColorStop(0.6, `rgba(0, 0, 0, ${0.45 * glowAlpha})`);
-          civGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
-          this.lightCtx.fillStyle = civGlow;
-          this.lightCtx.beginPath();
-          this.lightCtx.arc(civ.x, civ.y, 85, 0, Math.PI * 2);
-          this.lightCtx.fill();
-        }
-      }
-
-      // (C) Aiming Laser Beam of Light (piercing light line when ready to throw)
-      if (this.hammer.state === 'IDLE') {
-        const beamLen = 920;
-        const endX = this.hammer.x + Math.cos(this.aimAngle) * beamLen;
-        const endY = this.hammer.y + Math.sin(this.aimAngle) * beamLen;
-        
-        const beamThickness = this.isCharging ? (24 + this.power * 24) : 14;
-        this.lightCtx.lineWidth = beamThickness;
-        this.lightCtx.strokeStyle = 'rgba(0, 0, 0, 0.65)';
-        this.lightCtx.beginPath();
-        this.lightCtx.moveTo(this.hammer.x, this.hammer.y);
-        this.lightCtx.lineTo(endX, endY);
-        this.lightCtx.stroke();
-        
-        // Spotlight circle at the crosshair destination
-        const spotGlow = this.lightCtx.createRadialGradient(endX, endY, 5, endX, endY, 60);
-        spotGlow.addColorStop(0, 'rgba(0, 0, 0, 0.8)');
-        spotGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
-        this.lightCtx.fillStyle = spotGlow;
-        this.lightCtx.beginPath();
-        this.lightCtx.arc(endX, endY, 60, 0, Math.PI * 2);
-        this.lightCtx.fill();
-      }
-
-      // (D) ON THROW OF HAMMER: THE AREA GLOWS WITH COLOSSAL DIVINE LIGHT!
-      if (this.hammer.state === 'THROWN' || this.hammer.state === 'RETURNING') {
-        // Massive radial illumination sphere around Mjolnir (reveals targets & environment)
-        const lightRadius = 310;
-        const hammerGlow = this.lightCtx.createRadialGradient(
-          this.hammer.x, this.hammer.y, 20,
-          this.hammer.x, this.hammer.y, lightRadius
-        );
-        hammerGlow.addColorStop(0, 'rgba(0, 0, 0, 1)');
-        hammerGlow.addColorStop(0.4, 'rgba(0, 0, 0, 0.9)');
-        hammerGlow.addColorStop(0.75, 'rgba(0, 0, 0, 0.5)');
-        hammerGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
-        this.lightCtx.fillStyle = hammerGlow;
-        this.lightCtx.beginPath();
-        this.lightCtx.arc(this.hammer.x, this.hammer.y, lightRadius, 0, Math.PI * 2);
-        this.lightCtx.fill();
-
-        // Secondary forward illumination cone
-        if (this.hammer.state === 'THROWN') {
-          const forwardDist = 120;
-          const fx = this.hammer.x + (this.hammer.vx / 1100) * forwardDist;
-          const fy = this.hammer.y + (this.hammer.vy / 1100) * forwardDist;
-          const fGlow = this.lightCtx.createRadialGradient(fx, fy, 10, fx, fy, 180);
-          fGlow.addColorStop(0, 'rgba(0, 0, 0, 0.8)');
-          fGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
-          this.lightCtx.fillStyle = fGlow;
-          this.lightCtx.beginPath();
-          this.lightCtx.arc(fx, fy, 180, 0, Math.PI * 2);
-          this.lightCtx.fill();
-        }
-      }
-
-      // Blend the darkness layer over the world
-      ctx.drawImage(this.lightCanvas, 0, 0);
-    }
-
-    // Sky Thunder Lightning Arc during Thunder Flash
-    if (this.thunderActiveTimer > 1.8) {
-      ctx.save();
-      ctx.strokeStyle = '#ffffff';
-      ctx.shadowColor = '#00f0ff';
-      ctx.shadowBlur = 18;
-      ctx.lineWidth = 3.5;
-      ctx.beginPath();
-      ctx.moveTo(350, 0);
-      ctx.lineTo(390, 80);
-      ctx.lineTo(360, 130);
-      ctx.lineTo(430, 240);
-      ctx.lineTo(400, 310);
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.moveTo(680, 0);
-      ctx.lineTo(650, 90);
-      ctx.lineTo(690, 150);
-      ctx.lineTo(640, 260);
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    // =========================================================================
-    // 3. DRAW GLOWING ELEMENTS ON TOP (Pierces through the dark)
-    // =========================================================================
-
-    // (A) Distinct Protective Green Shield / Marker above Innocent Civilians (ONLY during thunder effect)
-    if (this.thunderActiveTimer > 0) {
-      const tagAlpha = Math.min(1.0, this.thunderActiveTimer / 0.4);
-      for (const civ of this.civilians) {
-        if (!civ.active) continue;
-
-        ctx.save();
-        ctx.globalAlpha = tagAlpha;
-        ctx.translate(civ.x, civ.y);
-
-        // Floating Shield Marker
-        ctx.font = 'bold 11px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillStyle = '#00ff88';
-        ctx.shadowColor = '#00ff88';
-        ctx.shadowBlur = 8;
-        ctx.fillText('🛡️ INNOCENT', 0, -civ.r - 10);
-
-        // Lantern glow dot
-        ctx.fillStyle = '#ffd54f';
-        ctx.shadowColor = '#ffd54f';
-        ctx.shadowBlur = 10;
-        ctx.beginPath();
-        ctx.arc(14, 2, 4, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.restore();
-      }
-    }
-
-    // (B) Sinister Glowing Eyes & Frost Silhouette of Frost Giants
-    for (const t of this.targets) {
-      if (!t.active) continue;
-      ctx.save();
-      ctx.translate(t.x, t.y);
-      
-      if (t.type === 'minion') {
-        // Glowing Frost Silhouette Ring in the darkness
-        ctx.strokeStyle = 'rgba(0, 240, 255, 0.45)';
-        ctx.shadowColor = '#00f0ff';
-        ctx.shadowBlur = 10;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(0, 0, t.r, 0, Math.PI * 2);
-        ctx.stroke();
-
-        // Glowing Crimson Eyes
-        ctx.fillStyle = '#ff1133';
-        ctx.shadowColor = '#ff0033';
-        ctx.shadowBlur = 10;
-        ctx.fillRect(-10, -8, 7, 7);
-        ctx.fillRect(4, -8, 7, 7);
-      } else if (t.type === 'boss') {
-        // Overlord Boss Astral Aura
-        ctx.strokeStyle = 'rgba(168, 85, 247, 0.6)';
-        ctx.shadowColor = '#a855f7';
-        ctx.shadowBlur = 18;
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(0, 0, t.r, 0, Math.PI * 2);
-        ctx.stroke();
-
-        // Glowing Boss Eyes
-        ctx.fillStyle = '#ff0077';
-        ctx.shadowColor = '#ff0077';
-        ctx.shadowBlur = 14;
-        ctx.fillRect(-16, -14, 11, 11);
-        ctx.fillRect(6, -14, 11, 11);
-      }
-      ctx.restore();
-    }
-
-    // (C) Glowing Nordic Runes in the dark (Bonus collectibles)
+    // 3. BONUS RUNES
     for (const rune of this.runes) {
       if (rune.collected) continue;
-      ctx.save();
-      ctx.translate(rune.x, rune.y);
-      ctx.strokeStyle = 'rgba(255, 210, 0, 0.7)';
-      ctx.shadowColor = '#ffd200';
-      ctx.shadowBlur = 12;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(0, 0, rune.r, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.restore();
+      this.drawBonusRune(ctx, rune);
     }
 
-    // (B) Continuous Laser Trajectory Guide & Aiming Reticle
-    if (this.hammer.state === 'IDLE') {
+    // 4. DYNAMIC 2D LIGHTING & STORM ATMOSPHERE
+    this.renderDynamicLighting(ctx);
+
+    // 5. DRAW THOR
+    this.drawThor(ctx);
+
+    // 6. DRAW CIVILIANS (Rule 3: 100% invisible during normal play; revealed ONLY when fade > 0)
+    this.drawCivilians(ctx);
+
+    // 7. DRAW CREATURES (Rule 3: 100% invisible during normal play; revealed ONLY when fade > 0)
+    this.drawCreatures(ctx);
+
+    // 8. ACTIVE LIGHTNING STRIKES
+    this.renderLightningStrikes(ctx);
+
+    // 9. AIMING RETICLE & TARGET LOCK
+    this.renderTargetingHUD(ctx);
+
+    // 10. MJOLNIR HAMMER
+    this.drawMjolnir(ctx);
+  }
+
+  // Stone Pillar Helper
+  drawStonePillar(ctx, x, y, w, h, runeChar) {
+    ctx.save();
+    ctx.fillStyle = '#11192b';
+    ctx.fillRect(x, y, w, h);
+
+    ctx.strokeStyle = '#1d2a45';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, w, h);
+
+    ctx.font = 'bold 22px serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(0, 240, 255, 0.7)';
+    ctx.shadowColor = '#00f0ff';
+    ctx.shadowBlur = 10;
+    ctx.fillText(runeChar, x + w / 2, y + 45);
+    ctx.restore();
+  }
+
+  // Bonus Rune Helper
+  drawBonusRune(ctx, rune) {
+    ctx.save();
+    ctx.translate(rune.x, rune.y);
+    const pulse = Math.sin(this.lightningTimer * 5) * 4;
+
+    ctx.fillStyle = 'rgba(255, 210, 0, 0.2)';
+    ctx.beginPath();
+    ctx.arc(0, 0, rune.r + pulse + 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#ffd200';
+    ctx.shadowColor = '#ffd200';
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.arc(0, 0, rune.r, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.moveTo(-3, -10); ctx.lineTo(6, -2); ctx.lineTo(0, 0);
+    ctx.lineTo(4, 10); ctx.lineTo(-5, 1); ctx.lineTo(-1, -1);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // ===========================================================================
+  // CIVILIANS RENDERING
+  // Rule 3: 100% invisible during normal play! Only rendered when fade > 0
+  // Rule 6: Visually distinct from hostiles, warm protective green/golden aura
+  // ===========================================================================
+  drawCivilians(ctx) {
+    for (const civ of this.civilians) {
+      if (civ.fade <= 0) continue;
+
+      ctx.save();
+      ctx.translate(civ.x, civ.y);
+      ctx.globalAlpha = civ.fade;
+
+      // Warm protective emerald/golden halo
+      const haloPulse = Math.sin(this.lightningTimer * 4) * 4;
+      const haloGrad = ctx.createRadialGradient(0, 0, 10, 0, 0, civ.r + 24 + haloPulse);
+      haloGrad.addColorStop(0, 'rgba(0, 255, 136, 0.35)');
+      haloGrad.addColorStop(0.6, 'rgba(255, 210, 0, 0.2)');
+      haloGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = haloGrad;
+      ctx.beginPath();
+      ctx.arc(0, 0, civ.r + 24 + haloPulse, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Protective runic orbit ring
+      ctx.strokeStyle = civ.shieldGlow > 0 ? '#00ff88' : 'rgba(0, 255, 136, 0.85)';
+      ctx.lineWidth = civ.shieldGlow > 0 ? 3.5 : 2;
+      ctx.shadowColor = '#00ff88';
+      ctx.shadowBlur = civ.shieldGlow > 0 ? 18 : 10;
+      ctx.beginPath();
+      ctx.arc(0, 0, civ.r + 8, 0, Math.PI * 2);
+      ctx.stroke();
+
+      const bob = Math.sin(this.lightningTimer * 5) * 2;
+
+      // Cloak & Tunic
+      ctx.fillStyle = civ.tunicColor;
+      ctx.beginPath();
+      ctx.moveTo(-12, 14 + bob);
+      ctx.lineTo(-16, -10 + bob);
+      ctx.lineTo(16, -10 + bob);
+      ctx.lineTo(12, 14 + bob);
+      ctx.closePath();
+      ctx.fill();
+
+      // Golden Belt
+      ctx.fillStyle = '#ffd200';
+      ctx.fillRect(-10, 2 + bob, 20, 3);
+
+      // Cheering raised arms
+      ctx.strokeStyle = '#ffe0b2';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(-12, -6 + bob);
+      ctx.lineTo(-20, -22 + bob);
+      ctx.moveTo(12, -6 + bob);
+      ctx.lineTo(20, -22 + bob);
+      ctx.stroke();
+
+      // Head
+      ctx.fillStyle = '#ffe0b2';
+      ctx.beginPath();
+      ctx.arc(0, -18 + bob, 10, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Hair
+      ctx.fillStyle = civ.hairColor;
+      ctx.beginPath();
+      ctx.arc(0, -21 + bob, 10, Math.PI, Math.PI * 2);
+      ctx.fill();
+
+      // Friendly face
+      ctx.fillStyle = '#333';
+      ctx.fillRect(-4, -19 + bob, 2, 2);
+      ctx.fillRect(2, -19 + bob, 2, 2);
+      ctx.beginPath();
+      ctx.arc(0, -15 + bob, 4, 0, Math.PI);
+      ctx.stroke();
+
+      // Floating protective lantern
+      ctx.fillStyle = '#ffd54f';
+      ctx.shadowColor = '#ffd54f';
+      ctx.shadowBlur = 12;
+      ctx.beginPath();
+      ctx.arc(22, -14 + bob, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Clear Innocent Civilian Label
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#00ff88';
+      ctx.shadowColor = '#00ff88';
+      ctx.shadowBlur = 8;
+      ctx.fillText(`🛡️ ${civ.name.toUpperCase()}`, 0, -civ.r - 18 + bob);
+      ctx.font = 'bold 9px sans-serif';
+      ctx.fillStyle = '#ffd200';
+      ctx.fillText(`(CIVILIAN - INNOCENT)`, 0, -civ.r - 8 + bob);
+
+      ctx.restore();
+    }
+  }
+
+  // ===========================================================================
+  // HOSTILE CREATURES RENDERING
+  // Rule 3: 100% invisible during normal play! Only rendered when fade > 0
+  // Rule 5: Threat styling with sinister crimson/cyan glitch border and eyes
+  // ===========================================================================
+  drawCreatures(ctx) {
+    for (const c of this.creatures) {
+      if (c.defeated || c.fade <= 0) continue;
+
+      ctx.save();
+      ctx.translate(c.x, c.y);
+      ctx.globalAlpha = c.fade;
+
+      const isHit = c.hitTimer > 0;
+
+      if (c.type === 'boss') {
+        // OVERLORD TITAN BOSS
+        const pulse = Math.sin(this.lightningTimer * 6) * 4;
+
+        // Corrupted Magenta/Cyan Energy Aura
+        ctx.fillStyle = 'rgba(255, 0, 85, 0.2)';
+        ctx.beginPath();
+        ctx.arc(0, 0, c.r + 10 + pulse, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Dark armored body
+        ctx.fillStyle = isHit ? '#ffffff' : '#140c1e';
+        ctx.beginPath();
+        ctx.arc(0, 0, c.r, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Spiked Crown / Horns
+        ctx.fillStyle = '#ff0055';
+        ctx.beginPath();
+        ctx.moveTo(-24, -20); ctx.lineTo(-34, -48); ctx.lineTo(-14, -30);
+        ctx.lineTo(0, -52); ctx.lineTo(14, -30); ctx.lineTo(34, -48); ctx.lineTo(24, -20);
+        ctx.fill();
+
+        // Pulsing corrupted border
+        ctx.strokeStyle = '#ff0055';
+        ctx.lineWidth = 3.5;
+        ctx.shadowColor = '#ff0055';
+        ctx.shadowBlur = 18;
+        ctx.stroke();
+
+        // Glowing red laser eye visor
+        ctx.fillStyle = '#ff1133';
+        ctx.shadowColor = '#ff1133';
+        ctx.shadowBlur = 14;
+        ctx.fillRect(-16, -8, 32, 6);
+
+        // Core runic glyph
+        ctx.font = 'bold 16px serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#00f0ff';
+        ctx.shadowColor = '#00f0ff';
+        ctx.fillText('ᚲ', 0, 16);
+
+        // Health Bar above boss
+        const hpBarW = 54;
+        const hpBarH = 6;
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillRect(-hpBarW / 2, -c.r - 20, hpBarW, hpBarH);
+        ctx.fillStyle = '#ff0055';
+        ctx.fillRect(-hpBarW / 2, -c.r - 20, (c.hp / c.maxHp) * hpBarW, hpBarH);
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(-hpBarW / 2, -c.r - 20, hpBarW, hpBarH);
+
+        // Hostile Boss Label
+        ctx.font = 'bold 11px sans-serif';
+        ctx.fillStyle = '#ff0055';
+        ctx.shadowColor = '#ff0055';
+        ctx.shadowBlur = 8;
+        ctx.fillText(`👾 ${c.name.toUpperCase()} (BOSS)`, 0, -c.r - 26);
+
+      } else {
+        // CORRUPTED MINION ROBOT / CREATURE
+        const pulse = Math.sin(this.lightningTimer * 8 + c.x) * 3;
+
+        // Dark metallic body
+        ctx.fillStyle = isHit ? '#ffffff' : '#08172c';
+        ctx.beginPath();
+        ctx.arc(0, 0, c.r, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Cyber Glitch outline
+        ctx.strokeStyle = '#00f0ff';
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = '#00f0ff';
+        ctx.shadowBlur = 12;
+        ctx.stroke();
+
+        // Ice Spikes / Antenna
+        ctx.fillStyle = '#1e3a5f';
+        ctx.beginPath();
+        ctx.moveTo(-c.r + 4, -4); ctx.lineTo(-c.r - 8, -16); ctx.lineTo(-c.r + 10, -12);
+        ctx.moveTo(c.r - 4, -4); ctx.lineTo(c.r + 8, -16); ctx.lineTo(c.r - 10, -12);
+        ctx.fill();
+
+        // Menacing crimson dual eyes
+        ctx.fillStyle = '#ff1744';
+        ctx.shadowColor = '#ff1744';
+        ctx.shadowBlur = 10;
+        ctx.fillRect(-9, -6, 6, 6);
+        ctx.fillRect(3, -6, 6, 6);
+
+        // Glitch line
+        ctx.strokeStyle = 'rgba(0, 240, 255, 0.6)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(-10, 8); ctx.lineTo(10, 8);
+        ctx.stroke();
+
+        // Hostile Creature Label
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#ff1744';
+        ctx.shadowColor = '#ff1744';
+        ctx.shadowBlur = 6;
+        ctx.fillText(`👾 ${c.name.toUpperCase()}`, 0, -c.r - 10);
+      }
+
+      ctx.restore();
+    }
+  }
+
+  // ===========================================================================
+  // REALISTIC ASGARDIAN THOR RENDERING
+  // ===========================================================================
+  drawThor(ctx) {
+    ctx.save();
+    ctx.translate(this.thor.x, this.thor.y);
+
+    const bob = Math.sin(this.lightningTimer * 3.5) * 2;
+
+    if (this.thorImg && this.thorImg.complete && this.thorImg.naturalWidth > 0) {
+      const drawW = 126;
+      const drawH = 142;
+      const drawX = -drawW / 2;
+      const drawY = -drawH + bob;
+
+      // Ground contact shadow
+      ctx.save();
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+      ctx.beginPath();
+      ctx.ellipse(0, 2, 42, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // Atmospheric lightning aura when charging or calling thunder
+      if (this.isCharging || this.thunderActiveTimer > 0) {
+        ctx.save();
+        ctx.shadowColor = '#00f0ff';
+        ctx.shadowBlur = 22;
+        ctx.drawImage(this.thorImg, drawX, drawY, drawW, drawH);
+        ctx.restore();
+
+        // Cyan electric arcs crackling around Thor's armor
+        ctx.strokeStyle = '#00f0ff';
+        ctx.lineWidth = 2;
+        ctx.shadowColor = '#00f0ff';
+        ctx.shadowBlur = 8;
+        const arcY = drawY + drawH * 0.42;
+        ctx.beginPath();
+        ctx.moveTo(-16 + (Math.random() - 0.5) * 12, arcY);
+        ctx.lineTo(16 + (Math.random() - 0.5) * 12, arcY + (Math.random() - 0.5) * 14);
+        ctx.stroke();
+      } else {
+        ctx.drawImage(this.thorImg, drawX, drawY, drawW, drawH);
+      }
+
+      // Glowing electric blue eyes
+      const eyeY = drawY + drawH * 0.13;
+      ctx.fillStyle = '#00f0ff';
+      ctx.shadowColor = '#00f0ff';
+      ctx.shadowBlur = 10;
+      ctx.fillRect(-4, eyeY, 3, 2.5);
+      ctx.fillRect(4, eyeY, 3, 2.5);
+
+      // Arm reaching out when catching returning hammer
+      if (this.hammer.state === 'RETURNING') {
+        ctx.strokeStyle = '#f6c7a7';
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.moveTo(22, drawY + drawH * 0.48);
+        ctx.lineTo(38, drawY + drawH * 0.45);
+        ctx.stroke();
+      }
+
+    } else {
+      // Fallback procedural Thor rendering
+      const flutter = Math.sin(this.lightningTimer * 6) * 6;
+      const capeGrad = ctx.createLinearGradient(-30, -75, -55, 0);
+      capeGrad.addColorStop(0, '#880000');
+      capeGrad.addColorStop(0.6, '#b80d0d');
+      capeGrad.addColorStop(1, '#550000');
+      ctx.fillStyle = capeGrad;
+      ctx.beginPath();
+      ctx.moveTo(-14, -74);
+      ctx.lineTo(-44 + flutter, -15);
+      ctx.lineTo(-32 + flutter * 0.5, 0);
+      ctx.lineTo(-12, 0);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#1c2436';
+      ctx.fillRect(-14, -28, 11, 28);
+      ctx.fillRect(3, -28, 11, 28);
+      ctx.fillStyle = '#ffd200';
+      ctx.fillRect(-14, -14, 11, 3);
+      ctx.fillRect(3, -14, 11, 3);
+
+      const armorGrad = ctx.createLinearGradient(-18, -74, 18, -28);
+      armorGrad.addColorStop(0, '#222d3d');
+      armorGrad.addColorStop(0.5, '#34455e');
+      armorGrad.addColorStop(1, '#1a2230');
+      ctx.fillStyle = armorGrad;
+      ctx.fillRect(-18, -74, 36, 46);
+
+      ctx.fillStyle = '#f6c7a7';
+      ctx.beginPath();
+      ctx.arc(0, -88, 15, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  // ===========================================================================
+  // DYNAMIC 2D ILLUMINATION MASK
+  // ===========================================================================
+  renderDynamicLighting(ctx) {
+    if (!this.lightCtx) return;
+
+    this.lightCtx.globalCompositeOperation = 'source-over';
+    this.lightCtx.fillStyle = 'rgba(3, 5, 14, 0.45)';
+    this.lightCtx.fillRect(0, 0, 960, 540);
+
+    this.lightCtx.globalCompositeOperation = 'destination-out';
+
+    // (A) THUNDER FLASH FLOOD
+    if (this.thunderActiveTimer > 0) {
+      const flashAlpha = Math.min(1.0, this.thunderActiveTimer / 0.3);
+      this.lightCtx.fillStyle = `rgba(0, 0, 0, ${flashAlpha})`;
+      this.lightCtx.fillRect(0, 0, 960, 540);
+    }
+
+    // (B) Thor's personal aura
+    const thorGlow = this.lightCtx.createRadialGradient(
+      this.thor.x, this.thor.y - 45, 10,
+      this.thor.x, this.thor.y - 45, 120
+    );
+    thorGlow.addColorStop(0, 'rgba(0, 0, 0, 1)');
+    thorGlow.addColorStop(0.6, 'rgba(0, 0, 0, 0.7)');
+    thorGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    this.lightCtx.fillStyle = thorGlow;
+    this.lightCtx.beginPath();
+    this.lightCtx.arc(this.thor.x, this.thor.y - 45, 120, 0, Math.PI * 2);
+    this.lightCtx.fill();
+
+    // (C) Light around revealed civilians
+    for (const civ of this.civilians) {
+      if (civ.fade > 0) {
+        const civGlow = this.lightCtx.createRadialGradient(
+          civ.x, civ.y, 10,
+          civ.x, civ.y, 110
+        );
+        civGlow.addColorStop(0, `rgba(0, 0, 0, ${civ.fade})`);
+        civGlow.addColorStop(0.6, `rgba(0, 0, 0, ${civ.fade * 0.6})`);
+        civGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        this.lightCtx.fillStyle = civGlow;
+        this.lightCtx.beginPath();
+        this.lightCtx.arc(civ.x, civ.y, 110, 0, Math.PI * 2);
+        this.lightCtx.fill();
+      }
+    }
+
+    // (D) Light around revealed creatures
+    for (const c of this.creatures) {
+      if (!c.defeated && c.fade > 0) {
+        const cGlow = this.lightCtx.createRadialGradient(
+          c.x, c.y, 10,
+          c.x, c.y, 120
+        );
+        cGlow.addColorStop(0, `rgba(0, 0, 0, ${c.fade})`);
+        cGlow.addColorStop(0.6, `rgba(0, 0, 0, ${c.fade * 0.5})`);
+        cGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        this.lightCtx.fillStyle = cGlow;
+        this.lightCtx.beginPath();
+        this.lightCtx.arc(c.x, c.y, 120, 0, Math.PI * 2);
+        this.lightCtx.fill();
+      }
+    }
+
+    // (E) Light around flying/returning Mjolnir
+    if (this.hammer.state === 'THROWN' || this.hammer.state === 'RETURNING') {
+      const hGlow = this.lightCtx.createRadialGradient(
+        this.hammer.x, this.hammer.y, 20,
+        this.hammer.x, this.hammer.y, 260
+      );
+      hGlow.addColorStop(0, 'rgba(0, 0, 0, 1)');
+      hGlow.addColorStop(0.5, 'rgba(0, 0, 0, 0.8)');
+      hGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      this.lightCtx.fillStyle = hGlow;
+      this.lightCtx.beginPath();
+      this.lightCtx.arc(this.hammer.x, this.hammer.y, 260, 0, Math.PI * 2);
+      this.lightCtx.fill();
+    }
+
+    // (F) Light around active lightning strikes
+    for (const strike of this.activeStrikes) {
+      const sGlow = this.lightCtx.createRadialGradient(strike.x, strike.y, 20, strike.x, strike.y, 350);
+      sGlow.addColorStop(0, 'rgba(0, 0, 0, 1)');
+      sGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      this.lightCtx.fillStyle = sGlow;
+      this.lightCtx.beginPath();
+      this.lightCtx.arc(strike.x, strike.y, 350, 0, Math.PI * 2);
+      this.lightCtx.fill();
+    }
+
+    // Blend darkness onto main game arena
+    ctx.drawImage(this.lightCanvas, 0, 0);
+  }
+
+  // ===========================================================================
+  // LIGHTNING STRIKES RENDERING
+  // ===========================================================================
+  renderLightningStrikes(ctx) {
+    if (this.activeStrikes.length === 0) return;
+
+    ctx.save();
+    for (const strike of this.activeStrikes) {
+      const alpha = strike.timer / strike.maxTimer;
+      ctx.globalAlpha = alpha;
+
+      // Outer cyan glow
+      ctx.strokeStyle = '#00f0ff';
+      ctx.shadowColor = '#00f0ff';
+      ctx.shadowBlur = 24;
+      ctx.lineWidth = 9;
+      this.strokeBoltPath(ctx, strike.segments);
+
+      // Inner white hot core
+      ctx.strokeStyle = '#ffffff';
+      ctx.shadowColor = '#ffffff';
+      ctx.shadowBlur = 12;
+      ctx.lineWidth = 4;
+      this.strokeBoltPath(ctx, strike.segments);
+
+      // Sub-branches
+      ctx.strokeStyle = '#80d8ff';
+      ctx.lineWidth = 2.5;
+      for (const branch of strike.branches) {
+        ctx.beginPath();
+        ctx.moveTo(branch.from.x, branch.from.y);
+        for (const pt of branch.path) {
+          ctx.lineTo(pt.x, pt.y);
+        }
+        ctx.stroke();
+      }
+
+      // Ground impact shockwave ring
+      const ringR = (1.0 - alpha) * 80 + 15;
+      ctx.strokeStyle = '#00f0ff';
+      ctx.lineWidth = 3;
+      ctx.shadowBlur = 15;
+      ctx.beginPath();
+      ctx.arc(strike.x, strike.y, ringR, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  strokeBoltPath(ctx, segments) {
+    if (!segments || segments.length === 0) return;
+    ctx.beginPath();
+    ctx.moveTo(segments[0].x, segments[0].y);
+    for (let i = 1; i < segments.length; i++) {
+      ctx.lineTo(segments[i].x, segments[i].y);
+    }
+    ctx.stroke();
+  }
+
+  // ===========================================================================
+  // TARGETING HUD & AIMING RETICLE
+  // Distinguishes hostile creatures from civilians
+  // ===========================================================================
+  renderTargetingHUD(ctx) {
+    if (this.hammer.state === 'IDLE' && !this.terminalOpen) {
       ctx.save();
       const displayRange = 920;
       const endX = this.hammer.x + Math.cos(this.aimAngle) * displayRange;
       const endY = this.hammer.y + Math.sin(this.aimAngle) * displayRange;
-      
-      const alpha = this.isCharging ? (0.6 + this.power * 0.4) : 0.4;
+
+      const alpha = this.isCharging ? (0.7 + this.power * 0.3) : 0.45;
       const lineWidth = this.isCharging ? (3 + this.power * 4) : 2;
-      
-      // Cyan Laser Guide Line
+
+      // Laser Trajectory Guide
       ctx.strokeStyle = `rgba(0, 240, 255, ${alpha})`;
       ctx.shadowColor = '#00f0ff';
-      ctx.shadowBlur = this.isCharging ? 12 : 6;
+      ctx.shadowBlur = this.isCharging ? 14 : 6;
       ctx.lineWidth = lineWidth;
       ctx.setLineDash([12, 8]);
       ctx.beginPath();
       ctx.moveTo(this.hammer.x, this.hammer.y);
       ctx.lineTo(endX, endY);
       ctx.stroke();
-      
-      // Impact Target Reticle
-      const reticleRadius = this.isCharging ? (18 + this.power * 8) : 16;
       ctx.setLineDash([]);
+
+      // Check lock-on on revealed hostile creature
+      let lockedTarget = null;
+      if (this.isRevealed) {
+        for (const c of this.creatures) {
+          if (c.defeated) continue;
+          const distToLine = this.distToSegment(c.x, c.y, this.hammer.x, this.hammer.y, endX, endY);
+          const distToReticle = Math.hypot(this.pointer.x - c.x, this.pointer.y - c.y);
+          if (distToLine < c.r + 15 || distToReticle < c.r + 25) {
+            lockedTarget = c;
+            break;
+          }
+        }
+      }
+
+      // Check near civilian warning
+      let nearCivilian = null;
+      if (this.isRevealed) {
+        for (const civ of this.civilians) {
+          const distToLine = this.distToSegment(civ.x, civ.y, this.hammer.x, this.hammer.y, endX, endY);
+          if (distToLine < civ.r + 15) {
+            nearCivilian = civ;
+            break;
+          }
+        }
+      }
+
+      if (lockedTarget) {
+        // Red Lock-On combat crosshairs on creature
+        ctx.strokeStyle = '#ff1744';
+        ctx.shadowColor = '#ff1744';
+        ctx.shadowBlur = 14;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(lockedTarget.x, lockedTarget.y, lockedTarget.r + 8, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#ff1744';
+        ctx.fillText('⚡ TARGET LOCKED', lockedTarget.x, lockedTarget.y + lockedTarget.r + 18);
+
+      } else if (nearCivilian) {
+        // Green innocent warning
+        ctx.strokeStyle = '#00ff88';
+        ctx.shadowColor = '#00ff88';
+        ctx.shadowBlur = 10;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(nearCivilian.x, nearCivilian.y, nearCivilian.r + 10, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#00ff88';
+        ctx.fillText('🛡️ CIVILIAN (SAFE)', nearCivilian.x, nearCivilian.y + nearCivilian.r + 16);
+      }
+
+      // Cursor Aim Reticle
       ctx.strokeStyle = this.isCharging ? '#ffd200' : '#00f0ff';
       ctx.shadowColor = this.isCharging ? '#ffd200' : '#00f0ff';
       ctx.shadowBlur = 10;
-      ctx.lineWidth = 2.5;
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(endX, endY, reticleRadius, 0, Math.PI * 2);
+      ctx.arc(endX, endY, 14, 0, Math.PI * 2);
       ctx.stroke();
-      
-      // Crosshairs
       ctx.beginPath();
-      ctx.moveTo(endX - 12, endY); ctx.lineTo(endX + 12, endY);
-      ctx.moveTo(endX, endY - 12); ctx.lineTo(endX, endY + 12);
+      ctx.moveTo(endX - 10, endY); ctx.lineTo(endX + 10, endY);
+      ctx.moveTo(endX, endY - 10); ctx.lineTo(endX, endY + 10);
       ctx.stroke();
+
       ctx.restore();
     }
+  }
 
-    // (C) Draw Radiant Mjolnir with Thunder Aura
+  // ===========================================================================
+  // MJOLNIR HAMMER RENDERING
+  // ===========================================================================
+  drawMjolnir(ctx) {
     ctx.save();
     ctx.translate(this.hammer.x, this.hammer.y);
     ctx.rotate(this.hammer.rotation);
-    
-    // Radiant Lightning Halo
+
     if (this.hammer.state === 'THROWN' || this.hammer.state === 'RETURNING') {
       const haloColor = this.hammer.state === 'RETURNING' ? '#ffd200' : '#00f0ff';
       ctx.fillStyle = haloColor;
@@ -1167,11 +1525,10 @@ class ThorHammerGame extends GameEngine {
       ctx.arc(0, 0, this.hammer.radius + 12, 0, Math.PI * 2);
       ctx.fill();
     } else {
-      // Idle hand lightning spark
       ctx.shadowColor = '#00f0ff';
       ctx.shadowBlur = 10;
     }
-    
+
     // Wooden Handle & Leather Wrapping
     ctx.fillStyle = '#4a2e18';
     ctx.fillRect(-4, -4, 8, 28);
@@ -1182,22 +1539,23 @@ class ThorHammerGame extends GameEngine {
     ctx.moveTo(-4, 12); ctx.lineTo(4, 16);
     ctx.moveTo(-4, 20); ctx.lineTo(4, 24);
     ctx.stroke();
+
     // Pommel
     ctx.fillStyle = '#888';
     ctx.fillRect(-5, 24, 10, 4);
-    
+
     // Uru Metal Hammer Head
     ctx.fillStyle = '#8395a7';
     ctx.fillRect(-15, -14, 30, 20);
     ctx.fillStyle = '#a4b0be';
     ctx.fillRect(-13, -12, 26, 8);
-    
-    // Central Norse Rune (Glows bright cyan)
+
+    // Central Norse Rune
     ctx.fillStyle = '#00f0ff';
     ctx.shadowColor = '#00f0ff';
     ctx.shadowBlur = 8;
     ctx.fillRect(-4, -8, 8, 8);
-    
+
     ctx.restore();
   }
 }

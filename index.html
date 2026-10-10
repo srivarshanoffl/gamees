@@ -3,239 +3,957 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Marvel Mini-Games: Character & Multiverse Missions</title>
-  <meta name="description" content="A dynamic collection of 10 single-player Marvel web mini-games featuring Spider-Man, Captain America, Iron Man, Thor, Ant-Man, and Multiverse Missions.">
-  <meta name="theme-color" content="#e23636">
+  <title>Mjolnir Return | Bug Purge & Civilian Rescue</title>
+  <meta name="description" content="Target corrupted glitch bugs, summon celestial thunder, solve anomalies, and rescue Asgardian civilians in this cinematic physics arcade game.">
+  <meta name="theme-color" content="#ffd200">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔨</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/hub.css">
   <link rel="stylesheet" href="css/game.css">
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 12px;
+      background-color: #0c101a;
+      background-image:
+        radial-gradient(ellipse at 15% 25%, rgba(0, 240, 255, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 85% 75%, rgba(255, 210, 0, 0.1) 0%, transparent 50%);
+    }
+
+    .standalone-nav {
+      width: 100%;
+      max-width: 960px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .nav-btn {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      text-decoration: none;
+      font-family: var(--comic-font, 'Bangers', cursive);
+      font-size: 15px;
+      padding: 8px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      transition: all 0.25s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+    .nav-btn:hover {
+      background: #ffd200;
+      color: #000;
+      border-color: #ffd200;
+      box-shadow: 0 4px 16px rgba(255, 210, 0, 0.4);
+    }
+
+    .nav-btn.debug-nav-btn {
+      background: rgba(245, 158, 11, 0.15);
+      border-color: #f59e0b;
+      color: #ffd200;
+    }
+    .nav-btn.debug-nav-btn:hover {
+      background: #f59e0b;
+      color: #000;
+      box-shadow: 0 4px 16px rgba(245, 158, 11, 0.5);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .game-title-area {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .game-title-area h2 {
+      margin: 0;
+      font-family: var(--comic-font, 'Bangers', cursive);
+      font-size: 24px;
+      letter-spacing: 1.5px;
+      color: #fff;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.7);
+    }
+
+    #gameCanvas {
+      cursor: crosshair;
+    }
+
+    /* CUSTOM FIGHT HUD */
+    .fight-hud-container {
+      position: absolute;
+      top: 14px;
+      left: 18px;
+      right: 18px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 16px;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .fighter-hud-box {
+      background: rgba(10, 15, 25, 0.78);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      padding: 8px 14px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+      pointer-events: auto;
+    }
+
+    .fighter-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .fighter-name {
+      font-family: var(--comic-font, 'Bangers', cursive);
+      font-size: 18px;
+      letter-spacing: 1px;
+      font-weight: 900;
+    }
+    .fighter-name.thor {
+      color: #00f0ff;
+      text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+    }
+
+    .hud-bar-track {
+      width: 100%;
+      height: 14px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 7px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      position: relative;
+    }
+
+    .hud-bar-fill-thor {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #0088ff, #00f0ff, #fff);
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.6);
+      transition: width 0.15s ease-out;
+    }
+
+    .hud-bar-fill-hostiles {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #d50000, #ff1744);
+      box-shadow: 0 0 10px rgba(255, 23, 68, 0.6);
+      transition: width 0.2s ease-out;
+    }
+
+    .hud-civilians-status {
+      font-size: 11px;
+      color: #00ff88;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-top: 4px;
+      text-align: right;
+    }
+
+    /* HUD BUG BADGE */
+    .hud-bug-badge {
+      display: inline-block;
+      margin-top: 4px;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+    .hud-bug-badge.error {
+      background: rgba(255, 23, 68, 0.2);
+      color: #ff5252;
+      border: 1px solid #ff1744;
+      box-shadow: 0 0 8px rgba(255, 23, 68, 0.3);
+    }
+    .hud-bug-badge.error:hover {
+      background: #ff1744;
+      color: #fff;
+    }
+    .hud-bug-badge.success {
+      background: rgba(0, 255, 136, 0.2);
+      color: #00ff88;
+      border: 1px solid #00ff88;
+    }
+
+    .vs-emblem-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      pointer-events: none;
+    }
+
+    .stage-pill {
+      font-family: var(--comic-font, 'Bangers', cursive);
+      font-size: 20px;
+      font-weight: 900;
+      color: #ffd200;
+      background: rgba(10, 15, 25, 0.85);
+      padding: 3px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 210, 0, 0.4);
+      box-shadow: 0 0 15px rgba(255, 210, 0, 0.2);
+      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    }
+
+    /* REVEAL TIMER HUD BOX */
+    .reveal-hud-box {
+      background: rgba(4, 8, 18, 0.92);
+      border: 1.5px solid #00f0ff;
+      border-radius: 8px;
+      padding: 4px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      box-shadow: 0 0 16px rgba(0, 240, 255, 0.45);
+      transition: all 0.2s ease;
+    }
+    .reveal-hud-box.hidden {
+      display: none;
+    }
+    .reveal-hud-box.urgent {
+      border-color: #ff1744;
+      box-shadow: 0 0 18px rgba(255, 23, 68, 0.7);
+      animation: urgentPulse 0.5s infinite alternate;
+    }
+    @keyframes urgentPulse {
+      from { transform: scale(1); }
+      to { transform: scale(1.05); }
+    }
+    .reveal-hud-label {
+      font-family: var(--comic-font, 'Bangers', cursive);
+      font-size: 13px;
+      color: #00f0ff;
+      letter-spacing: 1px;
+    }
+    .reveal-hud-box.urgent .reveal-hud-label {
+      color: #ff1744;
+    }
+    .reveal-hud-track {
+      width: 104px;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .reveal-hud-fill {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #00f0ff, #ffd200);
+      transition: width 0.1s linear;
+    }
+    .reveal-hud-box.urgent .reveal-hud-fill {
+      background: linear-gradient(90deg, #ff1744, #ff5252);
+    }
+
+    /* THROW POWER METER */
+    .power-meter-container {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 380px;
+      background: rgba(10, 15, 25, 0.82);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      padding: 8px 14px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      z-index: 10;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .power-meter-container.active {
+      opacity: 1;
+    }
+    .power-meter-label {
+      font-family: var(--comic-font, 'Bangers', cursive);
+      font-size: 13px;
+      color: #fff;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+    .power-meter-track {
+      width: 100%;
+      height: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 5px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .power-meter-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #ffd200, #ff5500);
+      box-shadow: 0 0 10px rgba(255, 85, 0, 0.6);
+    }
+
+    /* THUNDER BUTTON STATES */
+    .thunder-btn {
+      position: absolute;
+      bottom: 20px;
+      right: 22px;
+      background: rgba(14, 20, 35, 0.92);
+      backdrop-filter: blur(10px);
+      border: 2px solid #ffd200;
+      color: #ffd200;
+      font-family: var(--comic-font, 'Bangers', cursive);
+      font-size: 17px;
+      letter-spacing: 1px;
+      padding: 10px 20px;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 20px rgba(255, 210, 0, 0.35);
+      transition: all 0.2s ease;
+      z-index: 15;
+      user-select: none;
+      overflow: hidden;
+    }
+    .thunder-btn:hover:not(:disabled) {
+      background: #ffd200;
+      color: #000;
+      box-shadow: 0 6px 28px rgba(255, 210, 0, 0.6);
+      transform: translateY(-2px);
+    }
+    .thunder-btn:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+    .thunder-btn:disabled {
+      border-color: rgba(255, 255, 255, 0.2);
+      color: rgba(255, 255, 255, 0.4);
+      box-shadow: none;
+      cursor: not-allowed;
+      background: rgba(10, 15, 25, 0.7);
+    }
+
+    .thunder-btn.locked {
+      border-color: #f59e0b;
+      color: #f59e0b;
+      box-shadow: 0 0 14px rgba(245, 158, 11, 0.3);
+    }
+    .thunder-btn.locked:hover {
+      background: rgba(245, 158, 11, 0.2);
+      color: #ffd200;
+      border-color: #ffd200;
+      transform: translateY(-2px);
+    }
+    .thunder-btn.ready {
+      border-color: #ffd200;
+      color: #ffd200;
+      box-shadow: 0 0 20px rgba(255, 210, 0, 0.45);
+      animation: readyPulse 1.2s infinite alternate;
+    }
+    @keyframes readyPulse {
+      from { box-shadow: 0 0 12px rgba(255, 210, 0, 0.35); }
+      to { box-shadow: 0 0 24px rgba(0, 240, 255, 0.7); }
+    }
+    .thunder-btn.active {
+      border-color: #00f0ff;
+      color: #00f0ff;
+      background: rgba(0, 240, 255, 0.14);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+    }
+
+    .thunder-hint {
+      font-size: 11px;
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      padding: 2px 6px;
+      border-radius: 4px;
+      letter-spacing: 0;
+      font-family: monospace;
+    }
+    .thunder-cooldown-overlay {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: 0%;
+      background: rgba(0, 240, 255, 0.25);
+      pointer-events: none;
+      transition: height 0.1s linear;
+    }
+
+    @media (max-width: 640px) {
+      .fighter-name { font-size: 14px; }
+      .stage-pill { font-size: 16px; }
+      .power-meter-container { width: 90%; }
+      .thunder-btn { bottom: 12px; right: 12px; font-size: 14px; padding: 8px 14px; }
+    }
+  </style>
 </head>
 <body>
 
-  <!-- LOADING SPLASH SCREEN -->
-  <div class="loading-screen" id="loadingScreen">
-    <div class="loading-logo">MARVEL</div>
-    <div class="loading-bar-track">
-      <div class="loading-bar-fill"></div>
+  <!-- TOP NAVIGATION & STATUS -->
+  <div class="standalone-nav">
+    <div class="game-title-area">
+      <span class="arena-hero-badge" style="background:#ffd200; color:#000; box-shadow: 0 2px 8px rgba(255,210,0,0.4);">PHYSICS PUZZLE</span>
+      <h2>MJOLNIR RETURN</h2>
+    </div>
+    <div class="nav-actions">
+      <button class="nav-btn" id="quickSolveBugBtn" style="background: rgba(0, 255, 136, 0.2); border-color: #00ff88; color: #00ff88; font-weight: bold;" title="Instantly solve the CSS bug for testing">⚡ AUTO-SOLVE BUG</button>
+      <button class="nav-btn debug-nav-btn" id="navDebugBtn" title="Inspect Asgardian bifrost-ward.css Bug">🛠️ DEBUG WEB BUG</button>
+      <button class="nav-btn" id="topRestartBtn" title="Restart Mission from Beginning">🔄 RESTART</button>
+      <button class="audio-toggle-btn" id="audioToggleBtn">🔊 AUDIO: ON</button>
     </div>
   </div>
 
-  <!-- ANIMATED BACKGROUND PARTICLE CANVAS -->
-  <canvas id="bgParticles"></canvas>
+  <!-- CANVAS GAME ARENA WRAPPER -->
+  <div class="canvas-wrapper" id="canvasWrapper" style="touch-action: none;">
+    <canvas id="gameCanvas" width="960" height="540"></canvas>
 
-  <!-- HERO BANNER & PORTAL HEADER -->
-  <header class="hero-header">
-    <div class="marvel-logo-badge">MARVEL</div>
-    <h1 class="hero-title">MINI-GAME MULTIVERSE</h1>
-    <p class="hero-subtitle">
-      23 unique single-player arcade mini-games powered by iconic Marvel abilities, cosmic dimensional rifts, and high-performance physics.
-    </p>
+    <!-- FIGHT HUD -->
+    <div class="fight-hud-container">
+      <!-- Left: Thor & Bug State -->
+      <div class="fighter-hud-box">
+        <div class="fighter-header">
+          <span class="fighter-name thor">⚡ THOR ODINSON</span>
+          <span class="hud-label" id="hudScore" style="color:#ffd200; font-weight:bold;">0 PTS</span>
+        </div>
+        <div class="hud-bar-track">
+          <div class="hud-bar-fill-thor" id="thorHealthFill"></div>
+        </div>
+        <div class="hud-bug-badge error" id="hudBugBadge" title="Click to open CSS Bug Debugger">🔒 CSS BUG DETECTED</div>
+      </div>
 
-    <!-- Project Generated Hero Banner Artwork -->
-    <div style="max-width: 960px; margin: 16px auto; border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 12px 36px rgba(0,0,0,0.6);">
-      <img src="assets/hero_banner.jpg" alt="Marvel Superheroes Comic Art" style="width: 100%; height: auto; display: block; object-fit: cover; max-height: 260px;">
-    </div>
-
-    <div class="hero-stats">
-      <div class="stat-pill">MISSIONS PLAYED: <span id="statMissionsPlayed">0/23</span></div>
-      <div class="stat-pill">TOTAL MULTIVERSE SCORE: <span id="statTotalScore">0</span></div>
-      <div class="stat-pill">PERFORMANCE: <span>60 FPS</span></div>
-    </div>
-  </header>
-
-  <!-- SEARCH & QUICK ACTION TOOLBAR -->
-  <div class="hub-toolbar-row">
-    <div class="search-wrapper">
-      <span class="search-icon">🔍</span>
-      <input type="text" id="gameSearchInput" class="game-search-input" placeholder="Search by hero, mechanic, or mission title (e.g. Deadpool, Thor, Portals)...">
-    </div>
-    <div class="hub-actions-group">
-      <button class="action-pill-btn roulette-btn" id="randomMissionBtn">🎲 RANDOM MISSION</button>
-      <button class="action-pill-btn trophy-btn" id="trophyBtn">🏆 TROPHIES (<span id="trophyCount">0/10</span>)</button>
-      <button class="action-pill-btn bgm-btn" id="bgmToggleBtn">🎵 BGM: OFF</button>
-      <button class="action-pill-btn" id="fullscreenBtn">⛶ FULLSCREEN</button>
-    </div>
-  </div>
-
-  <!-- CATEGORY FILTER & AUDIO CONTROLS -->
-  <div class="filter-bar">
-    <div class="category-tabs">
-      <button class="tab-btn active" data-filter="all">ALL MISSIONS (23)</button>
-      <button class="tab-btn" data-filter="character">CHARACTER (10)</button>
-      <button class="tab-btn" data-filter="multiverse">MULTIVERSE (10)</button>
-      <button class="tab-btn" data-filter="doomsday">DOOMSDAY (3)</button>
-    </div>
-    <button class="audio-toggle-btn" id="audioToggleBtn">🔊 SFX: ON</button>
-  </div>
-
-  <!-- GAMES GRID -->
-  <main class="games-container">
-    <div class="games-grid" id="gamesGrid">
-      <!-- Game Cards dynamically injected by hub.js -->
-    </div>
-  </main>
-
-  <!-- FOOTER -->
-  <footer class="hub-footer">
-    <p>Marvel Mini-Game Multiverse &copy; 2026. Built with Vanilla JS &amp; Canvas 2D.</p>
-    <p>Single-player &bull; 10 Unique Mechanics &bull; 0 Dependencies &bull; 60 FPS Browser Ready</p>
-  </footer>
-
-  <!-- FULLSCREEN GAME ARENA MODAL -->
-  <!-- Uses visibility+opacity (not display:none) to prevent click-blocking bugs -->
-  <div class="game-modal" id="gameModal">
-    <!-- Header -->
-    <div class="arena-header">
-      <div class="arena-title-area">
-        <span class="arena-hero-badge" id="arenaHeroBadge">HERO</span>
-        <div>
-          <div class="arena-game-name" id="arenaGameName">GAME TITLE</div>
-          <div class="arena-controls-hint" id="arenaControlsHint">Controls guide</div>
+      <!-- Center: Stage & 30s Reveal Timer -->
+      <div class="vs-emblem-box">
+        <div class="stage-pill" id="hudPhase">GLITCH PURGE</div>
+        <div class="reveal-hud-box hidden" id="revealTimerBox">
+          <div class="reveal-hud-label">⚡ REVEAL SENSOR: <span id="revealTimerNum">30.0s</span></div>
+          <div class="reveal-hud-track">
+            <div class="reveal-hud-fill" id="revealTimerFill"></div>
+          </div>
         </div>
       </div>
-      <button class="arena-close-btn" id="closeArenaBtn">&times; EXIT</button>
+
+      <!-- Right: Hostile Creatures & Civilians -->
+      <div class="fighter-hud-box" id="hudCreaturesBox">
+        <div class="fighter-header">
+          <span class="fighter-name" style="color:#ff1744;">👾 HOSTILE CREATURES</span>
+          <span class="hud-label" id="hudCreaturesCount" style="color:#ff1744; font-weight:bold;">4 / 4 ALIVE</span>
+        </div>
+        <div class="hud-bar-track">
+          <div class="hud-bar-fill-hostiles" id="creaturesBarFill" style="width: 100%;"></div>
+        </div>
+        <div class="hud-civilians-status" id="hudCiviliansStatus">🛡️ ASGARDIAN CIVILIANS: 3 IN SECTOR (SAFE)</div>
+      </div>
     </div>
 
-    <!-- Canvas Wrapper -->
-    <div class="canvas-wrapper" id="canvasWrapper">
-      <canvas id="gameCanvas" width="960" height="540"></canvas>
+    <!-- THUNDER BUTTON -->
+    <button class="thunder-btn locked" id="thunderBtn" title="Reveal hidden creatures and civilians for 30s (Spacebar)">
+      <span id="thunderBtnIcon">🔒</span>
+      <span id="thunderBtnLabel">THUNDER LOCKED</span>
+      <span class="thunder-hint" id="thunderBtnHint">SOLVE BUG</span>
+      <div class="thunder-cooldown-overlay" id="thunderCooldownOverlay"></div>
+    </button>
 
-      <!-- HUD Overlay -->
-      <div class="game-hud">
-        <div class="hud-top-bar">
-          <div class="hud-stat-box">
-            <span class="hud-label">SCORE</span>
-            <span class="hud-value" id="hudScore">0</span>
+    <!-- THROW POWER METER -->
+    <div class="power-meter-container" id="powerMeterContainer">
+      <div class="power-meter-label">THROW POWER</div>
+      <div class="power-meter-track">
+        <div class="power-meter-fill" id="powerMeterFill"></div>
+      </div>
+    </div>
+
+    <!-- MISSION BRIEFING OVERLAY -->
+    <div class="canvas-screen-overlay" id="readyOverlay" style="background: rgba(8, 10, 16, 0.40); backdrop-filter: blur(2px);">
+      <div style="background: rgba(14, 16, 28, 0.94); border: 1px solid rgba(0, 240, 255, 0.4); border-radius: 16px; padding: 24px 32px; max-width: 620px; box-shadow: 0 16px 40px rgba(0,0,0,0.85); backdrop-filter: blur(14px);">
+        <div class="overlay-badge" style="background:#00f0ff; color:#000;">MISSION BRIEFING &bull; ASGARDIAN REALM DEFENSE</div>
+        <h2 class="overlay-title" style="margin: 10px 0; color:#fff;">MJOLNIR RETURN &bull; GLITCH PURGE</h2>
+        <p class="overlay-instructions" style="margin-bottom: 14px; line-height: 1.6; text-align: left;">
+          <b>REQUIRED GAMEPLAY PROGRESSION:</b><br>
+          🛠️ <b>1. SOLVE WEB BUG:</b> Inspect <code>bifrost-ward.css</code> in the Asgardian Terminal. Correct the invalid CSS layout property value on Line 4 to unlock divine Thunder power.<br>
+          ⚡ <b>2. UNLOCK &amp; PRESS THUNDER:</b> Thunder is initially locked. Once patched, press <b>[SPACE]</b> or click <b>[⚡ THUNDER REVEAL]</b>.<br>
+          👁️ <b>3. 30-SECOND REVEAL:</b> Thunder reveals all hidden civilians and surviving hostile creatures for exactly 30 seconds.<br>
+          🔨 <b>4. THROW MJOLNIR AT CREATURES:</b> Aim at visible hostile creatures and throw Mjolnir to defeat them. <b>Innocent civilians must never be targeted!</b><br>
+          ⏳ <b>5. REPEAT REVEAL:</b> When 30 seconds expire, surviving entities hide. Press Thunder again to reveal them until all hostiles are defeated!
+        </p>
+        <div class="overlay-controls-card" style="margin-bottom: 16px;">
+          <span>🎮 CONTROLS:</span><br>
+          Aim: Move mouse &bull; Reveal: [SPACE] or Click [⚡ THUNDER] &bull; Throw Hammer: Hold &amp; Release &bull; Debug Terminal: Click [🛠️ DEBUG WEB BUG]
+        </div>
+        <div class="overlay-btn-group">
+          <button class="overlay-btn" id="briefingSolveBugBtn" style="background:#00ff88; color:#000; font-weight:900;">⚡ AUTO-SOLVE &amp; PLAY</button>
+          <button class="overlay-btn" id="solveBugFirstBtn" style="background:#ffd200; color:#000; font-weight:900;">🛠️ SOLVE WEB BUG FIRST</button>
+          <button class="overlay-btn secondary" id="startMissionBtn">START MISSION</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LEVEL COMPLETE OVERLAY -->
+    <div class="canvas-screen-overlay hidden" id="levelCompleteOverlay">
+      <div class="overlay-badge" style="background:#00f0ff; color:#000;">SECTOR CLEARED</div>
+      <h2 class="overlay-title victory" style="color:#00f0ff;">HOSTILES PURGED</h2>
+      <p class="overlay-instructions">All corrupted glitch creatures defeated. All Asgardian civilians defended!</p>
+      <div class="hud-value" id="levelCompleteScore" style="font-size: 30px; margin-bottom: 24px; color:#00f0ff;">Score: 0</div>
+      <div class="overlay-btn-group">
+        <button class="overlay-btn" id="nextLevelBtn" style="background:#00f0ff; color:#000;">PLAY AGAIN</button>
+      </div>
+    </div>
+
+    <!-- VICTORY OVERLAY -->
+    <div class="canvas-screen-overlay hidden" id="victoryOverlay">
+      <div class="overlay-badge" style="background:#ffd200; color:#000;">VICTORY ACHIEVED</div>
+      <h2 class="overlay-title victory">REALM SECURED</h2>
+      <p class="overlay-instructions" id="victoryMessage">All corrupted creatures purged with divine thunder! All civilians defended.</p>
+      <div class="hud-value" id="victoryScore" style="font-size: 30px; margin-bottom: 24px; color:#ffd200;">Final Score: 0</div>
+      <div class="overlay-btn-group">
+        <button class="overlay-btn" id="victoryClaimBtn" style="background:#ffd200; color:#000;">PLAY AGAIN</button>
+        <button class="overlay-btn secondary" id="victoryRestartBtn">RESTART MISSION</button>
+      </div>
+    </div>
+
+    <!-- GAME OVER / DEFEAT OVERLAY -->
+    <div class="canvas-screen-overlay hidden" id="gameOverOverlay">
+      <div class="overlay-badge" style="background:#d50000; color:#fff;">CRITICAL FAILURE</div>
+      <h2 class="overlay-title defeat">MISSION FAILED</h2>
+      <p class="overlay-instructions" id="gameOverReason">Thor was overwhelmed by the glitch corruption.</p>
+      <div class="hud-value" id="gameOverScore" style="font-size: 24px; color:#aaa; margin-bottom: 24px;">Score: 0</div>
+      <div class="overlay-btn-group">
+        <button class="overlay-btn" id="retryMissionBtn">RETRY MISSION</button>
+        <button class="overlay-btn secondary" id="gameOverRestartBtn">START OVER</button>
+      </div>
+    </div>
+
+    <!-- ASGARDIAN RUNIC DEBUGGING TERMINAL OVERLAY -->
+    <div class="debug-terminal-overlay hidden" id="debugTerminalOverlay">
+      <div class="debug-terminal-window">
+        <div class="terminal-header">
+          <div class="terminal-title">
+            <span>⚡ ASGARDIAN BIFROST TERMINAL &bull; ANOMALY INSPECTOR</span>
           </div>
-
-          <div class="hud-stat-box">
-            <span class="hud-label">STAGE</span>
-            <span class="hud-value" id="hudStage">1/3</span>
-            <span id="hudPhase" style="display:none;">LEVEL 1</span>
+          <button class="terminal-close-btn" id="terminalCloseBtn" title="Close Inspector">&times;</button>
+        </div>
+        <div class="terminal-body">
+          <div class="terminal-briefing">
+            <b>CSS SYNTAX DEFECT DETECTED IN <code>bifrost-ward.css</code>:</b><br>
+            A CSS layout syntax defect is disrupting the Bifrost Ward matrix and blocking Thor's celestial Thunder power. Inspect Line 4 below, select the valid CSS layout declaration, and deploy the patch to unlock Thunder.
           </div>
-
-          <div class="hud-stat-box" id="hudCivilians">
-            <span class="hud-label" style="color:#00ff88;">🛡️ CIVILIANS</span>
-            <span class="hud-value" id="hudCasualties" style="font-size:14px; color:#00ff88;">SAFE (0/1)</span>
-            <div class="hud-bar-container">
-              <div class="hud-bar-fill" id="civHealthFill" style="background: linear-gradient(90deg, #00c853, #69f0ae);"></div>
+          <div class="code-editor-box" id="codeEditorBox">
+            <div class="code-line" data-line="1">
+              <span class="line-num">1</span>
+              <span class="line-code"><span class="comm">/* Asgardian Bifrost Barrier Defenses */</span></span>
+            </div>
+            <div class="code-line" data-line="2">
+              <span class="line-num">2</span>
+              <span class="line-code"><span class="kw">.bifrost-ward</span> {</span>
+            </div>
+            <div class="code-line" data-line="3">
+              <span class="line-num">3</span>
+              <span class="line-code">&nbsp;&nbsp;<span class="prop">position</span>: <span class="val">relative</span>;</span>
+            </div>
+            <div class="code-line" data-line="4" id="bugLine">
+              <span class="line-num">4</span>
+              <span class="line-code">&nbsp;&nbsp;<span class="prop">display</span>: <span class="val" id="codeLine4Val">center</span>; <span class="comm">/* &larr; Invalid CSS property value */</span></span>
+            </div>
+            <div class="code-line" data-line="5">
+              <span class="line-num">5</span>
+              <span class="line-code">&nbsp;&nbsp;<span class="prop">width</span>: <span class="val">100%</span>;</span>
+            </div>
+            <div class="code-line" data-line="6">
+              <span class="line-num">6</span>
+              <span class="line-code">&nbsp;&nbsp;<span class="prop">border-radius</span>: <span class="val">8px</span>;</span>
+            </div>
+            <div class="code-line" data-line="7">
+              <span class="line-num">7</span>
+              <span class="line-code">}</span>
             </div>
           </div>
 
-          <div class="hud-stat-box">
-            <span class="hud-label">VITAL INTEGRITY</span>
-            <div class="hud-bar-container">
-              <div class="hud-bar-fill" id="hudHealthFill"></div>
+          <div class="fix-selection-area" id="fixSelectionArea" style="display: none;">
+            <div class="fix-prompt">SELECT VALID REPLACEMENT CSS DECLARATION FOR LINE <span id="selectedLineNum">4</span>:</div>
+            <div class="fix-options-grid" id="fixOptionsGrid">
+              <button class="fix-option-btn" data-fix="flex">
+                <span>[A]</span> <code>display: flex;</code> &mdash; (Valid CSS Flexible Box Layout)
+              </button>
+              <button class="fix-option-btn" data-fix="middle">
+                <span>[B]</span> <code>display: middle;</code> &mdash; (Invalid CSS value)
+              </button>
+              <button class="fix-option-btn" data-fix="centered">
+                <span>[C]</span> <code>display: centered;</code> &mdash; (Invalid CSS value)
+              </button>
             </div>
           </div>
-        </div>
 
-        <div class="hud-center-alert" id="hudCenterAlert">ALERT</div>
-
-        <div><!-- Spacer for bottom flex --></div>
-      </div>
-
-      <!-- THUNDER BUTTON -->
-      <button class="thunder-btn" id="thunderBtn" style="position:absolute; bottom:20px; right:20px; z-index:15; display:flex; align-items:center; gap:8px; background:rgba(14,20,35,0.88); border:2px solid #ffd200; color:#ffd200; font-family:var(--comic-font); font-size:18px; padding:8px 18px; border-radius:12px; cursor:pointer;" title="Call Celestial Thunder (Spacebar)">
-        <span>⚡ THUNDER</span>
-        <span class="thunder-hint" style="font-size:11px; background:rgba(255,255,255,0.15); color:#fff; padding:2px 6px; border-radius:4px;">SPACE</span>
-        <div class="thunder-cooldown-overlay" id="thunderCooldownOverlay" style="position:absolute; left:0; bottom:0; width:100%; height:0%; background:rgba(0,240,255,0.25); pointer-events:none;"></div>
-      </button>
-
-      <!-- Ready / Tutorial Overlay -->
-      <div class="canvas-screen-overlay" id="readyOverlay">
-        <div class="overlay-badge">BRIEFING</div>
-        <h2 class="overlay-title" id="readyTitle">MISSION TITLE</h2>
-        <p class="overlay-instructions" id="readyInstructions">Instructions details...</p>
-        <div class="overlay-controls-card" id="readyControls">Controls info</div>
-        <div class="overlay-btn-group">
-          <button class="overlay-btn" id="startMissionBtn">START MISSION</button>
-        </div>
-      </div>
-
-      <!-- Victory Overlay -->
-      <div class="canvas-screen-overlay hidden" id="victoryOverlay">
-        <div class="overlay-badge" style="background:#ffd200; color:#000;">VICTORY</div>
-        <h2 class="overlay-title victory">MISSION ACCOMPLISHED!</h2>
-        <p class="overlay-instructions" id="victoryMessage">The sector has been secured!</p>
-        <div class="hud-value" id="victoryScore" style="font-size: 32px; margin-bottom: 24px;">Score: 0</div>
-        <div class="overlay-btn-group">
-          <button class="overlay-btn" id="victoryClaimBtn">CLAIM VICTORY</button>
-        </div>
-      </div>
-
-      <!-- Game Over Overlay -->
-      <div class="canvas-screen-overlay hidden" id="gameOverOverlay">
-        <div class="overlay-badge" style="background:#d50000;">DEFEAT</div>
-        <h2 class="overlay-title defeat">MISSION FAILED</h2>
-        <p class="overlay-instructions" id="gameOverReason">Critical failure...</p>
-        <div class="hud-value" id="gameOverScore" style="font-size: 26px; color:#aaa; margin-bottom: 24px;">Score: 0</div>
-        <div class="overlay-btn-group">
-          <button class="overlay-btn" id="retryMissionBtn">TRY AGAIN</button>
-        </div>
-      </div>
-
-      <!-- Pause Overlay -->
-      <div class="canvas-screen-overlay hidden" id="pauseOverlay">
-        <div class="overlay-badge">TACTICAL PAUSE</div>
-        <h2 class="overlay-title">GAME PAUSED</h2>
-        <p class="overlay-instructions">Press [P] or click Resume to continue the mission.</p>
-        <div class="overlay-btn-group">
-          <button class="overlay-btn" id="resumeGameBtn">RESUME</button>
+          <div class="terminal-footer">
+            <div class="terminal-status-msg" id="terminalStatusMsg">Click Line 4 to inspect the syntax defect...</div>
+            <button class="nav-btn" id="terminalSolveBtn" style="background: rgba(0, 255, 136, 0.2); border-color: #00ff88; color: #00ff88; font-size: 13px; padding: 6px 14px;" title="Instantly solve the CSS bug for testing">⚡ AUTO-SOLVE</button>
+            <button class="verify-patch-btn" id="verifyPatchBtn" disabled>⚡ VERIFY &amp; DEPLOY PATCH</button>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- TROPHY ROOM SHOWROOM MODAL -->
-  <div class="trophy-modal-backdrop hidden" id="trophyModal">
-    <div class="trophy-modal-box">
-      <div class="trophy-header">
-        <h2>🏆 MULTIVERSE TROPHY SHOWROOM</h2>
-        <button class="trophy-close-btn" id="closeTrophyModalBtn">&times; CLOSE</button>
-      </div>
-      <div class="trophy-grid" id="trophyGrid">
-        <!-- Trophies rendered by hub.js -->
-      </div>
-    </div>
-  </div>
-
-  <!-- SCRIPT INCLUDES -->
-  <!-- Audio & Base Engine -->
+  <!-- SCRIPTS -->
   <script src="js/engine/SoundFX.js"></script>
   <script src="js/engine/GameEngine.js"></script>
-
-  <!-- Part A: Character Games -->
-  <script src="js/games/spider-man.js"></script>
-  <script src="js/games/captain-america.js"></script>
-  <script src="js/games/iron-man.js"></script>
-  <script src="js/games/thor.js"></script>
   <script src="js/games/thor-hammer.js"></script>
-  <script src="js/games/ant-man.js"></script>
-  <script src="js/games/black-panther.js"></script>
-  <script src="js/games/wolverine.js"></script>
-  <script src="js/games/hawkeye.js"></script>
-  <script src="js/games/groot.js"></script>
 
-  <!-- Part B: Multiverse Games -->
-  <script src="js/games/doctor-strange.js"></script>
-  <script src="js/games/scarlet-witch.js"></script>
-  <script src="js/games/tva-loki.js"></script>
-  <script src="js/games/watcher-nexus.js"></script>
-  <script src="js/games/deadpool.js"></script>
-  <script src="js/games/chrono-branch.js"></script>
-  <script src="js/games/temporal-echo.js"></script>
-  <script src="js/games/canon-stabilizer.js"></script>
-  <script src="js/games/incursion-point.js"></script>
-  <script src="js/games/loki-timeline-hunt.js"></script>
+  <script>
+    let game;
+    document.addEventListener('DOMContentLoaded', () => {
+      game = new ThorHammerGame();
+      game.start();
 
-  <!-- Part C: Doomsday Games -->
-  <script src="js/games/heralds-exodus.js"></script>
-  <script src="js/games/beyonder-core.js"></script>
+      // Audio toggle
+      const audioBtn = document.getElementById('audioToggleBtn');
+      if (audioBtn) {
+        audioBtn.addEventListener('click', () => {
+          window.soundFX.init();
+          const muted = window.soundFX.toggleMute();
+          audioBtn.textContent = muted ? '🔇 AUDIO: OFF' : '🔊 AUDIO: ON';
+        });
+      }
 
-  <!-- Main Hub Controller -->
-  <script src="js/hub.js"></script>
+      // Top Restart Button
+      const topRestartBtn = document.getElementById('topRestartBtn');
+      if (topRestartBtn) {
+        topRestartBtn.addEventListener('click', () => {
+          window.soundFX.init();
+          document.getElementById('readyOverlay').classList.add('hidden');
+          document.getElementById('levelCompleteOverlay').classList.add('hidden');
+          document.getElementById('victoryOverlay').classList.add('hidden');
+          document.getElementById('gameOverOverlay').classList.add('hidden');
+          document.getElementById('debugTerminalOverlay').classList.add('hidden');
+          resetTerminalUI();
+          game.reset();
+          game.state = 'PLAYING';
+        });
+      }
+
+      // Nav Debug Button
+      const navDebugBtn = document.getElementById('navDebugBtn');
+      if (navDebugBtn) {
+        navDebugBtn.addEventListener('click', () => {
+          window.soundFX.init();
+          if (game) {
+            game.openDebugTerminal();
+          }
+        });
+      }
+
+      // HUD Bug Badge Click
+      const hudBugBadge = document.getElementById('hudBugBadge');
+      if (hudBugBadge) {
+        hudBugBadge.addEventListener('click', () => {
+          window.soundFX.init();
+          if (game) {
+            game.openDebugTerminal();
+          }
+        });
+      }
+
+      // Thunder Button Click
+      const thunderBtn = document.getElementById('thunderBtn');
+      if (thunderBtn) {
+        thunderBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          window.soundFX.init();
+          if (game && game.state === 'PLAYING') {
+            game.triggerThunder();
+          }
+        });
+      }
+
+      // Spacebar Key for Thunder
+      window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' && game && game.state === 'PLAYING' && !game.terminalOpen) {
+          e.preventDefault();
+          window.soundFX.init();
+          game.triggerThunder();
+        } else if (e.code === 'Escape' && game && game.terminalOpen) {
+          game.closeDebugTerminal();
+        }
+      });
+
+      // Start mission button in briefing
+      document.getElementById('startMissionBtn').addEventListener('click', () => {
+        window.soundFX.init();
+        document.getElementById('readyOverlay').classList.add('hidden');
+        game.state = 'PLAYING';
+      });
+
+      // Solve web bug first button in briefing
+      const solveBugFirstBtn = document.getElementById('solveBugFirstBtn');
+      if (solveBugFirstBtn) {
+        solveBugFirstBtn.addEventListener('click', () => {
+          window.soundFX.init();
+          document.getElementById('readyOverlay').classList.add('hidden');
+          game.state = 'PLAYING';
+          game.openDebugTerminal();
+        });
+      }
+
+      // Next level / Play Again
+      document.getElementById('nextLevelBtn').addEventListener('click', () => {
+        document.getElementById('levelCompleteOverlay').classList.add('hidden');
+        resetTerminalUI();
+        game.reset();
+        game.state = 'PLAYING';
+      });
+
+      // Retry mission
+      document.getElementById('retryMissionBtn').addEventListener('click', () => {
+        document.getElementById('gameOverOverlay').classList.add('hidden');
+        resetTerminalUI();
+        game.resetLevel();
+        game.state = 'PLAYING';
+      });
+
+      // Game Over Start Over
+      const gameOverRestartBtn = document.getElementById('gameOverRestartBtn');
+      if (gameOverRestartBtn) {
+        gameOverRestartBtn.addEventListener('click', () => {
+          document.getElementById('gameOverOverlay').classList.add('hidden');
+          resetTerminalUI();
+          game.reset();
+          game.state = 'PLAYING';
+        });
+      }
+
+      // Victory Play Again
+      document.getElementById('victoryClaimBtn').addEventListener('click', () => {
+        document.getElementById('victoryOverlay').classList.add('hidden');
+        resetTerminalUI();
+        game.reset();
+        game.state = 'PLAYING';
+      });
+
+      // Victory Restart
+      const victoryRestartBtn = document.getElementById('victoryRestartBtn');
+      if (victoryRestartBtn) {
+        victoryRestartBtn.addEventListener('click', () => {
+          document.getElementById('victoryOverlay').classList.add('hidden');
+          resetTerminalUI();
+          game.reset();
+          game.state = 'PLAYING';
+        });
+      }
+
+      // =========================================================================
+      // INTERACTIVE DEBUGGING TERMINAL LOGIC
+      // =========================================================================
+      let selectedLine = null;
+      let selectedFix = null;
+      const codeLines = document.querySelectorAll('.code-line');
+      const fixSelectionArea = document.getElementById('fixSelectionArea');
+      const selectedLineNumSpan = document.getElementById('selectedLineNum');
+      const fixOptionBtns = document.querySelectorAll('.fix-option-btn');
+      const verifyPatchBtn = document.getElementById('verifyPatchBtn');
+      const terminalStatusMsg = document.getElementById('terminalStatusMsg');
+      const terminalCloseBtn = document.getElementById('terminalCloseBtn');
+      const codeLine4Val = document.getElementById('codeLine4Val');
+
+      function resetTerminalUI() {
+        selectedLine = null;
+        selectedFix = null;
+        codeLines.forEach(l => l.classList.remove('selected', 'error-target'));
+        fixOptionBtns.forEach(b => b.classList.remove('active'));
+        if (fixSelectionArea) fixSelectionArea.style.display = 'none';
+        if (verifyPatchBtn) {
+          verifyPatchBtn.disabled = true;
+          verifyPatchBtn.textContent = '⚡ VERIFY & DEPLOY PATCH';
+        }
+        if (terminalStatusMsg) {
+          terminalStatusMsg.className = 'terminal-status-msg';
+          terminalStatusMsg.textContent = 'Click Line 4 to inspect the syntax defect...';
+        }
+        if (codeLine4Val) {
+          codeLine4Val.textContent = 'center';
+          codeLine4Val.style.color = '#f59e0b';
+        }
+      }
+
+      // Code line click handling
+      codeLines.forEach(lineEl => {
+        lineEl.addEventListener('click', () => {
+          window.soundFX.init();
+          window.soundFX.play('click');
+          codeLines.forEach(l => l.classList.remove('selected'));
+          lineEl.classList.add('selected');
+
+          const lineNum = parseInt(lineEl.getAttribute('data-line'), 10);
+          selectedLine = lineNum;
+          if (selectedLineNumSpan) selectedLineNumSpan.textContent = lineNum;
+
+          if (lineNum === 4) {
+            // Defective line identified
+            fixSelectionArea.style.display = 'flex';
+            terminalStatusMsg.className = 'terminal-status-msg';
+            terminalStatusMsg.textContent = "Line 4: 'display: center;' is an invalid CSS property value. Select the valid replacement:";
+            if (selectedFix) {
+              verifyPatchBtn.disabled = false;
+            }
+          } else {
+            // Player clicked a non-defective line
+            fixSelectionArea.style.display = 'none';
+            selectedFix = null;
+            fixOptionBtns.forEach(b => b.classList.remove('active'));
+            verifyPatchBtn.disabled = true;
+            terminalStatusMsg.className = 'terminal-status-msg';
+            terminalStatusMsg.textContent = `Line ${lineNum} contains valid syntax. Investigate the invalid layout declaration on Line 4!`;
+          }
+        });
+      });
+
+      // Fix option buttons handling
+      fixOptionBtns.forEach(optBtn => {
+        optBtn.addEventListener('click', () => {
+          window.soundFX.init();
+          window.soundFX.play('click');
+          fixOptionBtns.forEach(b => b.classList.remove('active'));
+          optBtn.classList.add('active');
+          selectedFix = optBtn.getAttribute('data-fix');
+
+          if (selectedLine === 4) {
+            verifyPatchBtn.disabled = false;
+            terminalStatusMsg.className = 'terminal-status-msg';
+            terminalStatusMsg.textContent = `Ready to verify patch: display: ${selectedFix};`;
+          }
+        });
+      });
+
+      // Verify and Deploy Patch
+      verifyPatchBtn.addEventListener('click', () => {
+        window.soundFX.init();
+        if (selectedLine === 4 && selectedFix === 'flex') {
+          // CORRECT REAL WEB BUG FIX!
+          terminalStatusMsg.className = 'terminal-status-msg success';
+          terminalStatusMsg.innerHTML = '✓ PATCH COMPILED! <code>display: flex;</code> is valid CSS! Celestial Thunder power unlocked!';
+          verifyPatchBtn.disabled = true;
+          verifyPatchBtn.textContent = '✓ PATCH DEPLOYED';
+          if (codeLine4Val) {
+            codeLine4Val.textContent = 'flex';
+            codeLine4Val.style.color = '#00ff88';
+          }
+          window.soundFX.play('collect');
+
+          if (game) {
+            game.solveCodingBug();
+          }
+
+          // Auto-close terminal after short confirmation delay
+          setTimeout(() => {
+            if (game) game.closeDebugTerminal();
+          }, 1200);
+
+        } else {
+          // INCORRECT FIX ATTEMPT
+          terminalStatusMsg.className = 'terminal-status-msg error';
+          if (selectedLine !== 4) {
+            terminalStatusMsg.textContent = '✗ VERIFICATION FAILED: Selected line does not have a defect. Check Line 4!';
+          } else {
+            terminalStatusMsg.innerHTML = `✗ VERIFICATION FAILED: <code>display: ${selectedFix};</code> is NOT valid CSS!`;
+          }
+          window.soundFX.play('hit');
+          if (game) game.shake(6, 0.2);
+        }
+      });
+
+      // Terminal close button
+      if (terminalCloseBtn) {
+        terminalCloseBtn.addEventListener('click', () => {
+          if (game) game.closeDebugTerminal();
+        });
+      }
+
+      // =========================================================================
+      // QUICK AUTO-SOLVE FUNCTIONALITY (FOR EASY TESTING)
+      // =========================================================================
+      function executeAutoSolve() {
+        window.soundFX.init();
+        selectedLine = 4;
+        selectedFix = 'flex';
+        if (selectedLineNumSpan) selectedLineNumSpan.textContent = 4;
+        codeLines.forEach(l => l.classList.remove('selected'));
+        const line4El = document.querySelector('.code-line[data-line="4"]');
+        if (line4El) line4El.classList.add('selected');
+        if (fixSelectionArea) fixSelectionArea.style.display = 'flex';
+        fixOptionBtns.forEach(b => {
+          b.classList.toggle('active', b.getAttribute('data-fix') === 'flex');
+        });
+
+        if (codeLine4Val) {
+          codeLine4Val.textContent = 'flex';
+          codeLine4Val.style.color = '#00ff88';
+        }
+        if (verifyPatchBtn) {
+          verifyPatchBtn.disabled = true;
+          verifyPatchBtn.textContent = '✓ PATCH DEPLOYED';
+        }
+        if (terminalStatusMsg) {
+          terminalStatusMsg.className = 'terminal-status-msg success';
+          terminalStatusMsg.innerHTML = '⚡ <b>AUTO-SOLVED!</b> <code>display: flex;</code> deployed! Thunder power unlocked!';
+        }
+        window.soundFX.play('powerup');
+
+        if (game) {
+          game.solveCodingBug();
+          game.state = 'PLAYING';
+          const readyOverlay = document.getElementById('readyOverlay');
+          if (readyOverlay) readyOverlay.classList.add('hidden');
+
+          setTimeout(() => {
+            game.closeDebugTerminal();
+          }, 600);
+        }
+      }
+
+      const quickSolveBugBtn = document.getElementById('quickSolveBugBtn');
+      if (quickSolveBugBtn) {
+        quickSolveBugBtn.addEventListener('click', executeAutoSolve);
+      }
+
+      const terminalSolveBtn = document.getElementById('terminalSolveBtn');
+      if (terminalSolveBtn) {
+        terminalSolveBtn.addEventListener('click', executeAutoSolve);
+      }
+
+      const briefingSolveBugBtn = document.getElementById('briefingSolveBugBtn');
+      if (briefingSolveBugBtn) {
+        briefingSolveBugBtn.addEventListener('click', executeAutoSolve);
+      }
+
+      // Shortcut keys: 'B' or 'S' to auto-solve for quick testing
+      window.addEventListener('keydown', (e) => {
+        if ((e.code === 'KeyB' || e.code === 'KeyS') && !e.ctrlKey && !e.metaKey && game && !game.bugSolved) {
+          executeAutoSolve();
+        }
+      });
+    });
+  </script>
 </body>
 </html>
