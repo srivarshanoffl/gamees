@@ -1,0 +1,2278 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deadpool &amp; Wolverine: Final Overload</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+            background: #04060a
+        }
+
+        body {
+            font-family: Consolas, 'Lucida Console', Monaco, monospace;
+            color: #c9d2dc;
+            -webkit-user-select: none;
+            user-select: none;
+            cursor: default
+        }
+
+        svg {
+            overflow: visible
+        }
+
+        button {
+            font-family: inherit;
+            cursor: pointer
+        }
+
+        #stage {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            background: #04060a
+        }
+
+        #stageInner {
+            position: absolute;
+            inset: 0;
+            transform-origin: 50% 58%;
+            will-change: transform
+        }
+
+        #env,
+        #linkSvg,
+        #fx {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none
+        }
+
+        #chars {
+            position: absolute;
+            inset: 0;
+            pointer-events: none
+        }
+
+        .char {
+            position: absolute;
+            pointer-events: none;
+            will-change: transform, opacity
+        }
+
+        #dp {
+            transition: opacity 1.2s ease, transform 1s ease
+        }
+
+        #dp.veiled {
+            opacity: 0;
+            transform: translateY(30px)
+        }
+
+        #wolv {
+            opacity: 0;
+            transform: translate(190px, 46px);
+            transition: opacity 1.15s ease, transform 1.5s cubic-bezier(.16, .8, .3, 1)
+        }
+
+        #wolv.in {
+            opacity: 1;
+            transform: translate(0, 0)
+        }
+
+        .bob {
+            width: 100%;
+            height: 100%;
+            animation: bob 3.8s ease-in-out infinite alternate
+        }
+
+        @keyframes bob {
+            from {
+                transform: translateY(0)
+            }
+
+            to {
+                transform: translateY(-4px)
+            }
+        }
+
+        .joltWrap {
+            width: 100%;
+            height: 100%
+        }
+
+        .shakeWrap {
+            width: 100%;
+            height: 100%
+        }
+
+        .strain .shakeWrap {
+            animation: shakeS .12s linear infinite
+        }
+
+        @keyframes shakeS {
+            0% {
+                transform: translate(0, 0)
+            }
+
+            30% {
+                transform: translate(1.6px, -1px)
+            }
+
+            60% {
+                transform: translate(-1.5px, 1.2px)
+            }
+
+            100% {
+                transform: translate(0, 0)
+            }
+        }
+
+        .jolt {
+            animation: joltK .38s linear
+        }
+
+        .joltBig {
+            animation: joltK .55s linear 2
+        }
+
+        @keyframes joltK {
+            0% {
+                transform: translate(0, 0) rotate(0)
+            }
+
+            12% {
+                transform: translate(3px, -3px) rotate(.8deg)
+            }
+
+            26% {
+                transform: translate(-3px, 2px) rotate(-.8deg)
+            }
+
+            40% {
+                transform: translate(2.5px, 2.5px) rotate(.5deg)
+            }
+
+            55% {
+                transform: translate(-2px, -2.5px) rotate(-.4deg)
+            }
+
+            72% {
+                transform: translate(1.5px, 1.5px) rotate(.3deg)
+            }
+
+            100% {
+                transform: translate(0, 0) rotate(0)
+            }
+        }
+
+        .glint .clawsL,
+        .glint .clawsR,
+        .glint .cowlGlint {
+            animation: glintSweep .85s ease forwards
+        }
+
+        @keyframes glintSweep {
+            0% {
+                transform: translateX(-80%);
+                opacity: 0
+            }
+
+            40% {
+                opacity: 1
+            }
+
+            100% {
+                transform: translateX(80%);
+                opacity: 0
+            }
+        }
+
+        .charImgWrap {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center
+        }
+
+        .charImg {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: bottom center;
+            filter: drop-shadow(0 0 16px rgba(220, 38, 56, .4));
+            transition: filter .25s ease
+        }
+
+        #wolv .charImg {
+            filter: drop-shadow(0 0 16px rgba(245, 158, 11, .35))
+        }
+
+        .charAura {
+            display: none
+        }
+
+        .cowlGlint {
+            display: none !important;
+        }
+
+        .rimB,
+        .rimR {
+            display: none !important;
+        }
+
+        .strain #dpImg {
+            animation: dpStrainFlicker .12s linear infinite alternate;
+        }
+
+        .strain #wolvImg {
+            animation: wolvStrainFlicker .12s linear infinite alternate;
+        }
+
+        @keyframes dpStrainFlicker {
+            from {
+                filter: drop-shadow(0 0 16px #ff3347) drop-shadow(0 0 35px #60a5fa) brightness(1.2) contrast(1.1);
+            }
+            to {
+                filter: drop-shadow(0 0 28px #ff4555) drop-shadow(0 0 55px #93c5fd) brightness(1.4) contrast(1.25);
+            }
+        }
+
+        @keyframes wolvStrainFlicker {
+            from {
+                filter: drop-shadow(0 0 16px #f59e0b) drop-shadow(0 0 35px #ef4444) brightness(1.2) contrast(1.1);
+            }
+            to {
+                filter: drop-shadow(0 0 28px #fbbf24) drop-shadow(0 0 55px #f87171) brightness(1.45) contrast(1.25);
+            }
+        }
+
+        /* FOREGROUND REACTOR BARRICADE & CONSOLE */
+        #foregroundBarricade {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 22%;
+            pointer-events: none;
+            z-index: 10
+        }
+
+        #barricadeSvg {
+            width: 100%;
+            height: 100%;
+            display: block;
+            filter: drop-shadow(0 -10px 24px rgba(0, 0, 0, .85))
+        }
+
+        .waveAnim {
+            stroke-dasharray: 6 3;
+            animation: waveScroll 2.2s linear infinite
+        }
+
+        .waveAnim2 {
+            stroke-dasharray: 8 4;
+            animation: waveScroll 1.6s linear infinite reverse
+        }
+
+        @keyframes waveScroll {
+            to {
+                stroke-dashoffset: -36
+            }
+        }
+
+        .fieldFill {
+            animation: fieldPulse 1.8s ease-in-out infinite alternate
+        }
+
+        @keyframes fieldPulse {
+            from {
+                opacity: .8;
+                width: 130px
+            }
+
+            to {
+                opacity: 1;
+                width: 175px
+            }
+        }
+
+        .ventGlow {
+            animation: ventGlowPulse 2.4s ease-in-out infinite alternate
+        }
+
+        @keyframes ventGlowPulse {
+            from {
+                opacity: .35
+            }
+
+            to {
+                opacity: .85
+            }
+        }
+
+        .consoleGlow {
+            animation: consolePulse 3.2s ease-in-out infinite alternate
+        }
+
+        @keyframes consolePulse {
+            from {
+                opacity: .3
+            }
+
+            to {
+                opacity: .75
+            }
+        }
+
+        .steamVent {
+            position: absolute;
+            bottom: 12%;
+            width: 52px;
+            height: 64px;
+            border-radius: 50%;
+            background: radial-gradient(closest-side, rgba(160, 190, 220, .28), rgba(160, 190, 220, 0) 72%);
+            pointer-events: none;
+            animation: steamBillow 3.8s ease-out infinite
+        }
+
+        .sv1 {
+            left: 22%;
+            animation-delay: 0s
+        }
+
+        .sv2 {
+            left: 40%;
+            animation-delay: 1.9s
+        }
+
+        .sv3 {
+            left: 58%;
+            animation-delay: .8s
+        }
+
+        .sv4 {
+            left: 76%;
+            animation-delay: 2.6s
+        }
+
+        @keyframes steamBillow {
+            0% {
+                transform: translate(0, 0) scale(.6);
+                opacity: 0
+            }
+
+            25% {
+                opacity: .7
+            }
+
+            100% {
+                transform: translate(-18px, -70px) scale(2.3);
+                opacity: 0
+            }
+        }
+
+        .charShadow {
+            position: absolute;
+            height: 3.4%;
+            pointer-events: none;
+            background: radial-gradient(closest-side, rgba(0, 0, 0, .65), transparent 72%)
+        }
+
+        /* smoke */
+        .smoke {
+            position: absolute;
+            pointer-events: none;
+            border-radius: 50%;
+            background: radial-gradient(closest-side, rgba(135, 148, 170, .14), rgba(135, 148, 170, 0) 70%)
+        }
+
+        .sb1 {
+            left: -12%;
+            bottom: 4%;
+            width: 64%;
+            height: 38%;
+            animation: drift1 42s ease-in-out infinite alternate
+        }
+
+        .sb2 {
+            right: -16%;
+            bottom: 0;
+            width: 58%;
+            height: 34%;
+            opacity: .85;
+            animation: drift2 50s ease-in-out infinite alternate
+        }
+
+        .sf1 {
+            left: 10%;
+            bottom: -9%;
+            width: 76%;
+            height: 32%;
+            opacity: .95;
+            animation: drift3 30s ease-in-out infinite alternate
+        }
+
+        @keyframes drift1 {
+            to {
+                transform: translate(9%, -4%) scale(1.14)
+            }
+        }
+
+        @keyframes drift2 {
+            to {
+                transform: translate(-8%, -6%) scale(1.08)
+            }
+        }
+
+        @keyframes drift3 {
+            to {
+                transform: translate(-12%, -3%) scale(1.18)
+            }
+        }
+
+        .gust {
+            position: absolute;
+            pointer-events: none;
+            border-radius: 50%;
+            opacity: .9;
+            will-change: transform, opacity;
+            background: radial-gradient(closest-side, rgba(155, 168, 192, .34), rgba(155, 168, 192, 0) 72%);
+            transition: transform 2.2s cubic-bezier(.2, .6, .4, 1), opacity 2.2s ease
+        }
+
+        /* RIGHT energy bridge — carries the real CSS bug */
+        .energy-link {
+            opacity: 0;
+            transition: opacity .35s ease
+        }
+
+        /* the intentional bug lives on this next rule */
+        .energy-link.is-active {
+            opacity: 0
+        }
+
+        .energy-link.energized #elMid {
+            stroke-opacity: .8
+        }
+
+        .energy-link.energized #elLo {
+            stroke-opacity: .28
+        }
+
+        .energy-link.is-active #elFlow {
+            animation: flowDash .5s linear infinite
+        }
+
+        @keyframes flowDash {
+            to {
+                stroke-dashoffset: -35
+            }
+        }
+
+        /* LEFT energy bridge — same ray style, always visible when connected */
+        #leftLink {
+            opacity: 0;
+            transition: opacity .4s ease
+        }
+
+        #leftLink.on {
+            opacity: 1
+        }
+
+        #leftLink #llFlow {
+            animation: flowDash .5s linear infinite
+        }
+
+        /* hands bridge */
+        #buddyLink {
+            opacity: 0;
+            transition: opacity .3s ease
+        }
+
+        #buddyLink.on {
+            opacity: 1
+        }
+
+        #buddyLink #blFlow {
+            animation: flowDash .42s linear infinite
+        }
+
+        .spin {
+            transform-box: fill-box;
+            transform-origin: center;
+            animation: spin 9s linear infinite
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+
+        .blink {
+            animation: blink 2.6s steps(1) infinite
+        }
+
+        @keyframes blink {
+
+            0%,
+            70% {
+                opacity: 1
+            }
+
+            78%,
+            100% {
+                opacity: .08
+            }
+        }
+
+        .cable {
+            stroke: #1a2331;
+            fill: none;
+            stroke-width: 2.5
+        }
+
+        .cable.live {
+            stroke: #38678f;
+            stroke-dasharray: 7 11;
+            animation: cableFlow 1.1s linear infinite
+        }
+
+        @keyframes cableFlow {
+            to {
+                stroke-dashoffset: -36
+            }
+        }
+
+        #machine.vibe {
+            animation: mVibe .09s linear infinite
+        }
+
+        @keyframes mVibe {
+            0% {
+                transform: translate(0, 0)
+            }
+
+            25% {
+                transform: translate(1.8px, -1.3px)
+            }
+
+            50% {
+                transform: translate(-1.6px, 1.1px)
+            }
+
+            75% {
+                transform: translate(1.1px, 1.5px)
+            }
+
+            100% {
+                transform: translate(0, 0)
+            }
+        }
+
+        #mCore {
+            transform-box: fill-box;
+            transform-origin: center
+        }
+
+        #machine.dying #mCore {
+            animation: mDie 1.25s steps(4, end) forwards
+        }
+
+        #machine.dying .vent {
+            animation: ventDie .8s steps(3) infinite
+        }
+
+        @keyframes ventDie {
+            0% {
+                opacity: 1
+            }
+
+            33% {
+                opacity: .15
+            }
+
+            66% {
+                opacity: .8
+            }
+
+            100% {
+                opacity: .1
+            }
+        }
+
+        @keyframes mDie {
+            0% {
+                opacity: 1
+            }
+
+            28% {
+                opacity: .2
+            }
+
+            44% {
+                opacity: .9
+            }
+
+            64% {
+                opacity: .08
+            }
+
+            80% {
+                opacity: .55
+            }
+
+            100% {
+                opacity: 0
+            }
+        }
+
+        #machine.dead .vent,
+        #machine.dead .blink {
+            opacity: 0 !important;
+            animation: none !important
+        }
+
+        #dim {
+            position: absolute;
+            inset: 0;
+            background: #000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .8s ease
+        }
+
+        #flash {
+            position: absolute;
+            inset: 0;
+            background: #fff;
+            opacity: 0;
+            pointer-events: none;
+            mix-blend-mode: screen
+        }
+
+        #vignette {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: radial-gradient(ellipse at 50% 45%, transparent 50%, rgba(0, 0, 0, .6) 100%)
+        }
+
+        .hudPanel {
+            position: fixed;
+            z-index: 40;
+            background: rgba(8, 10, 15, .74);
+            border: 1px solid rgba(255, 80, 92, .28);
+            padding: 9px 12px;
+            backdrop-filter: blur(3px)
+        }
+
+        #statusPanel {
+            top: 16px;
+            left: 16px;
+            min-width: 230px;
+            max-width: 400px
+        }
+
+        #stState {
+            font-size: 11px;
+            letter-spacing: 2px;
+            color: #ff3347;
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        #stState::before {
+            content: "";
+            width: 7px;
+            height: 7px;
+            background: #ff3347;
+            display: inline-block;
+            animation: blink 1.6s steps(1) infinite
+        }
+
+        #stMsg {
+            margin-top: 5px;
+            font-size: 11px;
+            letter-spacing: .6px;
+            color: #9aa7b4;
+            line-height: 1.5
+        }
+
+        #chargePanel {
+            top: 16px;
+            right: 64px;
+            width: 220px
+        }
+
+        #chargePanel .lbl {
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: #77828e;
+            display: flex;
+            justify-content: space-between
+        }
+
+        #chargeBar {
+            margin-top: 6px;
+            height: 8px;
+            background: #11141c;
+            border: 1px solid #232a38;
+            position: relative
+        }
+
+        #chargeFill {
+            position: absolute;
+            inset: 1px auto 1px 1px;
+            width: 0%;
+            background: #d81f30;
+            transition: width .2s linear
+        }
+
+        #chargeMeta {
+            margin-top: 5px;
+            font-size: 10px;
+            letter-spacing: 1.5px;
+            color: #9aa7b4;
+            display: flex;
+            justify-content: space-between
+        }
+
+        #chargePanel.hot #chargeFill {
+            background: #ff5a2a;
+            animation: blink 1s steps(1) infinite
+        }
+
+        #muteBtn {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 60;
+            width: 36px;
+            height: 36px;
+            background: rgba(8, 10, 15, .74);
+            border: 1px solid rgba(255, 80, 92, .28);
+            color: #c9d2dc;
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        #muteBtn:hover {
+            border-color: #ff3347
+        }
+
+        .overlay {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 30
+        }
+
+        .hidden {
+            display: none !important
+        }
+
+        #titleScreen {
+            background: rgba(3, 4, 8, .62);
+            text-align: center
+        }
+
+        .t-over {
+            font-size: 11px;
+            letter-spacing: 4px;
+            color: #77828e;
+            margin-bottom: 22px
+        }
+
+        .t-main {
+            font-family: Impact, 'Arial Black', 'Franklin Gothic Medium', sans-serif;
+            font-weight: 400;
+            font-size: clamp(34px, 6vw, 84px);
+            letter-spacing: 3px;
+            color: #e8edf3;
+            line-height: 1.02;
+            text-shadow: 0 0 26px rgba(229, 48, 63, .3)
+        }
+
+        .t-main .amp {
+            color: #ff3347
+        }
+
+        .t-div {
+            width: 280px;
+            height: 2px;
+            margin: 18px auto 14px;
+            background: linear-gradient(90deg, transparent, #ff3347, transparent);
+            background-size: 200% 100%;
+            animation: divSlide 2.6s linear infinite
+        }
+
+        @keyframes divSlide {
+            from {
+                background-position: 120% 0
+            }
+
+            to {
+                background-position: -80% 0
+            }
+        }
+
+        .t-sub {
+            font-family: Impact, 'Arial Black', sans-serif;
+            font-size: clamp(20px, 3vw, 38px);
+            letter-spacing: 10px;
+            color: #ff3347
+        }
+
+        .t-tag {
+            margin-top: 16px;
+            font-size: 12px;
+            letter-spacing: 1px;
+            color: #9aa7b4
+        }
+
+        .btn {
+            margin-top: 26px;
+            background: #c8202e;
+            color: #fff;
+            border: 1px solid #ff5a66;
+            padding: 13px 42px;
+            font-size: 14px;
+            letter-spacing: 4px;
+            transition: background .18s, letter-spacing .18s
+        }
+
+        .btn:hover {
+            background: #ff3347;
+            letter-spacing: 5px
+        }
+
+        .t-note {
+            margin-top: 20px;
+            font-size: 10px;
+            letter-spacing: 1px;
+            color: #5d6874
+        }
+
+        #debugOverlay {
+            position: fixed;
+            left: 50%;
+            bottom: 4vh;
+            transform: translateX(-50%);
+            z-index: 50;
+            width: min(660px, 92vw);
+            background: rgba(9, 7, 9, .92);
+            border: 1px solid #3a2026;
+            border-left: 4px solid #ff3347;
+            padding: 16px 20px
+        }
+
+        .dbg-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: Impact, 'Arial Black', sans-serif;
+            font-size: 22px;
+            letter-spacing: 3px;
+            color: #ff3347
+        }
+
+        .dbg-err {
+            margin-top: 6px;
+            font-size: 11px;
+            letter-spacing: 2px;
+            color: #ffb199
+        }
+
+        .dbg-body {
+            margin-top: 12px;
+            font-size: 12px;
+            line-height: 1.75;
+            color: #c9d2dc;
+            letter-spacing: .4px
+        }
+
+        .dbg-body b {
+            color: #fff
+        }
+
+        .kbd {
+            display: inline-block;
+            border: 1px solid #3a4350;
+            border-bottom-width: 2px;
+            padding: 0 6px;
+            margin: 0 2px;
+            font-size: 11px;
+            background: #141922;
+            color: #e8edf3
+        }
+
+        .dbg-code {
+            margin-top: 12px;
+            background: #0b0d12;
+            border: 1px solid #232a38;
+            padding: 10px 14px;
+            font-size: 12.5px;
+            color: #9fd4ff;
+            line-height: 1.6
+        }
+
+        .dbg-code .bug {
+            color: #ff3347;
+            font-weight: bold
+        }
+
+        .dbg-wait {
+            margin-top: 12px;
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: #77828e
+        }
+
+        .dbg-wait::after {
+            content: "_";
+            animation: blink 1s steps(1) infinite
+        }
+
+        #bypassBtn {
+            position: fixed;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 55;
+            background: rgba(20, 16, 8, .8);
+            border: 1px dashed #8a6a2c;
+            color: #d8a03c;
+            padding: 6px 14px;
+            font-size: 10px;
+            letter-spacing: 2px
+        }
+
+        #bypassBtn:hover {
+            border-color: #d8a03c;
+            color: #ffd98a
+        }
+
+        #bypassBtn.used {
+            opacity: .4;
+            pointer-events: none
+        }
+
+        #endScreen {
+            background: rgba(3, 4, 8, .4);
+            text-align: center;
+            justify-content: flex-end;
+            padding-bottom: 6vh
+        }
+
+        .end1 {
+            font-family: Impact, 'Arial Black', sans-serif;
+            font-size: clamp(22px, 3.4vw, 44px);
+            letter-spacing: 6px;
+            color: #9fd4ff
+        }
+
+        .end2 {
+            font-family: Impact, 'Arial Black', sans-serif;
+            font-size: clamp(30px, 5vw, 64px);
+            letter-spacing: 8px;
+            color: #ff3347;
+            margin-top: 10px;
+            text-shadow: 0 0 30px rgba(229, 48, 63, .35)
+        }
+
+        .endStats {
+            margin-top: 16px;
+            font-size: 11px;
+            letter-spacing: 2px;
+            color: #9aa7b4
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            .smoke,
+            .bob,
+            .blink,
+            .t-div,
+            #chargePanel.hot #chargeFill,
+            .spin,
+            .jolt,
+            .joltBig,
+            .strain .shakeWrap,
+            #machine.vibe,
+            .cable.live {
+                animation: none !important
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="stage">
+        <div id="stageInner">
+            <svg id="env"></svg>
+            <div id="smokeBack">
+                <div class="smoke sb1"></div>
+                <div class="smoke sb2"></div>
+            </div>
+
+            <div id="chars">
+                <div id="dpShadow" class="charShadow"></div>
+                <div id="wolvShadow" class="charShadow"></div>
+
+                <!-- DEADPOOL -->
+                <div id="dp" class="char veiled">
+                    <div class="bob">
+                        <div class="joltWrap">
+                            <div class="shakeWrap">
+                                <div class="charImgWrap dpImgWrap">
+                                    <img id="dpImg" src="assets/deadpool.png" alt="Deadpool" class="charImg" />
+                                    <div class="charAura dpAura"></div>
+                                    <div class="rimB"></div>
+                                    <div class="rimR"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- WOLVERINE -->
+                <div id="wolv" class="char">
+                    <div class="bob" style="animation-duration:4.4s">
+                        <div class="joltWrap">
+                            <div class="shakeWrap">
+                                <div class="charImgWrap wolvImgWrap" id="wolvSvg">
+                                    <img id="wolvImg" src="assets/wolverine.png" alt="Wolverine" class="charImg" />
+                                    <div class="charAura wolvAura"></div>
+                                    <div class="cowlGlint"></div>
+                                    <div class="rimB"></div>
+                                    <div class="rimR"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FOREGROUND REACTOR CONTAINMENT BARRICADE & CONSOLE -->
+            <div id="foregroundBarricade">
+                <svg id="barricadeSvg" viewBox="0 0 1920 200" preserveAspectRatio="none">
+                    <defs>
+                        <linearGradient id="armorMetal" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#2a3344" />
+                            <stop offset="20%" stop-color="#19202c" />
+                            <stop offset="65%" stop-color="#0f141d" />
+                            <stop offset="100%" stop-color="#05070b" />
+                        </linearGradient>
+                        <linearGradient id="rimHighlight" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stop-color="#3d495d" />
+                            <stop offset="50%" stop-color="#607699" />
+                            <stop offset="100%" stop-color="#3d495d" />
+                        </linearGradient>
+                        <linearGradient id="screenGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#091824" />
+                            <stop offset="100%" stop-color="#020910" />
+                        </linearGradient>
+                        <pattern id="hazardStripe" width="20" height="20" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                            <rect width="10" height="20" fill="#e59819" />
+                            <rect x="10" width="10" height="20" fill="#14171d" />
+                        </pattern>
+                        <radialGradient id="underglow" cx="50%" cy="100%" r="65%">
+                            <stop offset="0%" stop-color="#ff3347" stop-opacity="0.5" />
+                            <stop offset="60%" stop-color="#ff3347" stop-opacity="0.12" />
+                            <stop offset="100%" stop-color="#ff3347" stop-opacity="0" />
+                        </radialGradient>
+                    </defs>
+                    
+                    <!-- Soft atmospheric reactor pit underglow -->
+                    <ellipse cx="960" cy="180" rx="700" ry="70" fill="url(#underglow)" opacity="0.6" class="consoleGlow" />
+
+                    <!-- Main Heavy Bulkhead Wall -->
+                    <path d="M 0 200 L 0 80 L 300 80 L 480 35 L 1440 35 L 1620 80 L 1920 80 L 1920 200 Z" fill="url(#armorMetal)" stroke="#1a2332" stroke-width="2" />
+                    <!-- Top Chamfer Highlight -->
+                    <path d="M 0 80 L 300 80 L 480 35 L 1440 35 L 1620 80 L 1920 80" fill="none" stroke="url(#rimHighlight)" stroke-width="3" />
+
+                    <!-- Central Reactor Command Terminal Deck (Recessed central well) -->
+                    <path d="M 480 35 L 640 35 L 720 55 L 1200 55 L 1280 35 L 1440 35 L 1420 190 L 500 190 Z" fill="#0d1118" stroke="#253246" stroke-width="1.8" />
+                    <rect x="500" y="38" width="130" height="8" fill="url(#hazardStripe)" rx="1.5" />
+                    <rect x="1290" y="38" width="130" height="8" fill="url(#hazardStripe)" rx="1.5" />
+                    <rect x="730" y="58" width="460" height="7" fill="url(#hazardStripe)" opacity="0.8" rx="1.5" />
+
+                    <!-- Diagnostic CRT Screens & Oscilloscopes -->
+                    <rect x="520" y="70" width="160" height="58" rx="4" fill="url(#screenGrad)" stroke="#1d3148" stroke-width="1.4" />
+                    <text x="532" y="86" fill="#4fa3e3" font-size="8.5" font-family="monospace" letter-spacing="1">CH-1 // TIME RIPPER</text>
+                    <polyline points="532,108 550,108 560,92 570,118 580,96 595,112 610,102 630,108 665,108" fill="none" stroke="#38bdf8" stroke-width="1.6" class="waveAnim" />
+                    <text x="532" y="122" fill="#0ea5e9" font-size="7.5" font-family="monospace">VOLTAGE: CRITICAL</text>
+
+                    <rect x="720" y="76" width="220" height="66" rx="4" fill="url(#screenGrad)" stroke="#1d3148" stroke-width="1.4" />
+                    <text x="732" y="91" fill="#ef4444" font-size="8.5" font-family="monospace" letter-spacing="1">CONTAINMENT FIELD</text>
+                    <rect x="732" y="99" width="196" height="7" fill="#141c26" rx="2" />
+                    <rect x="732" y="99" width="155" height="7" fill="#ef4444" rx="2" class="fieldFill" />
+                    <text x="732" y="120" fill="#94a3b8" font-size="7.5" font-family="monospace">CORE FLUX: OVERLOAD 98.7%</text>
+                    <text x="732" y="134" fill="#cbd5e1" font-size="7.5" font-family="monospace">ANTIMATTER CIRCUIT ACTIVE</text>
+
+                    <rect x="980" y="76" width="220" height="66" rx="4" fill="url(#screenGrad)" stroke="#1d3148" stroke-width="1.4" />
+                    <text x="992" y="91" fill="#f59e0b" font-size="8.5" font-family="monospace" letter-spacing="1">BIO-RESONANCE // LOGAN</text>
+                    <polyline points="992,112 1010,112 1020,90 1030,122 1040,94 1055,116 1075,104 1100,118 1130,112 1180,112" fill="none" stroke="#f59e0b" stroke-width="1.6" class="waveAnim2" />
+                    <text x="992" y="134" fill="#fbbf24" font-size="7.5" font-family="monospace">CELL REGEN: MAXIMUM</text>
+
+                    <rect x="1240" y="70" width="160" height="58" rx="4" fill="url(#screenGrad)" stroke="#1d3148" stroke-width="1.4" />
+                    <text x="1252" y="86" fill="#10b981" font-size="8.5" font-family="monospace" letter-spacing="1">GRID // SEC-07</text>
+                    <circle cx="1270" cy="104" r="8" fill="none" stroke="#10b981" stroke-width="1.8" />
+                    <circle cx="1270" cy="104" r="3" fill="#10b981" />
+                    <circle cx="1310" cy="104" r="8" fill="none" stroke="#ef4444" stroke-width="1.8" />
+                    <circle cx="1310" cy="104" r="3" fill="#ef4444" />
+                    <circle cx="1350" cy="104" r="8" fill="none" stroke="#38bdf8" stroke-width="1.8" />
+                    <circle cx="1350" cy="104" r="3" fill="#38bdf8" />
+                    <text x="1252" y="122" fill="#6ee7b7" font-size="7.5" font-family="monospace">TERMINALS LOCKED</text>
+
+                    <!-- Industrial Heavy Piping & Conduits -->
+                    <path d="M 180 200 C 180 130, 360 140, 480 120" fill="none" stroke="#1c2432" stroke-width="14" stroke-linecap="round" />
+                    <path d="M 180 200 C 180 130, 360 140, 480 120" fill="none" stroke="#334259" stroke-width="7" stroke-linecap="round" />
+                    <path d="M 1740 200 C 1740 130, 1560 140, 1440 120" fill="none" stroke="#1c2432" stroke-width="14" stroke-linecap="round" />
+                    <path d="M 1740 200 C 1740 130, 1560 140, 1440 120" fill="none" stroke="#334259" stroke-width="7" stroke-linecap="round" />
+
+                    <!-- Cooling Grates & Vent Glow -->
+                    <g fill="#080c12" stroke="#1d2737">
+                        <rect x="720" y="152" width="220" height="20" rx="2" />
+                        <rect x="980" y="152" width="220" height="20" rx="2" />
+                    </g>
+                    <g stroke="#ff5522" stroke-width="1.8" opacity="0.65" class="ventGlow">
+                        <line x1="735" y1="156" x2="735" y2="168" /><line x1="755" y1="156" x2="755" y2="168" />
+                        <line x1="775" y1="156" x2="775" y2="168" /><line x1="795" y1="156" x2="795" y2="168" />
+                        <line x1="815" y1="156" x2="815" y2="168" /><line x1="835" y1="156" x2="835" y2="168" />
+                        <line x1="855" y1="156" x2="855" y2="168" /><line x1="875" y1="156" x2="875" y2="168" />
+                        <line x1="895" y1="156" x2="895" y2="168" /><line x1="915" y1="156" x2="915" y2="168" />
+                        
+                        <line x1="995" y1="156" x2="995" y2="168" /><line x1="1015" y1="156" x2="1015" y2="168" />
+                        <line x1="1035" y1="156" x2="1035" y2="168" /><line x1="1055" y1="156" x2="1055" y2="168" />
+                        <line x1="1075" y1="156" x2="1075" y2="168" /><line x1="1095" y1="156" x2="1095" y2="168" />
+                        <line x1="1115" y1="156" x2="1115" y2="168" /><line x1="1135" y1="156" x2="1135" y2="168" />
+                        <line x1="1155" y1="156" x2="1155" y2="168" /><line x1="1175" y1="156" x2="1175" y2="168" />
+                    </g>
+                    
+                    <!-- Blinking Diagnostic Status LEDs -->
+                    <circle cx="515" cy="42" r="3" fill="#10b981" class="blink" style="animation-delay:0.2s" />
+                    <circle cx="535" cy="42" r="3" fill="#f59e0b" class="blink" style="animation-delay:0.7s" />
+                    <circle cx="555" cy="42" r="3" fill="#ef4444" class="blink" style="animation-delay:1.2s" />
+                    
+                    <circle cx="1365" cy="42" r="3" fill="#38bdf8" class="blink" style="animation-delay:0.4s" />
+                    <circle cx="1385" cy="42" r="3" fill="#f59e0b" class="blink" style="animation-delay:0.9s" />
+                    <circle cx="1405" cy="42" r="3" fill="#ef4444" class="blink" style="animation-delay:1.5s" />
+                </svg>
+
+                <!-- Dynamic Volumetric Steam Emitters -->
+                <div class="steamVent sv1"></div>
+                <div class="steamVent sv2"></div>
+                <div class="steamVent sv3"></div>
+                <div class="steamVent sv4"></div>
+            </div>
+
+            <div id="smokeFront">
+                <div class="smoke sf1"></div>
+            </div>
+
+            <svg id="linkSvg">
+                <defs>
+                    <radialGradient id="handGrad">
+                        <stop offset="0" stop-color="#ffffff" />
+                        <stop offset=".35" stop-color="#bfe4ff" stop-opacity=".8" />
+                        <stop offset="1" stop-color="#5aa8ff" stop-opacity="0" />
+                    </radialGradient>
+                    <filter id="fGlow" x="-70%" y="-70%" width="240%" height="240%">
+                        <feGaussianBlur stdDeviation="4.5" result="b" />
+                        <feMerge>
+                            <feMergeNode in="b" />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                    </filter>
+                </defs>
+                <!-- LEFT bridge (tower -> Deadpool hand) -->
+                <g id="leftLink" filter="url(#fGlow)">
+                    <path id="llLo" fill="none" stroke="#4fb0ff" stroke-width="14" stroke-opacity=".22"
+                        stroke-linecap="round" />
+                    <path id="llMid" fill="none" stroke="#8ed2ff" stroke-width="6" stroke-opacity=".5"
+                        stroke-linecap="round" />
+                    <path id="llCore" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
+                    <path id="llFlow" fill="none" stroke="#e2f4ff" stroke-width="3.4" stroke-dasharray="6 30"
+                        stroke-linecap="round" />
+                    <circle id="llTip" r="6" fill="#eaf6ff" />
+                </g>
+                <!-- RIGHT bridge (tower -> gap) — carries the CSS bug -->
+                <g id="energyLink" class="energy-link" filter="url(#fGlow)">
+                    <path id="elLo" fill="none" stroke="#4fb0ff" stroke-width="14" stroke-opacity=".22"
+                        stroke-linecap="round" />
+                    <path id="elMid" fill="none" stroke="#8ed2ff" stroke-width="6" stroke-opacity=".5"
+                        stroke-linecap="round" />
+                    <path id="elCore" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
+                    <path id="elFlow" fill="none" stroke="#e2f4ff" stroke-width="3.4" stroke-dasharray="6 30"
+                        stroke-linecap="round" />
+                    <circle id="elTip" r="6" fill="#eaf6ff" />
+                </g>
+                <g id="buddyLink" filter="url(#fGlow)">
+                    <path id="blLo" fill="none" stroke="#4fb0ff" stroke-width="10" stroke-opacity=".28"
+                        stroke-linecap="round" />
+                    <path id="blMid" fill="none" stroke="#8ed2ff" stroke-width="4.5" stroke-opacity=".55"
+                        stroke-linecap="round" />
+                    <path id="blCore" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" />
+                    <path id="blFlow" fill="none" stroke="#e2f4ff" stroke-width="2.6" stroke-dasharray="5 24"
+                        stroke-linecap="round" />
+                </g>
+                <circle id="gDpL" r="14" fill="url(#handGrad)" opacity="0" />
+                <circle id="gDpR" r="14" fill="url(#handGrad)" opacity="0" />
+                <circle id="gWlL" r="14" fill="url(#handGrad)" opacity="0" />
+                <circle id="gWlR" r="15" fill="url(#handGrad)" opacity="0" />
+                <circle id="gContact" r="28" fill="url(#handGrad)" opacity="0" />
+                <circle id="gContactCore" r="9" fill="#ffffff" opacity="0" />
+            </svg>
+
+            <canvas id="fx"></canvas>
+            <div id="dim"></div>
+            <div id="flash"></div>
+            <div id="vignette"></div>
+        </div>
+    </div>
+
+    <!-- HUD -->
+    <div id="statusPanel" class="hudPanel">
+        <div id="stState">TITLE</div>
+        <div id="stMsg">AWAITING MISSION START</div>
+    </div>
+    <div id="chargePanel" class="hudPanel">
+        <div class="lbl"><span>REACTOR // CHARGE</span><span>VILLAIN ASSET</span></div>
+        <div id="chargeBar">
+            <div id="chargeFill"></div>
+        </div>
+        <div id="chargeMeta"><span id="chargePct">0%</span><span id="chargeState">DORMANT</span></div>
+    </div>
+    <button id="muteBtn" title="Toggle sound">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" />
+            <path id="sndOn" d="M16 9c1.2 1.6 1.2 4.4 0 6M18.5 6.5c2.4 3 2.4 8 0 11" />
+            <path id="sndOff" d="M16 9l5 6M21 9l-5 6" style="display:none" />
+        </svg>
+    </button>
+
+    <!-- TITLE -->
+    <div id="titleScreen" class="overlay">
+        <div class="t-over">SECTOR 7 // ENERGY CONTAINMENT — NIGHT SHIFT</div>
+        <h1 class="t-main">DEADPOOL <span class="amp">&amp;</span> WOLVERINE</h1>
+        <div class="t-div"></div>
+        <div class="t-sub">FINAL OVERLOAD</div>
+        <p class="t-tag">One signal short. One broken style rule. One very annoyed Wolverine.</p>
+        <button id="startBtn" class="btn">START MISSION</button>
+        <div class="t-note">HEADS UP: MID-MISSION YOU WILL NEED YOUR BROWSER'S REAL DEVELOPER TOOLS</div>
+    </div>
+
+    <!-- DEBUG -->
+    <div id="debugOverlay" class="hidden">
+        <div class="dbg-head">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ff3347" stroke-width="2">
+                <path d="M12 3 L22 20 L2 20 Z" stroke-linejoin="round" />
+                <path d="M12 10v4M12 17v.5" />
+            </svg>
+            ENERGY CONNECTION FAILED
+        </div>
+        <div class="dbg-err">CRITICAL ERROR: SIGNAL LINK INVISIBLE</div>
+        <div class="dbg-body">
+            The right-hand energy bridge is a <b>real element</b> on this page — it exists, but a stylesheet rule is
+            hiding it.<br>
+            Open <b>Developer Tools</b> (<span class="kbd">F12</span> or <span class="kbd">Ctrl</span>+<span
+                class="kbd">Shift</span>+<span class="kbd">I</span> or <span class="kbd">Cmd</span>+<span
+                class="kbd">Opt</span>+<span class="kbd">I</span>)
+            &rarr; <b>Elements</b> &rarr; <b>Styles</b> &rarr; find <b>.energy-link.is-active</b> and change <b>opacity:
+                0</b> to <b>opacity: 1</b>.
+        </div>
+        <div class="dbg-code">.energy-link.is-active {<br>&nbsp;&nbsp;opacity: <span class="bug">0</span>;<br>}</div>
+        <div class="dbg-wait">DIAGNOSTIC WATCHING COMPUTED STYLE — CINEMATIC PAUSED</div>
+    </div>
+    <button id="bypassBtn" class="hidden">DEV // BYPASS TEST — AUTO-FIX BUG</button>
+
+    <!-- END -->
+    <div id="endScreen" class="overlay hidden">
+        <div class="end1">VILLAIN'S PLAN: STOPPED</div>
+        <div class="end2 hidden" id="end2">MISSION COMPLETE</div>
+        <div class="endStats hidden" id="endStats"></div>
+        <button id="restartBtn" class="btn hidden">RESTART MISSION</button>
+    </div>
+
+    <script>
+        'use strict';
+        /* ============================================================
+           FINAL OVERLOAD — ray bridges both sides + shock reactions
+           ============================================================ */
+        const ENABLE_TEST_BYPASS = true;   // dev testing bypass (manual fix still works)
+
+        const $ = id => document.getElementById(id);
+        const stageInner = $('stageInner'), envSvg = $('env'), linkSvg = $('linkSvg'), fx = $('fx'),
+            ctx = fx.getContext('2d'), flashEl = $('flash'), dimEl = $('dim'),
+            dpEl = $('dp'), wolvEl = $('wolv'), wolvSvg = $('wolvSvg'),
+            linkEl = $('energyLink'), leftLinkEl = $('leftLink'), buddyEl = $('buddyLink'),
+            stState = $('stState'), stMsg = $('stMsg'),
+            chargeFill = $('chargeFill'), chargePct = $('chargePct'), chargeState = $('chargeState'),
+            chargePanel = $('chargePanel'), debugOverlay = $('debugOverlay'), bypassBtn = $('bypassBtn'),
+            endScreen = $('endScreen'), end2 = $('end2'), endStats = $('endStats'),
+            titleScreen = $('titleScreen'), smokeFront = $('smokeFront');
+
+        const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const MAXP = RM ? 150 : 420, TAU = Math.PI * 2;
+        const rand = (a, b) => a + Math.random() * (b - a);
+        const lerp = (a, b, t) => a + (b - a) * t;
+        const easeOut = k => 1 - Math.pow(1 - k, 2);
+        const ABORT = Symbol('abort');
+
+        let W = 0, H = 0, DPR = 1, runId = 0, gameTime = 0, paused = false, state = 'TITLE';
+        let charge = 0, chargeTarget = 0, chargeCrash = false, machineDead = false;
+        let leftOn = false, linkOn = false, rightOn = false, stub = false, contactOn = false, tension = false, reachR = false;
+        let leftI = 0, linkI = 0, rightI = 0, stubI = 0;
+        let towerLvlL = 0, towerLvlR = 0, towerTL = .25, towerTR = .25;
+        let linkEndX = 0, flashV = 0, shakeV = 0, lastT = performance.now(), ambT = 0, lastBL = 0, lastMT = 0, lastTT = 0, lastBA = 0, lastAJ = 0;
+        const cam = { z: 1, tz: 1, sh: 0 };
+        const A = {}, E = {}, S1 = { next: 0 }, S2 = { next: 0 }, S3 = { next: 0 }, S4 = { next: 0 };
+        const P = [], bolts = [], rings = [];
+        let fixResolve = null, fixDone = false, fixMode = 'MANUAL', verTimer = null, fixConfirm = null,
+            bypassUsed = false, fixStyleEl = null, runStart = 0, pausedAt = 0, pausedAccum = 0, muted = false;
+
+        /* ============ procedural audio ============ */
+        const S = {
+            ctx: null, m: null,
+            init() {
+                if (S.ctx) return; const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+                const c = S.ctx = new C(); S.m = c.createGain(); S.m.gain.value = muted ? 0 : 0.85; S.m.connect(c.destination);
+                const len = 2 * c.sampleRate, buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0); let l = 0;
+                for (let i = 0; i < len; i++) { l = l * 0.97 + (Math.random() * 2 - 1) * 0.05; d[i] = l * 3; }
+                S.nb = buf;
+                const src = c.createBufferSource(); src.buffer = buf; src.loop = true;
+                const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 90;
+                S.rg = c.createGain(); S.rg.gain.value = 0; src.connect(lp).connect(S.rg).connect(S.m); src.start();
+                const o = c.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 42;
+                const o2 = c.createBiquadFilter(); o2.type = 'lowpass'; o2.frequency.value = 220;
+                S.og = c.createGain(); S.og.gain.value = 0; o.connect(o2).connect(S.og).connect(S.m); o.start(); S.osc = o;
+            },
+            burst(o = {}) {
+                if (!S.ctx) return; const c = S.ctx, t = c.currentTime + (o.at || 0), dur = o.dur || 0.3;
+                const s = c.createBufferSource(); s.buffer = S.nb; s.loop = true;
+                const f = c.createBiquadFilter(); f.type = o.type || 'lowpass';
+                f.frequency.setValueAtTime(o.f0 || 1200, t);
+                if (o.f1) f.frequency.exponentialRampToValueAtTime(Math.max(30, o.f1), t + dur);
+                const g = c.createGain(); g.gain.setValueAtTime(0.0001, t);
+                g.gain.exponentialRampToValueAtTime(o.g || 0.2, t + 0.012);
+                g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+                s.connect(f).connect(g).connect(S.m); s.start(t); s.stop(t + dur + 0.05);
+            },
+            tone(o = {}) {
+                if (!S.ctx) return; const c = S.ctx, t = c.currentTime + (o.at || 0), dur = o.dur || 0.3;
+                const os = c.createOscillator(); os.type = o.type || 'sine'; os.frequency.setValueAtTime(o.f0 || 200, t);
+                if (o.f1) os.frequency.exponentialRampToValueAtTime(Math.max(20, o.f1), t + dur);
+                const g = c.createGain(); g.gain.setValueAtTime(0.0001, t);
+                g.gain.exponentialRampToValueAtTime(o.g || 0.15, t + 0.02);
+                g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+                os.connect(g).connect(S.m); os.start(t); os.stop(t + dur + 0.06);
+            },
+            zap() { S.burst({ f0: 5200, f1: 900, type: 'bandpass', dur: .18, g: .24 }); S.tone({ f0: 180, f1: 60, dur: .25, type: 'square', g: .09 }); },
+            fail() { S.burst({ f0: 2600, f1: 120, dur: .5, g: .3 }); S.tone({ f0: 90, f1: 38, dur: .55, g: .3 }); },
+            sting() {
+                S.tone({ f0: 55, f1: 110, dur: 1.1, type: 'sawtooth', g: .13 }); S.tone({ f0: 55.7, f1: 112, dur: 1.1, type: 'sawtooth', g: .09 });
+                S.burst({ f0: 400, f1: 2400, type: 'bandpass', dur: .9, g: .05 });
+            },
+            hand() { S.zap(); S.tone({ f0: 520, f1: 140, dur: .3, type: 'square', g: .08 }); },
+            overload() {
+                S.burst({ f0: 6000, f1: 60, dur: 1.6, g: .5 }); S.tone({ f0: 70, f1: 24, dur: 1.8, g: .42 });
+                S.burst({ at: .12, f0: 3200, f1: 300, type: 'bandpass', dur: .8, g: .2 });
+            },
+            shutdown() { S.tone({ f0: 240, f1: 28, dur: 1.4, type: 'sawtooth', g: .15 }); S.burst({ f0: 900, f1: 60, dur: 1.3, g: .15 }); },
+            tick() { S.tone({ f0: 880, f1: 660, dur: .07, type: 'square', g: .05 }); },
+            rumble(v) { if (S.rg) S.rg.gain.setTargetAtTime(v, S.ctx.currentTime, .4); },
+            chargeG(v, f) {
+                if (S.og) {
+                    S.og.gain.setTargetAtTime(v, S.ctx.currentTime, .5);
+                    S.osc.frequency.setTargetAtTime(f, S.ctx.currentTime, .5);
+                }
+            },
+            crackle(a) {
+                if (S.ctx && !muted && Math.random() < a)
+                    S.burst({ f0: 2400 + Math.random() * 3200, type: 'highpass', dur: .03 + Math.random() * .05, g: .015 + Math.random() * .035 });
+            }
+        };
+
+        /* ============ layout & environment ============ */
+        function layout() {
+            W = stageInner.clientWidth; H = stageInner.clientHeight;
+            DPR = Math.min(1.6, window.devicePixelRatio || 1);
+            fx.width = Math.round(W * DPR); fx.height = Math.round(H * DPR);
+            ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+            // Sizing calibrated to the high-res movie image aspect ratios
+            // Deadpool: 977 x 620 (ratio 1.5758)
+            // Wolverine: 1024 x 456 (ratio 2.2456)
+            const availableSpan = (W * 0.915) - (W * 0.085);
+            const targetSpan = availableSpan * 0.74;
+            const dpRatio = 977 / 620;
+            const wolvRatio = 1024 / 456;
+
+            const dpH = Math.min(H * 0.46, (targetSpan - 8) / (0.96 * dpRatio + 0.94 * wolvRatio * 0.97));
+            const dpW = dpH * dpRatio;
+            const wolH = dpH * 0.94;
+            const wolW = wolH * wolvRatio;
+
+            const charBottom = H * 0.885;
+            const claspX = W * 0.485;
+
+            const dpLeft = claspX - dpW * 0.975;
+            const dpTop = charBottom - dpH;
+
+            const wolLeft = claspX - wolW * 0.025;
+            const wolTop = charBottom - wolH;
+
+            dpEl.style.left = dpLeft + 'px';
+            dpEl.style.top = dpTop + 'px';
+            dpEl.style.width = dpW + 'px';
+            dpEl.style.height = dpH + 'px';
+
+            wolvEl.style.left = wolLeft + 'px';
+            wolvEl.style.top = wolTop + 'px';
+            wolvEl.style.width = wolW + 'px';
+            wolvEl.style.height = wolH + 'px';
+
+            $('dpShadow').style.left = (dpLeft + dpW * 0.22) + 'px';
+            $('dpShadow').style.top = (charBottom - H * 0.015) + 'px';
+            $('dpShadow').style.width = (dpW * 0.55) + 'px';
+
+            $('wolvShadow').style.left = (wolLeft + wolW * 0.22) + 'px';
+            $('wolvShadow').style.top = (charBottom - H * 0.015) + 'px';
+            $('wolvShadow').style.width = (wolW * 0.55) + 'px';
+
+            // Precise hand and body anchors matching the actors in the photo cutouts
+            A.dpL = { x: dpLeft + dpW * 0.04, y: dpTop + dpH * 0.62 };
+            A.dpR = { x: dpLeft + dpW * 0.965, y: dpTop + dpH * 0.54 };
+            A.dpBody = { x: dpLeft + dpW * 0.56, y: dpTop + dpH * 0.48 };
+
+            A.wolL = { x: wolLeft + wolW * 0.035, y: wolTop + wolH * 0.58 };
+            A.wolR = { x: wolLeft + wolW * 0.97, y: wolTop + wolH * 0.52 };
+            A.wolBody = { x: wolLeft + wolW * 0.51, y: wolTop + wolH * 0.48 };
+
+            A.coreL = { x: W * 0.085, y: H * 0.44 }; A.coreR = { x: W * 0.915, y: H * 0.45 };
+            A.machine = { x: W * 0.5, y: H * 0.36 }; A.mTop = H * 0.245; A.groundY = H * 0.875;
+            A.linkRest = A.dpR.x + W * 0.15; A.linkFinal = A.wolR.x + 8;
+            if (linkEndX === 0 || linkEndX > A.coreR.x) linkEndX = A.coreR.x - 10;
+
+            dpEl._rimB = dpEl.querySelector('.rimB'); dpEl._rimR = dpEl.querySelector('.rimR');
+            wolvEl._rimB = wolvEl.querySelector('.rimB'); wolvEl._rimR = wolvEl.querySelector('.rimR');
+            dpEl._jolt = dpEl.querySelector('.joltWrap'); wolvEl._jolt = wolvEl.querySelector('.joltWrap');
+            buildEnv(); refreshLinkJ(); updateBuddy();
+        }
+
+        function mkEl(NS, t, a, p) { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); (p || envSvg).appendChild(e); return e; }
+
+        function buildEnv() {
+            const NS = 'http://www.w3.org/2000/svg'; envSvg.innerHTML = '';
+            const TL = A.coreL.x, TR = A.coreR.x, MX = W * 0.5;
+            const defs = mkEl(NS, 'defs', {});
+            const grad = (id, type, attrs, stops) => {
+                const g = mkEl(NS, type, { id, ...attrs }, defs);
+                stops.forEach(st => mkEl(NS, 'stop', { ...st }, g));
+            };
+            grad('sky', 'linearGradient', { x1: 0, y1: 0, x2: 0, y2: 1 },
+                [{ offset: 0, 'stop-color': '#05070c' }, { offset: .45, 'stop-color': '#0b1019' }, { offset: 1, 'stop-color': '#121826' }]);
+            grad('floorG', 'linearGradient', { x1: 0, y1: 0, x2: 0, y2: 1 },
+                [{ offset: 0, 'stop-color': '#161c2a' }, { offset: .25, 'stop-color': '#0b0e16' }, { offset: 1, 'stop-color': '#04050a' }]);
+            grad('mCoreG', 'radialGradient', {}, [
+                { offset: 0, 'stop-color': '#f2f9ff' }, { offset: .22, 'stop-color': '#a8d8ff', 'stop-opacity': .95 },
+                { offset: .6, 'stop-color': '#3a7cc0', 'stop-opacity': .55 }, { offset: 1, 'stop-color': '#12325c', 'stop-opacity': 0 }]);
+            grad('tCoreG', 'radialGradient', {}, [
+                { offset: 0, 'stop-color': '#ffffff' }, { offset: .3, 'stop-color': '#bfe4ff', 'stop-opacity': .9 },
+                { offset: 1, 'stop-color': '#5aa8ff', 'stop-opacity': 0 }]);
+            grad('poolB', 'radialGradient', {}, [{ offset: 0, 'stop-color': '#7fc4ff', 'stop-opacity': .34 }, { offset: 1, 'stop-color': '#7fc4ff', 'stop-opacity': 0 }]);
+            grad('poolR', 'radialGradient', {}, [{ offset: 0, 'stop-color': '#ff4a52', 'stop-opacity': .24 }, { offset: 1, 'stop-color': '#ff4a52', 'stop-opacity': 0 }]);
+            grad('hazeG', 'radialGradient', {}, [{ offset: 0, 'stop-color': '#1b2436', 'stop-opacity': .55 }, { offset: 1, 'stop-color': '#1b2436', 'stop-opacity': 0 }]);
+
+            mkEl(NS, 'rect', { x: 0, y: 0, width: W, height: H, fill: 'url(#sky)' });
+            mkEl(NS, 'ellipse', { cx: MX, cy: H * 0.42, rx: W * 0.56, ry: H * 0.44, fill: 'url(#hazeG)' });
+
+            const skyline = (baseY, col, seed, windows) => {
+                const g = mkEl(NS, 'g', { fill: col }); let x = -40, sd = seed;
+                const rn = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
+                while (x < W + 40) {
+                    const w = 30 + rn() * 95, h = 40 + rn() * 160;
+                    mkEl(NS, 'rect', { x: x, y: baseY - h, width: w, height: h + 4 }, g);
+                    if (rn() < 0.4) mkEl(NS, 'rect', { x: x + w * 0.3, y: baseY - h - 14 - rn() * 24, width: 6, height: 24 }, g);
+                    if (rn() < 0.35) mkEl(NS, 'path', { d: `M${x} ${baseY - h} h${w} M${x + w * 0.5} ${baseY - h} V${baseY - h * 0.45}`, stroke: col, 'stroke-width': 2, fill: 'none' }, g);
+                    if (windows && rn() < 0.55) {
+                        const wg = mkEl(NS, 'g', { fill: '#8a6a3a', opacity: .28 });
+                        for (let k = 0; k < 3; k++) mkEl(NS, 'rect', { x: x + 4 + rn() * (w - 10), y: baseY - h + 6 + rn() * (h - 16), width: 3, height: 4 }, wg);
+                    }
+                    x += w + 8 + rn() * 60;
+                }
+            };
+            skyline(H * 0.66, '#0e121a', 7919, true); skyline(H * 0.72, '#080b10', 104729, false);
+
+            // ===== villain machine =====
+            const mg = mkEl(NS, 'g', { id: 'machine' });
+            const top = A.mTop, base = H * 0.765;
+            mkEl(NS, 'rect', { x: MX - W * 0.165, y: base, width: W * 0.33, height: H * 0.038, fill: '#0c1018', stroke: '#222c40', 'stroke-width': 1.5 }, mg);
+            mkEl(NS, 'path', { d: `M${MX - W * 0.075} ${base} L${MX - W * 0.05} ${top} L${MX + W * 0.05} ${top} L${MX + W * 0.075} ${base} Z`, fill: '#0e1320', stroke: '#28344c', 'stroke-width': 1.8 }, mg);
+            mkEl(NS, 'rect', { x: MX - W * 0.105, y: H * 0.34, width: W * 0.022, height: H * 0.41, fill: '#0c111b', stroke: '#1e2940' }, mg);
+            mkEl(NS, 'rect', { x: MX + W * 0.083, y: H * 0.34, width: W * 0.022, height: H * 0.41, fill: '#0c111b', stroke: '#1e2940' }, mg);
+            mkEl(NS, 'path', { d: `M${MX - W * 0.075} ${base} L${MX - W * 0.05} ${top} L${MX - W * 0.045} ${base} Z`, fill: '#131a29', opacity: .8 }, mg);
+            mkEl(NS, 'path', { d: `M${MX + W * 0.075} ${base} L${MX + W * 0.05} ${top} L${MX + W * 0.045} ${base} Z`, fill: '#131a29', opacity: .8 }, mg);
+            E.vents = [];
+            [0.40, 0.50, 0.60].forEach(f => {
+                mkEl(NS, 'rect', { x: MX - W * 0.062, y: H * f, width: W * 0.124, height: H * 0.012, fill: '#17202f', stroke: '#2b3a55', 'stroke-width': 1 }, mg);
+                E.vents.push(mkEl(NS, 'rect', { x: MX - W * 0.052, y: H * f + H * 0.0035, width: W * 0.104, height: 3, fill: '#ff9a46', opacity: 0, class: 'vent' }, mg));
+            });
+            const cy = H * 0.355, cr = W * 0.05;
+            mkEl(NS, 'circle', { cx: MX, cy: cy, r: cr * 1.45, fill: '#0a0e16', stroke: '#2a3850', 'stroke-width': 6 }, mg);
+            mkEl(NS, 'circle', { cx: MX, cy: cy, r: cr * 1.02, fill: 'none', stroke: '#31405e', 'stroke-width': 2.4, 'stroke-dasharray': '12 8', class: 'spin' }, mg);
+            mkEl(NS, 'circle', { cx: MX, cy: cy, r: cr * 0.8, fill: 'none', stroke: '#263450', 'stroke-width': 1.6, 'stroke-dasharray': '4 6' }, mg);
+            E.mCore = mkEl(NS, 'g', { id: 'mCore', opacity: .16 }, mg);
+            mkEl(NS, 'circle', { cx: MX, cy: cy, r: cr * 1.2, fill: 'url(#mCoreG)' }, E.mCore);
+            mkEl(NS, 'circle', { cx: MX, cy: cy, r: cr * 0.24, fill: '#eef7ff' }, E.mCore);
+            mkEl(NS, 'path', { d: `M${MX - W * 0.012} ${top} L${MX} ${H * 0.20} L${MX + W * 0.012} ${top} Z`, fill: '#0e1320' }, mg);
+            mkEl(NS, 'circle', { cx: MX, cy: H * 0.197, r: 4, fill: '#ff3347', class: 'blink', style: 'animation-delay:1.1s' }, mg);
+            [[0.33, 0.35], [0.47, 0.62], [0.57, 0.2]].forEach((d, i) => {
+                mkEl(NS, 'circle', { cx: MX + (i - 1) * W * 0.004, cy: H * d[1], r: 3.4, fill: '#ff3347', class: 'blink', style: `animation-delay:${(i * 0.9).toFixed(1)}s` }, mg);
+            });
+            E.cables = [];
+            [[TL, -1], [TR, 1]].forEach(d => {
+                const x = d[0], sd = d[1];
+                E.cables.push(mkEl(NS, 'path', {
+                    class: 'cable',
+                    d: `M${MX - sd * W * 0.072} ${H * 0.30} C ${MX - sd * W * 0.2} ${H * 0.37}, ${x + sd * W * 0.09} ${H * 0.315}, ${x + sd * 9} ${H * 0.225}`
+                }));
+            });
+
+            // ===== signal towers =====
+            const buildTower = (x, side, coreY) => {
+                const g = mkEl(NS, 'g', {});
+                const topY = H * 0.185, botY = H * 0.80, hw1 = W * 0.012, hw2 = W * 0.032;
+                const hw = f => hw1 + (hw2 - hw1) * f;
+                mkEl(NS, 'path', { d: `M${x - hw2} ${botY} L${x - hw1} ${topY} L${x + hw1} ${topY} L${x + hw2} ${botY} Z`, fill: '#0c1018', stroke: '#243048', 'stroke-width': 1.6 }, g);
+                for (let i = 0; i < 5; i++) {
+                    const f1 = 0.08 + i * 0.16, f2 = f1 + 0.09;
+                    mkEl(NS, 'path', {
+                        d: `M${x - hw(f1)} ${topY + (botY - topY) * f1} L${x + hw(f2)} ${topY + (botY - topY) * f2} M${x + hw(f1)} ${topY + (botY - topY) * f1} L${x - hw(f2)} ${topY + (botY - topY) * f2}`,
+                        stroke: '#1a2334', 'stroke-width': 1.4, fill: 'none'
+                    }, g);
+                }
+                [[0.30], [0.38]].forEach(d => {
+                    const f = d[0];
+                    mkEl(NS, 'rect', { x: x - W * 0.036, y: H * f, width: W * 0.072, height: 5, fill: '#111827' }, g);
+                    mkEl(NS, 'rect', { x: x - W * 0.028, y: H * f - 7, width: 4, height: 7, fill: '#1e2940' }, g);
+                    mkEl(NS, 'rect', { x: x + W * 0.024, y: H * f - 7, width: 4, height: 7, fill: '#1e2940' }, g);
+                });
+                mkEl(NS, 'circle', { cx: x, cy: coreY, r: W * 0.033, fill: 'none', stroke: '#2a3850', 'stroke-width': 3.4, 'stroke-dasharray': '15 9', class: 'spin' }, g);
+                mkEl(NS, 'circle', { cx: x, cy: coreY, r: W * 0.023, fill: 'none', stroke: '#324260', 'stroke-width': 2.2 }, g);
+                const glow = mkEl(NS, 'circle', { cx: x, cy: coreY, r: W * 0.027, fill: 'url(#tCoreG)', opacity: 0 }, g);
+                mkEl(NS, 'circle', { cx: x, cy: coreY, r: 7.5, fill: '#eaf6ff' }, g);
+                mkEl(NS, 'circle', { cx: x, cy: topY - 8, r: 3.8, fill: '#ff3347', class: 'blink', style: 'animation-delay:.6s' }, g);
+                mkEl(NS, 'path', {
+                    d: `M${x} ${topY} C ${x + side * W * 0.01} ${H * 0.14}, ${x + side * W * 0.05} ${H * 0.12}, ${x + side * W * 0.07} ${H * 0.05}`,
+                    stroke: '#1a2334', 'stroke-width': 2.2, fill: 'none'
+                }, g);
+                return glow;
+            };
+            E.glowL = buildTower(TL, -1, H * 0.44);
+            E.glowR = buildTower(TR, 1, H * 0.45);
+
+            // ===== floor =====
+            mkEl(NS, 'rect', { x: 0, y: H * 0.78, width: W, height: H * 0.22, fill: 'url(#floorG)' });
+            for (let x = -W * 0.1; x <= W * 1.1; x += W * 0.07) {
+                const xr = MX + (x - MX) * 0.5;
+                mkEl(NS, 'line', { x1: xr, y1: H * 0.78, x2: x, y2: H, stroke: '#182031', 'stroke-width': 1, opacity: .5 });
+            }
+            mkEl(NS, 'line', { x1: 0, y1: H * 0.84, x2: W, y2: H * 0.84, stroke: '#131a29', opacity: .6 });
+            mkEl(NS, 'line', { x1: 0, y1: H * 0.92, x2: W, y2: H * 0.92, stroke: '#10151f', opacity: .6 });
+            E.poolL = mkEl(NS, 'ellipse', { cx: TL, cy: H * 0.80, rx: W * 0.055, ry: H * 0.022, fill: 'url(#poolB)', opacity: .25 });
+            E.poolR = mkEl(NS, 'ellipse', { cx: TR, cy: H * 0.80, rx: W * 0.055, ry: H * 0.022, fill: 'url(#poolB)', opacity: .25 });
+            mkEl(NS, 'ellipse', { cx: W * 0.46, cy: H * 0.875, rx: W * 0.15, ry: H * 0.03, fill: 'url(#poolR)', opacity: .55 });
+        }
+
+        /* ============ energy ray bridges (left + right + buddy) ============ */
+        let linkJ = [], leftJ = [], buddyJ = [];
+        const mkJ = n => Array.from({ length: n }, () => Math.random() - .5);
+        function refreshLinkJ() { linkJ = mkJ(10); leftJ = mkJ(10); buddyJ = mkJ(8); }
+
+        function rayD(x0, y0, x1, y1, now, j, amp, waves, seg) {
+            let d = '';
+            for (let i = 0; i <= seg; i++) {
+                const t = i / seg;
+                const x = x0 + (x1 - x0) * t, env = Math.sin(Math.PI * t);
+                const jj = j[Math.min(j.length - 1, Math.round(t * (j.length - 1)))] || 0;
+                const y = y0 + (y1 - y0) * t + Math.sin(t * waves + now / 110) * amp * env + jj * amp * 1.8 * env;
+                d += (i ? 'L ' : 'M ') + x.toFixed(1) + ' ' + y.toFixed(1) + ' ';
+            }
+            return d;
+        }
+        function updateLinkShape(now) {
+            if (leftI > 0.02) {
+                const d = rayD(A.coreL.x + 6, A.coreL.y, A.dpL.x - 2, A.dpL.y - 2, now, leftJ, 5, 12, 26);
+                ['llLo', 'llMid', 'llCore', 'llFlow'].forEach(id => $(id).setAttribute('d', d));
+            }
+            if (linkI > 0.02) {
+                const targetY = rightOn ? (A.wolR.y - 2) : lerp(A.coreR.y + 8, A.wolR.y - 2, Math.max(0, Math.min(1, (A.linkRest - linkEndX) / (A.linkRest - A.linkFinal || 1))));
+                const d = rayD(A.coreR.x - 6, A.coreR.y, linkEndX, targetY, now, linkJ, 6, 13, 26);
+                ['elLo', 'elMid', 'elCore', 'elFlow'].forEach(id => $(id).setAttribute('d', d));
+                $('elTip').setAttribute('cx', linkEndX); $('elTip').setAttribute('cy', targetY);
+            }
+        }
+        function updateBuddy() {
+            const d = rayD(A.dpR.x + 4, A.dpR.y + 2, A.wolL.x - 4, A.wolL.y + 2, 0, buddyJ, 2, 9, 12);
+            ['blLo', 'blMid', 'blCore', 'blFlow'].forEach(id => $(id).setAttribute('d', d));
+            const set = (id, p) => { $(id).setAttribute('cx', p.x); $(id).setAttribute('cy', p.y); };
+            set('gDpL', A.dpL); set('gDpR', A.dpR); set('gWlL', A.wolL); set('gWlR', A.wolR);
+            const midContact = { x: (A.dpR.x + A.wolL.x) / 2, y: (A.dpR.y + A.wolL.y) / 2 };
+            set('gContact', midContact);
+            if ($('gContactCore')) set('gContactCore', midContact);
+            $('llTip').setAttribute('cx', A.dpL.x); $('llTip').setAttribute('cy', A.dpL.y - 2);
+        }
+
+        /* ============ canvas fx ============ */
+        function boltPts(x1, y1, x2, y2, jag) {
+            const dx = x2 - x1, dy = y2 - y1, d = Math.hypot(dx, dy) || 1, nx = -dy / d, ny = dx / d;
+            const n = Math.max(6, Math.min(30, Math.round(d / 20))), pts = [{ x: x1, y: y1 }];
+            for (let i = 1; i < n; i++) {
+                const t = i / n, o = (Math.random() - .5) * 2 * jag * Math.sin(Math.PI * t);
+                pts.push({ x: x1 + dx * t + nx * o, y: y1 + dy * t + ny * o });
+            }
+            pts.push({ x: x2, y: y2 }); return pts;
+        }
+        function genBranches(p, jag, n) {
+            const bs = [], d = Math.hypot(p[p.length - 1].x - p[0].x, p[p.length - 1].y - p[0].y);
+            for (let k = 0; k < n; k++) {
+                const i = 2 + ((Math.random() * (p.length - 4)) | 0), pt = p[i];
+                const ang = Math.atan2(p[p.length - 1].y - p[0].y, p[p.length - 1].x - p[0].x) + (Math.random() < .5 ? -1 : 1) * rand(.35, .85);
+                const len = d * rand(.12, .24);
+                bs.push(boltPts(pt.x, pt.y, pt.x + Math.cos(ang) * len, pt.y + Math.sin(ang) * len, jag * 0.7));
+            }
+            return bs;
+        }
+        function strokePts(pts, w, style) {
+            ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+            for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+            ctx.lineWidth = w; ctx.strokeStyle = style; ctx.stroke();
+        }
+        function drawShape(p, bs, alpha, w) {
+            strokePts(p, w * 3.4, `rgba(120,180,255,${(0.12 * alpha).toFixed(3)})`);
+            strokePts(p, w * 1.7, `rgba(150,200,255,${(0.4 * alpha).toFixed(3)})`);
+            strokePts(p, Math.max(.7, w * 0.75), `rgba(255,255,255,${(0.95 * alpha).toFixed(3)})`);
+            bs.forEach(b => strokePts(b, w * 0.55, `rgba(190,220,255,${(0.55 * alpha).toFixed(3)})`));
+        }
+        function streamBolt(a, b, alpha, cache, now) {
+            if (alpha < 0.03 || Math.random() < 0.06) return;
+            if (now > cache.next) {
+                cache.next = now + 70 + Math.random() * 90;
+                cache.p = boltPts(a.x, a.y, b.x, b.y, cache.jag);
+                cache.bs = genBranches(cache.p, cache.jag, cache.br);
+            }
+            drawShape(cache.p, cache.bs, alpha * (0.72 + 0.28 * Math.random()), cache.w);
+        }
+        function glowC(x, y, r, a, rgb) {
+            if (a <= 0.01) return;
+            const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+            g.addColorStop(0, `rgba(${rgb},${(0.55 * a).toFixed(3)})`);
+            g.addColorStop(1, `rgba(${rgb},0)`);
+            ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
+        }
+        function spawn(o) { if (P.length < MAXP) P.push(o); }
+        function sparksAt(x, y, n, blue) {
+            for (let i = 0; i < n; i++) {
+                const a = Math.random() * TAU, v = rand(60, 330);
+                spawn({
+                    k: 'spark', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 90, g: 560,
+                    life: rand(.3, .8), max: .8, col: blue ? '190,220,255' : `255:${(rand(120, 190) | 0)}`
+                });
+            }
+        }
+        function embersAt(x, y, n) {
+            for (let i = 0; i < n; i++)
+                spawn({ k: 'ember', x, y, vx: rand(-8, 8), vy: rand(-26, -8), g: -6, life: rand(1.5, 3.5), max: 3.5, r: rand(1, 2.2) });
+        }
+        function dustAt(x, y) { spawn({ k: 'dust', x, y, vx: rand(-6, 6), vy: rand(-4, 2), life: rand(4, 8), max: 8, r: rand(14, 42) }); }
+        function debrisAt(x, y, n) {
+            for (let i = 0; i < n; i++) {
+                const a = rand(-Math.PI, 0), v = rand(120, 430);
+                spawn({
+                    k: 'deb', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, g: 640, life: rand(.7, 1.6), max: 1.6,
+                    s: rand(2, 6), rot: rand(0, TAU), vr: rand(-8, 8)
+                });
+            }
+        }
+        function energyAt(x, y, tx, ty, n) {
+            for (let i = 0; i < n; i++) {
+                const a = Math.atan2(ty - y, tx - x) + rand(-.4, .4), v = rand(150, 430);
+                spawn({ k: 'en', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: rand(.2, .6), max: .6 });
+            }
+        }
+        function ring(x, y, vr, w, col) { rings.push({ x, y, r: 6, vr, w, col, life: .9, max: .9 }); }
+        function pushBolt(x1, y1, x2, y2, jag, life, w) {
+            const p = boltPts(x1, y1, x2, y2, jag);
+            bolts.push({ p, bs: genBranches(p, jag, 2), life, max: life, w });
+        }
+        function stepParticles(dt) {
+            for (let i = P.length - 1; i >= 0; i--) {
+                const p = P[i];
+                p.life -= dt; if (p.life <= 0) { P.splice(i, 1); continue; }
+                p.vy += (p.g || 0) * dt; p.x += p.vx * dt; p.y += p.vy * dt;
+                if (p.k === 'deb') { p.rot += p.vr * dt; if (p.y > A.groundY) { p.y = A.groundY; p.vy *= -0.35; p.vx *= 0.6; } }
+            }
+        }
+        function stepRings(dt) {
+            for (let i = rings.length - 1; i >= 0; i--) {
+                const r = rings[i];
+                r.life -= dt; r.r += r.vr * dt; if (r.life <= 0) rings.splice(i, 1);
+            }
+        }
+        function drawParticles() {
+            for (const p of P) {
+                const a = p.life / p.max;
+                if (p.k === 'dust') {
+                    ctx.fillStyle = `rgba(140,150,168,${(0.06 * a).toFixed(3)})`;
+                    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill();
+                }
+                else if (p.k === 'deb') {
+                    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+                    ctx.fillStyle = `rgba(30,34,44,${a.toFixed(2)})`; ctx.fillRect(-p.s, -p.s / 2, p.s * 2, p.s); ctx.restore();
+                }
+            }
+            ctx.globalCompositeOperation = 'lighter';
+            for (const p of P) {
+                const a = p.life / p.max;
+                if (p.k === 'spark') {
+                    ctx.strokeStyle = `rgba(${p.col.replace(':', ',')},${(0.9 * a).toFixed(2)})`;
+                    ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(p.x, p.y);
+                    ctx.lineTo(p.x - p.vx * 0.02, p.y - p.vy * 0.02); ctx.stroke();
+                }
+                else if (p.k === 'ember') {
+                    ctx.fillStyle = `rgba(255,${(110 + 80 * a) | 0},50,${(0.75 * a).toFixed(2)})`;
+                    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill();
+                }
+                else if (p.k === 'en') {
+                    ctx.fillStyle = `rgba(210,235,255,${(0.9 * a).toFixed(2)})`;
+                    ctx.beginPath(); ctx.arc(p.x, p.y, 2.3, 0, TAU); ctx.fill();
+                    ctx.strokeStyle = `rgba(160,210,255,${(0.4 * a).toFixed(2)})`; ctx.lineWidth = 1.2;
+                    ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - p.vx * 0.03, p.y - p.vy * 0.03); ctx.stroke();
+                }
+            }
+            ctx.globalCompositeOperation = 'source-over';
+        }
+
+        /* ============ shock reactions on characters ============ */
+        function jolt(el, big) {
+            const w = el._jolt; if (!w || RM) return;
+            w.classList.remove('jolt', 'joltBig'); void w.offsetWidth;
+            w.classList.add(big ? 'joltBig' : 'jolt');
+        }
+        function setGlow(el, i) {
+            const img = (el && el.querySelector) ? (el.querySelector('.charImg') || el) : el;
+            if (el && el.style && el.style.filter) el.style.filter = '';
+            if (!img || !img.style) return;
+            if (i > 0.06) {
+                if (el === dpEl) {
+                    img.style.filter = `drop-shadow(0 0 ${(6 + 22 * i).toFixed(1)}px rgba(230,40,56,${Math.min(0.9, 0.35 + 0.55 * i).toFixed(2)})) drop-shadow(0 0 ${(12 + 30 * i).toFixed(1)}px rgba(96,165,250,${Math.min(0.8, 0.25 + 0.45 * i).toFixed(2)})) brightness(${(1 + 0.35 * i).toFixed(2)}) contrast(${(1 + 0.15 * i).toFixed(2)})`;
+                } else {
+                    img.style.filter = `drop-shadow(0 0 ${(6 + 22 * i).toFixed(1)}px rgba(245,158,11,${Math.min(0.9, 0.35 + 0.55 * i).toFixed(2)})) drop-shadow(0 0 ${(12 + 30 * i).toFixed(1)}px rgba(239,68,68,${Math.min(0.8, 0.25 + 0.45 * i).toFixed(2)})) brightness(${(1 + 0.4 * i).toFixed(2)}) contrast(${(1 + 0.18 * i).toFixed(2)})`;
+                }
+            } else if (img.style.filter) {
+                img.style.filter = '';
+            }
+        }
+
+        /* ============ per-frame streams & glows ============ */
+        function updateStreams(now, dt) {
+            leftI += ((leftOn ? 1 : 0) - leftI) * Math.min(1, dt * 5);
+            linkI += ((linkOn ? 1 : 0) - linkI) * Math.min(1, dt * 5);
+            rightI += ((rightOn ? 1 : 0) - rightI) * Math.min(1, dt * 5);
+            stubI += ((stub ? 1 : 0) - stubI) * Math.min(1, dt * 5);
+            const intens = (tension ? 0.45 : 1);
+
+            S1.jag = 8 + 16 * leftI; S1.br = leftI > 0.7 ? 2 : 1; S1.w = 1.7 + 2.5 * leftI;
+            S2.jag = 8 + 12 * linkI; S2.br = linkI > 0.7 ? 2 : 1; S2.w = 1.7 + 2.5 * linkI;
+            S3.jag = 9 + 14 * rightI; S3.br = rightI > 0.7 ? 2 : 1; S3.w = 1.7 + 2.5 * rightI;
+            S4.jag = 10; S4.br = 1; S4.w = 1.7 + 2 * stubI;
+
+            if (leftI > 0.04) {
+                streamBolt(A.coreL, A.dpL, leftI * intens, S1, now);
+                if (now - lastBL > 85 && Math.random() < leftI) { lastBL = now; sparksAt(A.dpL.x, A.dpL.y, 2, true); }
+                if (!tension && Math.random() < leftI * 0.4) {
+                    const t = Math.random();
+                    energyAt(lerp(A.coreL.x, A.dpL.x, t), lerp(A.coreL.y, A.dpL.y, t) + rand(-8, 8), A.dpL.x, A.dpL.y, 1);
+                }
+            }
+            if (stubI > 0.04 && !linkOn) {
+                const gp = { x: A.linkRest, y: A.coreR.y + 10 };
+                streamBolt(A.coreR, gp, stubI * intens, S4, now);
+                if (Math.random() < stubI * 0.6) sparksAt(gp.x, gp.y, 2, true);
+            }
+            if (linkI > 0.04) {
+                const targetY = rightOn ? (A.wolR.y - 2) : lerp(A.coreR.y + 10, A.wolR.y - 2, Math.max(0, Math.min(1, (A.linkRest - linkEndX) / (A.linkRest - A.linkFinal || 1))));
+                const le = { x: linkEndX, y: targetY };
+                streamBolt(A.coreR, le, linkI * intens, S2, now);
+                if (!tension && Math.random() < linkI * 0.55) sparksAt(le.x, le.y, 2, true);
+            }
+            if (rightI > 0.04) {
+                streamBolt(A.coreR, A.wolR, rightI * intens, S3, now);
+                if (Math.random() < rightI * 0.6) sparksAt(A.wolR.x, A.wolR.y, 2, true);
+            }
+            S.crackle(Math.min(0.4, (leftI + rightI + stubI + linkI) * 0.14) * (tension ? 0.1 : 1));
+        }
+        function pulseGlows(now) {
+            const set = (id, v) => $(id).setAttribute('opacity', Math.max(0, v).toFixed(3));
+            set('gDpL', leftI * (0.6 + 0.28 * Math.sin(now / 140)));
+            set('gDpR', reachR ? (0.55 + 0.35 * Math.sin(now / 90)) : leftI * 0.15);
+            set('gWlL', contactOn || rightI > 0.1 ? (0.55 + 0.25 * Math.sin(now / 120)) : 0);
+            set('gWlR', rightI * (0.6 + 0.3 * Math.sin(now / 110)));
+            set('gContact', contactOn ? (0.75 + 0.25 * Math.sin(now / 100)) : 0);
+            if ($('gContactCore')) $('gContactCore').setAttribute('opacity', contactOn ? (0.85 + 0.15 * Math.sin(now / 70)).toFixed(3) : '0');
+            if (contactOn && Math.random() < 0.6) sparksAt((A.dpR.x + A.wolL.x) / 2, (A.dpR.y + A.wolL.y) / 2, 2, false);
+            E.glowL.setAttribute('opacity', (towerLvlL * (0.55 + 0.22 * Math.sin(now / 190))).toFixed(3));
+            E.glowR.setAttribute('opacity', (towerLvlR * (0.55 + 0.22 * Math.sin(now / 175))).toFixed(3));
+            E.poolL.setAttribute('opacity', (0.2 + towerLvlL * 0.5).toFixed(2));
+            E.poolR.setAttribute('opacity', (0.2 + towerLvlR * 0.5).toFixed(2));
+            const fl = flashV * 0.7;
+            if (dpEl._rimB) {
+                dpEl._rimB.style.opacity = Math.min(1, 0.12 + leftI * 0.85 + fl).toFixed(2);
+                dpEl._rimR.style.opacity = Math.min(1, 0.06 + (linkI + rightI) * 0.7 + fl).toFixed(2);
+                wolvEl._rimB.style.opacity = Math.min(1, 0.1 + rightI * 0.9 + fl).toFixed(2);
+                wolvEl._rimR.style.opacity = Math.min(1, 0.06 + (contactOn ? 0.55 : 0) + linkI * 0.35 + fl).toFixed(2);
+            }
+            setGlow(dpEl, Math.max(leftI, linkI * 0.55, contactOn ? 0.4 : 0));
+            setGlow(wolvEl, Math.max(rightI, contactOn ? 0.45 : 0));
+        }
+
+        /* ============ camera / flash / charge ============ */
+        function updateCharge(dt) {
+            if (paused) return;
+            if (chargeCrash) { charge = Math.max(0, charge - 170 * dt); }
+            else if (chargeTarget != null) {
+                charge += (chargeTarget - charge) * Math.min(1, dt * 0.9);
+                if (Math.abs(charge - chargeTarget) < 0.3) charge = chargeTarget;
+            }
+            chargeFill.style.width = charge.toFixed(1) + '%';
+            chargePct.textContent = Math.round(charge) + '%';
+            chargeState.textContent = machineDead ? 'OFFLINE' :
+                charge < 5 ? 'DORMANT' : charge < 70 ? 'CHARGING' : charge < 90 ? 'ELEVATED' : charge < 100 ? 'CRITICAL' : 'MAXIMUM';
+            chargePanel.classList.toggle('hot', charge >= 90 && !machineDead);
+            const live = charge >= 45 && !machineDead;
+            E.cables.forEach(c => c.classList.toggle('live', live));
+            if (!E.mCore) return;
+            const k = machineDead ? 0 : (0.16 + charge / 100 * 0.84);
+            const pulse = 1 + 0.05 * Math.sin(gameTime * 5);
+            E.mCore.style.opacity = k.toFixed(3);
+            E.mCore.style.transform = `scale(${(0.75 + charge / 100 * 0.5) * pulse})`;
+            E.vents.forEach(v => v.style.opacity = machineDead ? 0 : (charge / 100 * 0.95).toFixed(2));
+        }
+        function flash(v, col) { flashV = Math.max(flashV, v); flashEl.style.background = col || '#fff'; }
+        function shake(v) { shakeV = Math.max(shakeV, RM ? v * 0.3 : v); }
+
+        /* ============ main loop ============ */
+        let charsElRef = null;
+        function charsEl_filter(v) {
+            if (!charsElRef) charsElRef = document.getElementById('chars');
+            charsElRef.style.filter = v > 0.02 ? `brightness(${(1 + v * 0.55).toFixed(2)})` : '';
+        }
+        function frame(now) {
+            requestAnimationFrame(frame);
+            const dtR = Math.min(0.05, (now - lastT) / 1000) || 0.016; lastT = now;
+            const dtG = paused ? 0 : dtR; gameTime += dtG;
+
+            towerLvlL += (towerTL - towerLvlL) * Math.min(1, dtR * 2);
+            towerLvlR += (towerTR - towerLvlR) * Math.min(1, dtR * 2);
+            updateCharge(dtG);
+            updateStreams(now, dtR);
+            updateLinkShape(now);
+            stepParticles(dtR); stepRings(dtR);
+            for (let i = bolts.length - 1; i >= 0; i--) { bolts[i].life -= dtR; if (bolts[i].life <= 0) bolts.splice(i, 1); }
+
+            flashV = Math.max(0, flashV - dtR * (flashV > 0.5 ? 2.4 : 1.5));
+            flashEl.style.opacity = flashV.toFixed(3);
+            charsEl_filter(flashV);
+            shakeV *= Math.pow(0.001, dtR);
+            cam.z += (cam.tz - cam.z) * Math.min(1, dtG * 2.5);
+            const sh = RM ? shakeV * 0.25 : shakeV;
+            stageInner.style.transform = `translate(${((Math.random() - .5) * sh).toFixed(1)}px,${((Math.random() - .5) * sh).toFixed(1)}px) scale(${cam.z.toFixed(3)})`;
+
+            pulseGlows(now);
+
+            ambT -= dtR;
+            if (ambT <= 0) {
+                ambT = 0.4 + Math.random() * 0.6;
+                if (P.length < MAXP * 0.7) {
+                    if (Math.random() < 0.6) embersAt(W * rand(0.05, 0.95), H * rand(0.6, 0.86), 1);
+                    if (Math.max(towerLvlL, towerLvlR) > 0.35 && Math.random() < 0.5) dustAt(W * rand(0.1, 0.9), H * rand(0.35, 0.8));
+                }
+            }
+            if (!paused && !machineDead) {
+                if (chargeTarget > charge + 2 && Math.random() < 0.14)
+                    sparksAt(W * 0.5 + (Math.random() < .5 ? -1 : 1) * W * 0.075, H * rand(0.34, 0.62), 2, false);
+                if (charge > 60 && now - lastMT > 900) {
+                    lastMT = now;
+                    const side = Math.random() < .5 ? A.coreL : A.coreR;
+                    pushBolt(W * 0.5 + (side === A.coreL ? -1 : 1) * W * 0.05, A.mTop + H * 0.03, side.x, side.y - 10, 26, 0.28, 3);
+                }
+            }
+            if (now - lastTT > 620 && (towerLvlL > 0.55 || towerLvlR > 0.55)) {
+                lastTT = now;
+                [[A.coreL, towerLvlL], [A.coreR, towerLvlR]].forEach(d => {
+                    if (d[1] > 0.55 && Math.random() < d[1]) {
+                        const a = rand(0, TAU), r = W * 0.045;
+                        pushBolt(d[0].x, d[0].y, d[0].x + Math.cos(a) * r, d[0].y + Math.sin(a) * r, 10, rand(.15, .3), 2);
+                    }
+                });
+            }
+            // arcs crawling on connected bodies + hand-contact zone
+            if (!tension && (leftI > 0.5 || rightI > 0.5) && now - lastBA > 230) {
+                lastBA = now;
+                const r = Math.random();
+                if (r < 0.38 && leftI > 0.5) {
+                    const x = lerp(A.dpL.x, A.dpR.x, Math.random()), y = A.dpBody.y + rand(-46, 46);
+                    pushBolt(x, y, x + rand(-55, 55), y + rand(-38, 38), 10, 0.16, 1.5);
+                } else if (r < 0.76 && rightI > 0.5) {
+                    const x = lerp(A.wolL.x, A.wolR.x, Math.random()), y = A.wolBody.y + rand(-46, 46);
+                    pushBolt(x, y, x + rand(-55, 55), y + rand(-38, 38), 10, 0.16, 1.5);
+                } else if (contactOn) {
+                    const cx = (A.dpR.x + A.wolL.x) / 2, cy = A.dpR.y + rand(-26, 26);
+                    pushBolt(cx, cy, cx + rand(-60, 60), cy + rand(-30, 30), 12, 0.18, 1.6);
+                }
+            }
+            // periodic shock jolts while holding the circuit
+            if (!tension && (leftI > 0.5 || rightI > 0.5) && now - lastAJ > 1450) {
+                lastAJ = now;
+                if (leftI > 0.5) { jolt(dpEl); sparksAt(lerp(A.dpL.x, A.dpR.x, Math.random()), A.dpBody.y, 4, true); }
+                if (rightI > 0.5) { jolt(wolvEl); sparksAt(lerp(A.wolL.x, A.wolR.x, Math.random()), A.wolBody.y, 4, true); }
+            }
+
+            ctx.clearRect(0, 0, W, H);
+            drawParticles();
+            ctx.globalCompositeOperation = 'lighter';
+            glowC(A.coreL.x, A.coreL.y, W * 0.055, towerLvlL * 0.85, '127,196,255');
+            glowC(A.coreR.x, A.coreR.y, W * 0.055, towerLvlR * 0.85, '127,196,255');
+            glowC(A.machine.x, A.machine.y, W * 0.1, (machineDead ? 0 : 0.15 + charge / 100 * 0.6), '110,180,255');
+            glowC(A.dpL.x, A.dpL.y, 28 * leftI + 8, leftI, '160,210,255');
+            glowC(A.wolR.x, A.wolR.y, 28 * rightI + 8, rightI, '160,210,255');
+            if (linkI > 0.03) glowC(linkEndX, rightOn ? (A.wolR.y - 2) : (A.coreR.y + 10), 26 * linkI + 6, linkI, '160,210,255');
+            if (contactOn) glowC((A.dpR.x + A.wolL.x) / 2, (A.dpR.y + A.wolL.y) / 2, 38, 0.95, '190,225,255');
+            for (const b of bolts) drawShape(b.p, b.bs, b.life / b.max, b.w);
+            for (const r of rings) {
+                const a = r.life / r.max;
+                ctx.strokeStyle = `rgba(${r.col},${(0.5 * a).toFixed(3)})`; ctx.lineWidth = r.w * a + 1;
+                ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, TAU); ctx.stroke();
+            }
+            ctx.globalCompositeOperation = 'source-over';
+        }
+
+        /* ============ HUD / helpers ============ */
+        const setState = s => { state = s; stState.textContent = s.replace(/_/g, ' '); };
+        const msg = t => { stMsg.textContent = t; };
+        function gust(x, y, w, dx, dy) {
+            if (RM) return;
+            const d = document.createElement('div'); d.className = 'gust';
+            d.style.left = (x - w / 2) + 'px'; d.style.top = (y - w / 2) + 'px'; d.style.width = w + 'px'; d.style.height = (w * 0.55) + 'px';
+            smokeFront.appendChild(d);
+            requestAnimationFrame(() => { d.style.transform = `translate(${dx}px,${dy}px) scale(1.6)`; d.style.opacity = 0; });
+            setTimeout(() => d.remove(), 2500);
+        }
+
+        /* ============ timeline primitives ============ */
+        function tick() {
+            const id = runId;
+            return new Promise((res, rej) => requestAnimationFrame(() => id !== runId ? rej(ABORT) : res()));
+        }
+        async function wait(ms) {
+            const t0 = gameTime;
+            while (gameTime - t0 < ms / 1000) await tick();
+        }
+        async function tween(ms, fn) {
+            const t0 = gameTime;
+            while (true) { const k = Math.min(1, (gameTime - t0) / (ms / 1000)); fn(k); if (k >= 1) break; await tick(); }
+        }
+
+        /* ============ CSS bug: verification + bypass ============ */
+        function findBugRules() {
+            const out = [];
+            for (const sh of document.styleSheets) {
+                let rs; try { rs = sh.cssRules; } catch (e) { continue; }
+                if (!rs) continue;
+                for (const r of rs) {
+                    if (r.style && r.selectorText && r.selectorText.includes('energy-link') && r.selectorText.includes('is-active'))
+                        out.push(r);
+                }
+            }
+            return out;
+        }
+        function restoreBug() {
+            findBugRules().forEach(r => { try { r.style.setProperty('opacity', '0'); } catch (e) { } });
+            try { linkEl.style.opacity = ''; } catch (e) { }
+        }
+        function startVerification() {
+            if (verTimer) { clearInterval(verTimer); verTimer = null; }
+            fixDone = false;
+            verTimer = setInterval(() => {
+                if (fixDone) return;
+                let op = 0; try { op = parseFloat(getComputedStyle(linkEl).opacity) || 0; } catch (e) { }
+                if (op >= 0.95) {
+                    fixDone = true; fixMode = bypassUsed ? 'DEV BYPASS' : 'MANUAL FIX';
+                    clearInterval(verTimer); verTimer = null;
+                    fixConfirm = setTimeout(() => {
+                        fixConfirm = null;
+                        if (fixResolve) { const r = fixResolve; fixResolve = null; r(); }
+                    }, 500);
+                }
+            }, 180);
+            return new Promise(res => { fixResolve = res; });
+        }
+        function applyBypass() {
+            if (!ENABLE_TEST_BYPASS || bypassUsed || fixDone || state !== 'DEBUG_PAUSE') return;
+            bypassUsed = true; bypassBtn.classList.add('used'); S.tick();
+            const rules = findBugRules();
+            if (rules.length) { rules.forEach(r => { try { r.style.setProperty('opacity', '1', 'important'); } catch (e) { } }); }
+            else {
+                fixStyleEl = document.createElement('style');
+                fixStyleEl.textContent = '.energy-link.is-active{opacity:1 !important}';
+                document.head.appendChild(fixStyleEl);
+            }
+            msg('DEV BYPASS APPLIED — AWAITING COMPUTED-STYLE CONFIRMATION');
+        }
+
+        /* ============ the cinematic ============ */
+        async function runCinematic() {
+            const id = ++runId;
+            try {
+                runStart = performance.now(); pausedAccum = 0;
+                towerTL = towerTR = 0.25; S.rumble(0.10);
+                /* INTRO */
+                setState('INTRO'); msg('SECTOR 7 // CONTAINMENT FLOOR — NIGHT');
+                dimEl.style.opacity = 0;
+                await wait(2400);
+                /* LIGHTNING_CHARGE */
+                setState('LIGHTNING_CHARGE'); msg('SIGNAL TOWERS: POWERING UP');
+                await wait(1500);
+                towerTL = towerTR = 1; chargeTarget = 18; S.rumble(0.16); S.chargeG(0.02, 50);
+                pushBolt(A.coreL.x, A.coreL.y - 30, A.coreL.x + 40, A.coreL.y - 140, 20, 0.3, 3);
+                pushBolt(A.coreR.x, A.coreR.y - 30, A.coreR.x - 40, A.coreR.y - 140, 20, 0.3, 3);
+                msg('BOTH SIGNALS ACTIVE — MACHINE DRAWING POWER');
+                await wait(1500);
+                dpEl.classList.remove('veiled');
+                msg('DEADPOOL — DEPLOYED BETWEEN SIGNALS');
+                await wait(1500);
+                chargeTarget = 55;
+                await wait(1400);
+                /* CONNECTION_FAILURE */
+                setState('CONNECTION_FAILURE');
+                msg('DEADPOOL: ESTABLISHING LEFT LINK');
+                leftOn = true; leftLinkEl.classList.add('on');
+                await wait(1600);
+                flash(0.2); shake(5); sparksAt(A.dpL.x, A.dpL.y, 16, true);
+                ring(A.dpL.x, A.dpL.y, 320, 3, '160,210,255'); S.zap();
+                jolt(dpEl);                                  /* thunder shock hits Deadpool */
+                msg('LEFT SIGNAL: LINKED');
+                await wait(1300);
+                msg('RIGHT SIGNAL: LINK ATTEMPT'); stub = true;
+                await wait(1300);
+                linkEl.classList.add('is-active');   /* the bug swallows the visual bridge */
+                linkOn = true;
+                await tween(1400, k => { linkEndX = lerp(A.coreR.x - 10, A.linkRest, easeOut(k)); });
+                msg('ENERGY DISCHARGE IN PROGRESS… NO VISUAL LINK');
+                await wait(1500);
+                /* failure */
+                stub = false; sparksAt(A.linkRest, A.coreR.y + 10, 30, false);
+                sparksAt(A.dpR.x, A.dpR.y, 12, true);
+                flash(0.28); shake(9); S.fail(); dpEl.classList.add('strain');
+                pushBolt(A.linkRest, A.coreR.y + 10, A.linkRest - 60, A.coreR.y + 70, 16, 0.35, 2.5);
+                msg('LINK FAILED — SIGNAL INVISIBLE // TARGET OUT OF REACH');
+                chargeTarget = charge;
+                await wait(1900);
+                /* DEBUG_PAUSE */
+                setState('DEBUG_PAUSE'); paused = true; pausedAt = performance.now();
+                msg('CINEMATIC PAUSED — FIX THE CSS BUG TO RESTORE THE ENERGY LINK');
+                debugOverlay.classList.remove('hidden');
+                if (ENABLE_TEST_BYPASS) bypassBtn.classList.remove('hidden');
+                await startVerification();
+                /* CONNECTION_RESTORED */
+                paused = false; pausedAccum += performance.now() - pausedAt;
+                debugOverlay.classList.add('hidden'); bypassBtn.classList.add('hidden');
+                setState('CONNECTION_RESTORED');
+                flash(0.24, '#cfe8ff'); ring(linkEndX, A.coreR.y + 10, 440, 3, '160,210,255');
+                sparksAt(linkEndX, A.coreR.y + 10, 22, true); S.zap();
+                linkEl.classList.add('energized'); msg('ENERGY LINK RESTORED');
+                await wait(1400);
+                dpEl.classList.remove('strain'); jolt(dpEl);
+                msg('GAP REMAINS — DEADPOOL CANNOT REACH THE FAR SIDE');
+                await wait(1600);
+                chargeTarget = 78; msg('REACTOR CHARGING — WINDOW IS CLOSING');
+                await wait(1600);
+                /* WOLVERINE_ENTRANCE */
+                setState('WOLVERINE_ENTRANCE');
+                dimEl.style.opacity = 0.45; S.sting();
+                gust(W * 0.82, H * 0.55, W * 0.55, -W * 0.42, -H * 0.02);
+                msg('NEW CONTACT — INBOUND');
+                await wait(500);
+                wolvEl.classList.add('in');
+                await wait(1150);
+                wolvSvg.classList.add('glint');
+                setTimeout(() => wolvSvg.classList.remove('glint'), 1000);
+                dimEl.style.opacity = 0.12;
+                await wait(1500);
+                /* HAND_CONNECTION */
+                setState('HAND_CONNECTION'); msg('WOLVERINE: COVERING THE GAP');
+                reachR = true;
+                await wait(950);
+                contactOn = true; buddyEl.classList.add('on');
+                flash(0.32, '#dff0ff'); shake(6); ring((A.dpR.x + A.wolL.x) / 2, A.dpR.y, 400, 3, '190,225,255');
+                sparksAt((A.dpR.x + A.wolL.x) / 2, A.dpR.y, 26, true); S.hand();
+                jolt(dpEl); jolt(wolvEl);                    /* contact shock hits both */
+                msg('HANDS LOCKED — CIRCUIT NEARLY CLOSED');
+                await wait(1600);
+                msg('WOLVERINE REACHING FOR THE RIGHT SIGNAL');
+                wolvSvg.classList.add('glint'); setTimeout(() => wolvSvg.classList.remove('glint'), 1000);
+                await tween(1300, k => { linkEndX = lerp(A.linkRest, A.linkFinal, easeOut(k)); });
+                rightOn = true; reachR = false;
+                await wait(650);
+                flash(0.3, '#dff0ff'); shake(7); ring(A.wolR.x, A.wolR.y, 440, 3, '160,210,255');
+                sparksAt(A.wolR.x, A.wolR.y, 24, true); S.zap();
+                jolt(wolvEl);                                /* right-signal shock hits Wolverine */
+                msg('RIGHT SIGNAL: LINKED — FULL CIRCUIT');
+                /* CIRCUIT_COMPLETE */
+                setState('CIRCUIT_COMPLETE');
+                chargeTarget = 100; towerTL = towerTR = 1.3; cam.tz = RM ? 1.03 : 1.09;
+                $('machine').classList.add('vibe'); S.rumble(0.26); S.chargeG(0.05, 150);
+                dpEl.classList.add('strain'); wolvEl.classList.add('strain');  /* holding live current */
+                msg('CIRCUIT COMPLETE — OVERLOAD IMMINENT');
+                for (let i = 0; i < 5; i++) { energyAt(W * rand(0.2, 0.8), H * rand(0.3, 0.7), (A.dpR.x + A.wolL.x) / 2, A.dpR.y, 2); await wait(120); }
+                await wait(2300);
+                /* FINAL_OVERLOAD */
+                setState('FINAL_OVERLOAD'); msg('MAXIMUM CHARGE — NO BRAKE, NO PLAN B');
+                await wait(1800);
+                tension = true; cam.tz = RM ? 1.04 : 1.15; dimEl.style.opacity = 0.35;
+                msg('…'); S.rumble(0.08);
+                await wait(620);
+                /* release */
+                tension = false; dimEl.style.opacity = 0; cam.tz = 1.07;
+                flash(0.95, '#eaf4ff'); shake(24); S.overload(); S.rumble(0.4);
+                const cc = { x: (A.dpL.x + A.wolR.x) / 2, y: A.dpL.y };
+                for (let i = 0; i < 4; i++) ring(cc.x, cc.y, 720 + i * 170, 4, '190,225,255');
+                ring(A.machine.x, A.machine.y, 920, 5, '160,210,255');
+                for (let i = 0; i < 14; i++)
+                    pushBolt(rand(0, W), rand(H * 0.08, H * 0.7), rand(0, W), rand(H * 0.2, H * 0.85), 42, rand(.2, .42), rand(2, 5));
+                pushBolt(cc.x, cc.y, A.machine.x, A.machine.y, 34, 0.5, 6);
+                energyAt(cc.x, cc.y, A.machine.x, A.machine.y, 40);
+                debrisAt(A.machine.x, A.machine.y, 18); sparksAt(A.machine.x, A.machine.y, 32, true);
+                jolt(dpEl, true); jolt(wolvEl, true);          /* massive overload shock */
+                gust(W * 0.5, H * 0.6, W * 0.5, -W * 0.12, -H * 0.12);
+                await wait(300);
+                jolt(dpEl); jolt(wolvEl);                    /* aftershock convulsion */
+                sparksAt(A.dpBody.x, A.dpBody.y, 10, true); sparksAt(A.wolBody.x, A.wolBody.y, 10, true);
+                await wait(500);
+                /* machine shutdown */
+                msg('REACTOR OVERLOAD — EMERGENCY SHUTDOWN');
+                $('machine').classList.remove('vibe'); $('machine').classList.add('dying');
+                S.shutdown(); flash(0.35, '#ffe9d0');
+                debrisAt(A.machine.x, H * 0.55, 12); sparksAt(A.machine.x, H * 0.5, 26, false);
+                gust(A.machine.x, H * 0.6, W * 0.42, -W * 0.1, -H * 0.18);
+                await wait(1300);
+                $('machine').classList.remove('dying'); $('machine').classList.add('dead');
+                machineDead = true; chargeCrash = true; chargeTarget = 0;
+                towerTL = towerTR = 0.45; sparksAt(A.machine.x + W * 0.05, H * 0.45, 10, false);
+                await wait(1500);
+                /* AFTERMATH */
+                setState('AFTERMATH'); msg('THREAT NEUTRALIZED — SECTOR SECURE');
+                chargeCrash = false; cam.tz = 1; S.rumble(0.06); S.chargeG(0, 42);
+                leftOn = rightOn = linkOn = false; contactOn = false; tension = false;
+                buddyEl.classList.remove('on'); leftLinkEl.classList.remove('on');
+                dpEl.classList.remove('strain'); wolvEl.classList.remove('strain');
+                towerTL = towerTR = 0.12;
+                gust(W * 0.4, H * 0.7, W * 0.6, -W * 0.15, -H * 0.05);
+                await wait(3300);
+                /* MISSION_COMPLETE */
+                setState('MISSION_COMPLETE'); msg('ALL UNITS: STAND DOWN. BEST DAMN TEAM-UP I NEVER ASKED FOR.');
+                endScreen.classList.remove('hidden');
+                await wait(900);
+                end2.classList.remove('hidden'); S.tick();
+                await wait(700);
+                const secs = Math.round((performance.now() - runStart - pausedAccum) / 1000);
+                endStats.textContent = `CSS BUG RESOLVED: ${fixMode} // MISSION TIME: ${secs}s (EXCLUDING DEBUG)`;
+                endStats.classList.remove('hidden');
+                $('restartBtn').classList.remove('hidden');
+            } catch (e) { if (e !== ABORT) console.error(e); }
+        }
+
+        /* ============ restart ============ */
+        function restart() {
+            runId++;
+            if (verTimer) { clearInterval(verTimer); verTimer = null; }
+            if (fixConfirm) { clearTimeout(fixConfirm); fixConfirm = null; }
+            fixResolve = null; fixDone = false; bypassUsed = false; fixMode = 'MANUAL';
+            if (fixStyleEl) { fixStyleEl.remove(); fixStyleEl = null; }
+            restoreBug();
+            paused = false; machineDead = false; chargeCrash = false;
+            charge = 0; chargeTarget = 0; leftOn = rightOn = linkOn = stub = contactOn = tension = reachR = false;
+            leftI = rightI = linkI = stubI = 0;
+            towerTL = towerTR = 0.25; towerLvlL = towerLvlR = 0;
+            P.length = 0; bolts.length = 0; rings.length = 0;
+            S1.next = S2.next = S3.next = S4.next = 0;
+            flashV = 0; flashEl.style.opacity = 0; shakeV = 0; cam.z = 1; cam.tz = 1;
+            linkEndX = A.coreR ? A.coreR.x - 10 : 0;
+            linkEl.classList.remove('is-active', 'energized');
+            leftLinkEl.classList.remove('on'); buddyEl.classList.remove('on');
+            dpEl.classList.add('veiled'); dpEl.classList.remove('strain');
+            dpEl.style.filter = ''; wolvEl.style.filter = '';
+            wolvEl.classList.remove('in', 'strain'); wolvSvg.classList.remove('glint');
+            [dpEl, wolvEl].forEach(el => { if (el._jolt) el._jolt.classList.remove('jolt', 'joltBig'); });
+            const m = $('machine'); if (m) { m.classList.remove('vibe', 'dying', 'dead'); }
+            document.querySelectorAll('.gust').forEach(g => g.remove());
+            dimEl.style.opacity = 0;
+            debugOverlay.classList.add('hidden'); bypassBtn.classList.add('hidden');
+            endScreen.classList.add('hidden'); end2.classList.add('hidden');
+            endStats.classList.add('hidden'); $('restartBtn').classList.add('hidden');
+            setState('TITLE'); msg('AWAITING MISSION START');
+            titleScreen.classList.remove('hidden');
+            S.rumble(0.06);
+            if (E.mCore) updateCharge(0);
+            refreshLinkJ(); updateBuddy();
+        }
+
+        /* ============ wiring ============ */
+        $('startBtn').addEventListener('click', () => {
+            S.init(); if (S.ctx && S.ctx.state === 'suspended') S.ctx.resume();
+            S.tick(); titleScreen.classList.add('hidden');
+            setState('INTRO'); runCinematic();
+        });
+        $('restartBtn').addEventListener('click', () => { S.tick(); restart(); });
+        bypassBtn.addEventListener('click', applyBypass);
+        $('muteBtn').addEventListener('click', () => {
+            muted = !muted;
+            if (S.m) S.m.gain.setTargetAtTime(muted ? 0 : 0.85, S.ctx.currentTime, 0.05);
+            $('sndOn').style.display = muted ? 'none' : '';
+            $('sndOff').style.display = muted ? '' : 'none';
+        });
+        let rsT = null;
+        addEventListener('resize', () => { clearTimeout(rsT); rsT = setTimeout(layout, 150); });
+
+        /* ============ boot ============ */
+        layout();
+        linkEndX = A.coreR.x - 10;
+        updateBuddy(); updateCharge(0);
+        requestAnimationFrame(t => { lastT = t; requestAnimationFrame(frame); });
+    </script>
+</body>
+
+</html>
