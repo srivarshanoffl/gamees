@@ -1,0 +1,2312 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHANG-CHI — Broken Harmony</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13' fill='none' stroke='%23e9bd5a' stroke-width='3.5'/><circle cx='16' cy='16' r='7' fill='none' stroke='%23f7d878' stroke-width='2'/></svg>">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Rajdhani:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+
+    <!-- ============ THE LIVE BUGGY STYLESHEET (this is the real game bug) ============ -->
+    <style id="ring-css">
+        /* ten-rings orbit engine — core */
+        @keyframes ring-orbit {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .ring {
+            animation: ringOrbit 2s linear infinite;
+        }
+    </style>
+
+    <style>
+        /* ================================================================
+   SHANG-CHI: BROKEN HARMONY — main stylesheet
+   ================================================================ */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        [hidden] {
+            display: none !important;
+        }
+
+        html,
+        body {
+            height: 100%;
+            min-height: 100svh;
+            overflow: hidden;
+        }
+
+        body {
+            background-color: #07090d;
+            background-image: 
+                radial-gradient(ellipse at 50% 48%, rgba(7, 9, 13, 0.15) 0%, rgba(7, 9, 13, 0.45) 65%, rgba(4, 5, 8, 0.78) 100%),
+                url('assets/shangchi_bg.jpg');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            color: #e8dcc0;
+            font-family: 'Rajdhani', sans-serif;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        /* ---------------- stage & environment ---------------- */
+        #stage {
+            position: fixed;
+            inset: 0;
+            min-height: 100svh;
+            overflow: hidden;
+            background: transparent;
+        }
+
+        #vignette {
+            position: fixed;
+            inset: 0;
+            z-index: 6;
+            pointer-events: none;
+            background: radial-gradient(92% 84% at 50% 46%, transparent 55%, rgba(4, 5, 8, .68) 100%);
+        }
+
+        #motes {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        #motes i {
+            position: absolute;
+            bottom: -8px;
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            background: #e9bd5a;
+            filter: blur(.5px);
+            animation: moteRise linear infinite;
+        }
+
+        @keyframes moteRise {
+            0% {
+                transform: translateY(0);
+                opacity: 0;
+            }
+
+            12% {
+                opacity: .4;
+            }
+
+            85% {
+                opacity: .22;
+            }
+
+            100% {
+                transform: translateY(-72vh);
+                opacity: 0;
+            }
+        }
+
+        #figure-wrap {
+            position: absolute;
+            left: 46%;
+            top: 54%;
+            width: 520px;
+            height: 560px;
+            z-index: 2;
+        }
+
+        .ambient {
+            position: absolute;
+            left: -60px;
+            top: -95px;
+            width: 640px;
+            height: 640px;
+            border-radius: 50%;
+            z-index: 0;
+            background: radial-gradient(closest-side, rgba(216, 166, 66, .17), rgba(216, 166, 66, .05) 46%, transparent 72%);
+            opacity: .6;
+            transition: opacity 2.2s;
+        }
+
+        body.final .ambient {
+            opacity: 1;
+        }
+
+        .ground {
+            position: absolute;
+            left: 50%;
+            border-radius: 50%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .g1 {
+            width: 460px;
+            height: 96px;
+            top: 466px;
+            transform: translateX(-50%);
+            border: 1px solid rgba(233, 189, 90, .11);
+        }
+
+        .g2 {
+            width: 320px;
+            height: 64px;
+            top: 476px;
+            transform: translateX(-50%);
+            border: 1px solid rgba(233, 189, 90, .06);
+        }
+
+        /* ---------------- ground cloud & mountain mist ---------------- */
+        .ground-mist-back {
+            position: absolute;
+            left: 260px;
+            top: 480px;
+            width: 580px;
+            height: 140px;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            z-index: 4;
+            pointer-events: none;
+            background: 
+                radial-gradient(ellipse at 45% 65%, rgba(185, 215, 245, 0.42) 0%, rgba(130, 175, 220, 0.24) 45%, transparent 75%),
+                radial-gradient(ellipse at 60% 70%, rgba(245, 195, 110, 0.28) 0%, rgba(190, 140, 60, 0.12) 48%, transparent 72%);
+            filter: blur(14px);
+            animation: mistPulseBack 9s ease-in-out infinite alternate;
+        }
+
+        @keyframes mistPulseBack {
+            0% { transform: translate(-50%, -50%) scale(0.96, 0.94); opacity: 0.85; }
+            100% { transform: translate(-50%, -50%) scale(1.05, 1.08); opacity: 1; }
+        }
+
+        .ground-mist-front {
+            position: absolute;
+            left: 260px;
+            top: 476px;
+            width: 480px;
+            height: 120px;
+            transform: translate(-50%, -50%);
+            z-index: 6;
+            pointer-events: none;
+            transition: filter 1s ease;
+        }
+
+        body.final .ground-mist-front {
+            filter: drop-shadow(0 0 16px rgba(255, 195, 60, 0.45));
+        }
+
+        .mist-cloud {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .mc-1 {
+            left: 25px;
+            bottom: 12px;
+            width: 260px;
+            height: 80px;
+            background: radial-gradient(ellipse at 50% 65%, rgba(200, 225, 250, 0.58) 0%, rgba(145, 185, 225, 0.32) 46%, rgba(100, 140, 185, 0.1) 68%, transparent 80%);
+            filter: blur(10px);
+            animation: mistFloat1 7.5s ease-in-out infinite alternate;
+        }
+
+        .mc-2 {
+            right: 20px;
+            bottom: 8px;
+            width: 290px;
+            height: 88px;
+            background: radial-gradient(ellipse at 50% 70%, rgba(250, 205, 120, 0.46) 0%, rgba(185, 150, 200, 0.28) 45%, rgba(120, 150, 190, 0.1) 68%, transparent 82%);
+            filter: blur(12px);
+            animation: mistFloat2 9s ease-in-out infinite alternate-reverse;
+        }
+
+        .mc-3 {
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: -4px;
+            width: 360px;
+            height: 64px;
+            background: radial-gradient(ellipse at 50% 75%, rgba(215, 235, 255, 0.52) 0%, rgba(150, 190, 230, 0.28) 48%, transparent 75%);
+            filter: blur(8px);
+            animation: mistDrift 12s ease-in-out infinite alternate;
+        }
+
+        @keyframes mistFloat1 {
+            0% { transform: translateY(0px) scale(1); opacity: 0.85; }
+            100% { transform: translateY(-7px) scale(1.08, 1.05); opacity: 1; }
+        }
+
+        @keyframes mistFloat2 {
+            0% { transform: translateY(0px) scale(1); opacity: 0.82; }
+            100% { transform: translateY(-9px) scale(1.06, 1.04); opacity: 1; }
+        }
+
+        @keyframes mistDrift {
+            0% { transform: translateX(-52%) scale(0.97); }
+            100% { transform: translateX(-48%) scale(1.04); }
+        }
+
+        #hero {
+            position: absolute;
+            left: 260px;
+            top: 255px;
+            width: 324px;
+            height: 486px;
+            transform: translate(-50%, -50%);
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .hero-body-wrap {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            animation: heroBreathe 3.8s ease-in-out infinite;
+            transform-origin: 50% 92%;
+        }
+
+        @keyframes heroBreathe {
+            0%, 100% {
+                transform: translateY(0px) scale(1);
+            }
+            50% {
+                transform: translateY(-5px) scale(1.008, 1.012);
+            }
+        }
+
+        .hero-layer {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        #hero-img {
+            filter: drop-shadow(0 16px 30px rgba(0, 0, 0, .82)) drop-shadow(0 2px 10px rgba(0, 0, 0, .6));
+            transition: filter 0.8s ease;
+        }
+
+        #hero-shadow {
+            position: absolute;
+            left: 50%;
+            bottom: -10px;
+            top: auto;
+            width: 280px;
+            height: 56px;
+            transform: translateX(-50%);
+            object-fit: contain;
+            z-index: 4;
+            opacity: 0.75;
+            animation: shadowPulse 3.8s ease-in-out infinite;
+        }
+
+        @keyframes shadowPulse {
+            0%, 100% {
+                transform: translateX(-50%) scale(1);
+                opacity: 0.75;
+            }
+            50% {
+                transform: translateX(-50%) scale(0.93);
+                opacity: 0.58;
+            }
+        }
+
+        .glow-layer {
+            mix-blend-mode: screen;
+            opacity: 0;
+            transition: opacity 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), filter 1.2s ease;
+        }
+
+        body.broken .glow-layer {
+            opacity: 0.5;
+            filter: hue-rotate(185deg) brightness(1.3) drop-shadow(0 0 14px rgba(40, 220, 250, 0.85));
+            animation: chiFlicker 2.4s ease-in-out infinite;
+        }
+
+        body.fixed .glow-layer {
+            opacity: 0.65;
+            filter: brightness(1.25) drop-shadow(0 0 16px rgba(255, 190, 60, 0.85));
+            animation: chiPulse 2.8s ease-in-out infinite;
+        }
+
+        body.final .glow-layer {
+            opacity: 0.85;
+            filter: brightness(1.4) drop-shadow(0 0 24px rgba(255, 210, 80, 0.95));
+        }
+
+        @keyframes chiFlicker {
+            0%, 100% { opacity: 0.35; }
+            50% { opacity: 0.65; }
+        }
+
+        @keyframes chiPulse {
+            0%, 100% {
+                opacity: 0.45;
+                filter: brightness(1.1) drop-shadow(0 0 12px rgba(255, 190, 60, 0.6));
+            }
+            50% {
+                opacity: 0.85;
+                filter: brightness(1.35) drop-shadow(0 0 24px rgba(255, 220, 90, 0.95));
+            }
+        }
+
+        .hero-body-wrap.blast {
+            animation: heroBlast 0.45s ease-out;
+        }
+
+        @keyframes heroBlast {
+            0% { transform: scale(0.96) translateY(4px); }
+            40% { transform: scale(1.035) translateY(-7px); }
+            100% { transform: scale(1) translateY(0); }
+        }
+
+        .glow-layer.flare {
+            animation: glowFlare 0.55s ease-out;
+        }
+
+        @keyframes glowFlare {
+            0% { opacity: 1; filter: brightness(2) drop-shadow(0 0 35px rgba(255, 220, 100, 1)); }
+            100% { opacity: 0.85; filter: brightness(1.4) drop-shadow(0 0 24px rgba(255, 210, 80, 0.95)); }
+        }
+
+        #shock {
+            position: absolute;
+            left: 260px;
+            top: 215px;
+            width: 120px;
+            height: 120px;
+            margin: -60px 0 0 -60px;
+            border: 2px solid rgba(247, 216, 120, .75);
+            border-radius: 50%;
+            opacity: 0;
+            z-index: 7;
+            pointer-events: none;
+        }
+
+        #shock.go {
+            animation: shockw 1s cubic-bezier(.2, .7, .3, 1) forwards;
+        }
+
+        @keyframes shockw {
+            0% {
+                transform: scale(.4);
+                opacity: .85;
+            }
+
+            100% {
+                transform: scale(4.8);
+                opacity: 0;
+            }
+        }
+
+        /* ================================================================
+   THE TEN RINGS — ten independent layered metallic objects
+   ================================================================ */
+        .arm-anchor {
+            position: absolute;
+            width: 0;
+            height: 0;
+        }
+
+        .ring-unit {
+            position: absolute;
+            width: 0;
+            height: 0;
+            pointer-events: none;
+            transition: transform 1.15s cubic-bezier(.3, .75, .25, 1);
+            will-change: transform;
+        }
+
+        .ring-plane {
+            position: absolute;
+            width: 0;
+            height: 0;
+            transition: transform 1.15s cubic-bezier(.3, .75, .25, 1);
+        }
+
+        .ring-gather {
+            position: absolute;
+            width: 0;
+            height: 0;
+        }
+
+        .ring {
+            position: absolute;
+            width: 0;
+            height: 0;
+            will-change: transform;
+        }
+
+        /* BROKEN state — orbit engine offline, emergency drift protocol */
+        body.broken .ring {
+            animation: none !important;
+        }
+
+        body.broken .ring-unit {
+            animation: ring-chaos var(--bt) ease-in-out infinite;
+            animation-delay: var(--bd);
+        }
+
+        /* FIXED state — the corrected live rule in #ring-css drives .ring;
+   these rules only override per-ring duration / phase head-start */
+        body:not(.broken) .ring {
+            animation-duration: var(--t);
+            animation-delay: var(--dl);
+        }
+
+        body.fixed .ring-gather {
+            animation: ring-gather 1.25s cubic-bezier(.17, .8, .24, 1) both;
+        }
+
+        @keyframes ring-chaos {
+
+            0%,
+            100% {
+                transform: translate(var(--cx), var(--cy)) rotate(var(--cr));
+            }
+
+            50% {
+                transform: translate(calc(var(--cx) + var(--jx)), calc(var(--cy) + var(--jy))) rotate(calc(var(--cr) + var(--jr)));
+            }
+        }
+
+        @keyframes ring-orbit {
+            from {
+                transform: rotate(calc(var(--ph)*1deg)) translateX(var(--orb-r)) rotate(calc(var(--ph)*-1deg));
+            }
+
+            to {
+                transform: rotate(calc((var(--ph) + 360)*1deg)) translateX(var(--orb-r)) rotate(calc((var(--ph) + 360)*-1deg));
+            }
+        }
+
+        @keyframes ring-gather {
+            from {
+                transform: rotate(calc(var(--ph)*1deg)) translateX(calc(var(--orb-r)*-1)) rotate(calc(var(--ph)*-1deg)) scale(.5);
+                opacity: .3;
+            }
+
+            55% {
+                opacity: 1;
+            }
+
+            to {
+                transform: rotate(0deg) translateX(0px) rotate(0deg) scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* --- torus construction: depth slab + spinning metal + fixed light --- */
+        /* --- torus construction: depth slab + spinning metal + fixed light --- */
+        .r-body {
+            position: absolute;
+            left: calc(var(--d) / -2);
+            top: calc(var(--d) / -2);
+            filter: brightness(1) drop-shadow(0 4px 7px rgba(0, 0, 0, .5)) drop-shadow(0 0 16px rgba(255, 195, 75, .65)) drop-shadow(0 0 32px rgba(255, 155, 35, .35));
+            transition: filter 1.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        body.broken .r-body {
+            filter: brightness(1.1) drop-shadow(0 3px 6px rgba(0, 0, 0, .55)) drop-shadow(0 0 18px rgba(35, 220, 250, .85)) drop-shadow(0 0 38px rgba(10, 160, 220, .45));
+        }
+
+        body.final .ring.projected .r-body {
+            filter: brightness(1.3) drop-shadow(0 4px 10px rgba(0, 0, 0, .65)) drop-shadow(0 0 24px rgba(255, 225, 95, 1)) drop-shadow(0 0 48px rgba(255, 170, 40, .7)) !important;
+        }
+
+        .r-tilt {
+            position: absolute;
+            inset: 0;
+        }
+
+        .r-depth,
+        .r-metal,
+        .r-gloss {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+        }
+
+        /* --- Aqua blue Wenwu shader layers (active when broken, dissolve on fix) --- */
+        .r-depth::after,
+        .r-metal::after,
+        .r-gloss::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 1.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        body.broken .r-depth::after,
+        body.broken .r-metal::after,
+        body.broken .r-gloss::after {
+            opacity: 1;
+        }
+
+        .r-depth {
+            transform: translate(2.6px, 3.4px);
+            /* extruded thickness */
+            background: conic-gradient(from 30deg, #170d02, #33200a 18%, #4d300d 40%, #201302 62%, #3a250b 82%, #170d02);
+            -webkit-mask: radial-gradient(closest-side, transparent 0 41%, #000 44% 92%, transparent 95%);
+            mask: radial-gradient(closest-side, transparent 0 41%, #000 44% 92%, transparent 95%);
+        }
+
+        .r-depth::after {
+            background: conic-gradient(from 30deg, #01141c, #04222c 18%, #0a3a48 40%, #021a22 62%, #062f3a 82%, #01141c);
+            -webkit-mask: radial-gradient(closest-side, transparent 0 41%, #000 44% 92%, transparent 95%);
+            mask: radial-gradient(closest-side, transparent 0 41%, #000 44% 92%, transparent 95%);
+        }
+
+        .r-metal {
+            will-change: transform;
+            background:
+                radial-gradient(closest-side, transparent 0 59%, rgba(56, 30, 4, .55) 62% 65%, transparent 68%),
+                radial-gradient(closest-side, transparent 0 42%, rgba(255, 224, 150, .16) 46% 50%, transparent 56%),
+                radial-gradient(closest-side, transparent 0 80%, rgba(43, 22, 3, .55) 87% 92%, transparent 96%),
+                conic-gradient(from 210deg, #6b4413, #9a6620 8%, #d9a43a 18%, #f7d878 26%, #ffe9a8 31%, #e2b04a 39%, #a06a1c 49%, #6b4413 59%, #8a5a1a 67%, #c8912f 77%, #f2cd6e 85%, #d9a43a 91%, #6b4413);
+            -webkit-mask: radial-gradient(closest-side, transparent 0 43%, #000 46% 91%, transparent 94%);
+            mask: radial-gradient(closest-side, transparent 0 43%, #000 46% 91%, transparent 94%);
+        }
+
+        .r-metal::after {
+            background:
+                radial-gradient(closest-side, transparent 0 59%, rgba(3, 40, 52, .7) 62% 65%, transparent 68%),
+                radial-gradient(closest-side, transparent 0 42%, rgba(130, 240, 255, .35) 46% 50%, transparent 56%),
+                radial-gradient(closest-side, transparent 0 80%, rgba(2, 28, 38, .7) 87% 92%, transparent 96%),
+                conic-gradient(from 210deg, #052a36, #094759 8%, #138fa9 18%, #3dd5ed 26%, #bbf7ff 31%, #1fafd0 39%, #0d677e 49%, #052a36 59%, #084252 67%, #169dbb 77%, #55e2f7 85%, #1593af 91%, #052a36);
+            -webkit-mask: radial-gradient(closest-side, transparent 0 43%, #000 46% 91%, transparent 94%);
+            mask: radial-gradient(closest-side, transparent 0 43%, #000 46% 91%, transparent 94%);
+        }
+
+        @keyframes sheen {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        body.broken .r-metal {
+            animation-duration: var(--bs) !important;
+            animation-direction: var(--bsd) !important;
+        }
+
+        .r-gloss {
+            background:
+                radial-gradient(circle at 32% 24%, rgba(255, 252, 236, .95) 0 4%, rgba(255, 240, 190, .5) 13%, transparent 27%),
+                radial-gradient(circle at 70% 78%, rgba(255, 190, 90, .42) 0 3%, transparent 18%),
+                radial-gradient(closest-side, transparent 0 43.5%, rgba(255, 236, 170, .9) 46.5% 49%, rgba(122, 74, 12, .28) 53%, transparent 59%);
+            -webkit-mask: radial-gradient(closest-side, transparent 0 43%, #000 46% 91%, transparent 94%);
+            mask: radial-gradient(closest-side, transparent 0 43%, #000 46% 91%, transparent 94%);
+        }
+
+        .r-gloss::after {
+            background:
+                radial-gradient(circle at 32% 24%, rgba(235, 253, 255, .98) 0 4%, rgba(150, 240, 255, .7) 13%, transparent 27%),
+                radial-gradient(circle at 70% 78%, rgba(55, 205, 245, .5) 0 3%, transparent 18%),
+                radial-gradient(closest-side, transparent 0 43.5%, rgba(175, 245, 255, .95) 46.5% 49%, rgba(10, 80, 102, .4) 53%, transparent 59%);
+            -webkit-mask: radial-gradient(closest-side, transparent 0 43%, #000 46% 91%, transparent 94%);
+            mask: radial-gradient(closest-side, transparent 0 43%, #000 46% 91%, transparent 94%);
+        }
+
+        body.broken #motes i {
+            background: rgba(80, 225, 255, .75) !important;
+            box-shadow: 0 0 8px rgba(80, 225, 255, .95) !important;
+        }
+
+        .ring[data-g="outer"] .r-metal {
+            filter: brightness(.9) saturate(.94);
+        }
+
+        .ring[data-g="inner"] .r-metal {
+            filter: brightness(1.08);
+        }
+
+        /* group activation pulse */
+        @keyframes gpulse {
+            0% {
+                transform: scale(1);
+                filter: brightness(1) drop-shadow(0 4px 7px rgba(0, 0, 0, .5)) drop-shadow(0 0 14px rgba(255, 190, 80, .3));
+            }
+
+            30% {
+                transform: scale(1.17);
+                filter: brightness(1.6) drop-shadow(0 4px 7px rgba(0, 0, 0, .5)) drop-shadow(0 0 28px rgba(255, 208, 105, .9));
+            }
+
+            100% {
+                transform: scale(1);
+                filter: brightness(1) drop-shadow(0 4px 7px rgba(0, 0, 0, .5)) drop-shadow(0 0 14px rgba(255, 190, 80, .3));
+            }
+        }
+
+        body.ga-outer .ring[data-g="outer"] .r-body,
+        body.ga-middle .ring[data-g="middle"] .r-body,
+        body.ga-inner .ring[data-g="inner"] .r-body {
+            animation: gpulse .85s ease;
+        }
+
+        /* final synchronized breath */
+        @keyframes rbreathe {
+
+            0%,
+            100% {
+                transform: scale(1);
+                filter: brightness(1.06) drop-shadow(0 4px 8px rgba(0, 0, 0, .5)) drop-shadow(0 0 20px rgba(255, 200, 95, .5));
+            }
+
+            50% {
+                transform: scale(1.05);
+                filter: brightness(1.22) drop-shadow(0 4px 8px rgba(0, 0, 0, .5)) drop-shadow(0 0 30px rgba(255, 208, 110, .75));
+            }
+        }
+
+        body.final .r-body {
+            animation: rbreathe 3.4s ease-in-out infinite;
+        }
+
+        /* ================================================================
+           MOVIE-ACCURATE SOLID GOLDEN CYLINDRICAL FOREARM BRACERS & CHI AURA
+           ================================================================ */
+        .arm-chi-fire {
+            position: absolute;
+            width: 140px;
+            height: 190px;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 3;
+            opacity: 0;
+            transition: opacity 1.2s ease, filter 1.2s ease;
+            border-radius: 50%;
+            background: radial-gradient(ellipse at 50% 50%, rgba(255, 210, 80, 0.75) 0%, rgba(255, 140, 25, 0.5) 42%, rgba(210, 80, 10, 0.25) 65%, transparent 80%);
+            filter: blur(10px);
+        }
+
+        body.broken .arm-chi-fire {
+            opacity: 0.22;
+            background: radial-gradient(ellipse at 50% 50%, rgba(40, 220, 255, 0.55) 0%, rgba(20, 140, 210, 0.3) 42%, transparent 75%);
+            filter: blur(12px) drop-shadow(0 0 16px rgba(40, 220, 255, 0.65));
+            animation: chiFlicker 2.4s ease-in-out infinite;
+        }
+
+        body.fixed .arm-chi-fire {
+            opacity: 0.65;
+            filter: blur(9px) drop-shadow(0 0 22px rgba(255, 180, 40, 0.85));
+            animation: armChiPulse 2.8s ease-in-out infinite;
+        }
+
+        body.final .arm-chi-fire {
+            opacity: 0.95;
+            filter: blur(7px) drop-shadow(0 0 26px rgba(255, 195, 50, 0.95)) drop-shadow(0 0 52px rgba(255, 130, 20, 0.7));
+            animation: armChiPulse 2.4s ease-in-out infinite;
+        }
+
+        @keyframes armChiPulse {
+            0%, 100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.9;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.08, 1.04);
+                opacity: 1;
+                filter: blur(6px) drop-shadow(0 0 34px rgba(255, 205, 55, 1)) drop-shadow(0 0 60px rgba(255, 140, 25, 0.85));
+            }
+        }
+
+        .arm-chi-fire.flare {
+            animation: armChiFlare 0.55s ease-out;
+        }
+
+        @keyframes armChiFlare {
+            0% {
+                opacity: 1;
+                filter: blur(5px) drop-shadow(0 0 45px rgba(255, 230, 100, 1)) drop-shadow(0 0 80px rgba(255, 140, 20, 0.95));
+                transform: translate(-50%, -50%) scale(1.22);
+            }
+            100% {
+                opacity: 0.95;
+                filter: blur(7px) drop-shadow(0 0 26px rgba(255, 195, 50, 0.95)) drop-shadow(0 0 52px rgba(255, 130, 20, 0.7));
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        /* Movie-accurate solid golden cylindrical bracers in final harmony */
+        body.final .ring-unit {
+            transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        body.final .ring {
+            border-radius: 3px / 5px;
+            background: linear-gradient(90deg, 
+                #3a1d02 0%, 
+                #9e6610 8%, 
+                #fed568 20%, 
+                #fff8d4 28%, 
+                #d79924 48%, 
+                #7e4407 65%, 
+                #fcdd82 82%, 
+                #f6c95c 90%, 
+                #3a1d02 100%);
+            border-top: 1.2px solid #fff5cc;
+            border-bottom: 1.8px solid #381b02;
+            box-shadow: 
+                inset 0 1px 2px rgba(255, 255, 255, 0.75),
+                inset 0 -1.5px 3px rgba(0, 0, 0, 0.85),
+                0 3px 6px rgba(0, 0, 0, 0.9);
+            filter: drop-shadow(0 0 5px rgba(255, 205, 55, 0.95)) drop-shadow(0 0 14px rgba(255, 140, 20, 0.65));
+            position: relative;
+            overflow: visible;
+        }
+
+        body.final .r-body {
+            width: 100% !important;
+            height: 100% !important;
+            margin: 0 !important;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: none !important;
+        }
+
+        body.final .r-tilt,
+        body.final .r-depth,
+        body.final .r-metal,
+        body.final .r-gloss {
+            display: none !important;
+        }
+
+        /* Concentric ancient circular medallion seal engraved into the center of each ring band */
+        body.final .ring::before {
+            content: "";
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            border: 1.2px solid rgba(70, 36, 4, 0.95);
+            background: radial-gradient(circle, #fff3c4 24%, #824709 50%, #f7c756 75%);
+            box-shadow: 
+                0 0 0 1.2px rgba(255, 235, 150, 0.9),
+                inset 0 0 0 1.2px rgba(255, 245, 190, 0.95),
+                inset 0 0 1.8px rgba(40, 20, 2, 0.95);
+            z-index: 2;
+        }
+
+        /* Relief circular engravings flanking the center medallion */
+        body.final .ring::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(circle at calc(50% - 9px) 50%, #fff1b8 0, #824709 1.5px, #f7c756 2.6px, transparent 3px),
+                radial-gradient(circle at calc(50% + 9px) 50%, #fff1b8 0, #824709 1.5px, #f7c756 2.6px, transparent 3px);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* ================================================================
+   UI
+   ================================================================ */
+        #title-block {
+            position: fixed;
+            left: 26px;
+            top: 20px;
+            z-index: 20;
+            max-width: 340px;
+            pointer-events: none;
+        }
+
+        .t-sup {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #orn {
+            position: relative;
+            width: 16px;
+            height: 16px;
+        }
+
+        #orn i {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: conic-gradient(from 40deg, #6b4413, #e2b04a 30%, #ffe9a8 45%, #a06a1c 70%, #6b4413);
+            -webkit-mask: radial-gradient(closest-side, transparent 0 45%, #000 50% 88%, transparent 94%);
+            mask: radial-gradient(closest-side, transparent 0 45%, #000 50% 88%, transparent 94%);
+        }
+
+        #title-block #orn {
+            animation: orn-spin 7s linear infinite;
+        }
+
+        body.broken #orn {
+            animation: orn-chaos 1.15s ease-in-out infinite;
+        }
+
+        @keyframes orn-spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes orn-chaos {
+
+            0%,
+            100% {
+                transform: rotate(14deg) translateX(1px);
+            }
+
+            30% {
+                transform: rotate(-22deg);
+            }
+
+            55% {
+                transform: rotate(30deg) translateY(-1px);
+            }
+
+            80% {
+                transform: rotate(-8deg);
+            }
+        }
+
+        #title-block h1 {
+            margin: 7px 0 6px;
+            font: 800 24px/1.12 'Cinzel', serif;
+            color: #efe3c0;
+            letter-spacing: .14em;
+        }
+
+        #title-block h1 em {
+            display: block;
+            font-style: normal;
+            font-size: 12.5px;
+            letter-spacing: .42em;
+            color: #c8912f;
+            margin-bottom: 3px;
+        }
+
+        #title-block h1::after {
+            content: "";
+            display: block;
+            width: 46px;
+            height: 2px;
+            background: #8e2432;
+            margin-top: 7px;
+        }
+
+        #mission {
+            margin-top: 9px;
+            font: 500 13px/1.45 'Rajdhani';
+            color: #b9ab8a;
+        }
+
+        #objective {
+            margin-top: 7px;
+            font: 600 12.5px/1.4 'Rajdhani';
+            letter-spacing: .06em;
+            color: #e9bd5a;
+        }
+
+        /* panel */
+        #panel {
+            position: fixed;
+            right: 22px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 22;
+            width: 354px;
+        }
+
+        #panel-box {
+            background: rgba(13, 15, 20, .88);
+            border: 1px solid rgba(233, 189, 90, .24);
+            border-left: 2px solid #c8912f;
+            border-radius: 4px;
+            padding: 14px 16px 16px;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 18px 50px rgba(0, 0, 0, .5);
+        }
+
+        #panel-box.shake {
+            animation: pshake .4s ease;
+        }
+
+        @keyframes pshake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            20% {
+                transform: translateX(-7px);
+            }
+
+            40% {
+                transform: translateX(6px);
+            }
+
+            60% {
+                transform: translateX(-4px);
+            }
+
+            80% {
+                transform: translateX(3px);
+            }
+        }
+
+        .p-head {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding-bottom: 9px;
+            margin-bottom: 11px;
+            border-bottom: 1px solid rgba(233, 189, 90, .15);
+        }
+
+        .p-head svg {
+            width: 15px;
+            height: 15px;
+            color: #e9bd5a;
+            flex: none;
+        }
+
+        .p-head b {
+            font: 700 13px 'Rajdhani';
+            letter-spacing: .2em;
+            color: #efe3c0;
+        }
+
+        .p-head .file {
+            margin-left: auto;
+            font: 400 10.5px 'IBM Plex Mono', monospace;
+            color: #7d8590;
+        }
+
+        .p-head .pcount {
+            margin-left: auto;
+            font: 700 14px 'Rajdhani';
+            color: #e9bd5a;
+            letter-spacing: .1em;
+        }
+
+        .code {
+            white-space: pre;
+            font: 400 11.5px/1.62 'IBM Plex Mono', monospace;
+            color: #aeb6c2;
+            background: rgba(0, 0, 0, .28);
+            padding: 10px 11px;
+            border-radius: 3px;
+            border: 1px solid rgba(255, 255, 255, .04);
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .c-kw {
+            color: #e9bd5a;
+        }
+
+        .c-sel {
+            color: #f0e2bd;
+        }
+
+        .c-fn {
+            color: #d9a43a;
+        }
+
+        .c-num {
+            color: #c98b6b;
+        }
+
+        .c-com {
+            color: #5d6570;
+        }
+
+        #name-edit {
+            font: inherit;
+            background: rgba(142, 36, 50, .14);
+            color: #f2b23c;
+            border: 1px dashed rgba(233, 189, 90, .45);
+            border-radius: 3px;
+            padding: 0 3px;
+            width: 10ch;
+            text-align: center;
+            outline: none;
+        }
+
+        #name-edit:focus {
+            border-color: #f7d878;
+            background: rgba(233, 189, 90, .1);
+        }
+
+        #name-edit:disabled {
+            border-style: solid;
+            border-color: rgba(140, 200, 150, .5);
+            color: #9fd8a4;
+            background: rgba(80, 160, 90, .08);
+        }
+
+        .p-status {
+            font: 500 12px/1.5 'Rajdhani';
+            letter-spacing: .04em;
+            color: #b9ab8a;
+            min-height: 36px;
+            margin: 8px 0 10px;
+        }
+
+        .p-status.ok {
+            color: #e9bd5a;
+        }
+
+        .p-status.err {
+            color: #e07a6a;
+        }
+
+        .btnrow {
+            display: flex;
+            gap: 9px;
+        }
+
+        #apply-btn {
+            flex: 1;
+            background: #c8912f;
+            color: #17110a;
+            border: none;
+            font: 700 13px 'Rajdhani';
+            letter-spacing: .2em;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: .15s;
+        }
+
+        #apply-btn:hover {
+            background: #e9bd5a;
+        }
+
+        #apply-btn:disabled {
+            background: #5a4a26;
+            color: #2a2416;
+            cursor: default;
+        }
+
+        #hint-btn {
+            background: transparent;
+            border: 1px solid rgba(233, 189, 90, .35);
+            color: #c9b98e;
+            font: 600 12px 'Rajdhani';
+            letter-spacing: .14em;
+            padding: 10px 14px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+
+        #hint-btn:hover {
+            border-color: #e9bd5a;
+            color: #f7d878;
+        }
+
+        #hint-btn:disabled {
+            opacity: .35;
+            cursor: default;
+        }
+
+        #bypass-btn {
+            background: rgba(233, 189, 90, .1);
+            border: 1px solid rgba(233, 189, 90, .38);
+            color: #f7d878;
+            font: 700 12px 'Rajdhani';
+            letter-spacing: .15em;
+            padding: 10px 14px;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: .15s;
+        }
+
+        #bypass-btn:hover {
+            background: rgba(233, 189, 90, .24);
+            border-color: #f7d878;
+            color: #fff;
+        }
+
+        #bypass-btn:disabled {
+            opacity: .35;
+            cursor: default;
+        }
+
+        .pattern-skip-row {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 8px;
+        }
+
+        #skip-pattern-btn {
+            background: transparent;
+            border: 1px dashed rgba(233, 189, 90, .32);
+            color: #a89f8a;
+            font: 600 11px 'Rajdhani';
+            letter-spacing: .14em;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: .15s;
+        }
+
+        #skip-pattern-btn:hover {
+            border-color: #e9bd5a;
+            color: #e9bd5a;
+            background: rgba(233, 189, 90, .08);
+        }
+
+        #skip-pattern-btn:disabled {
+            opacity: .35;
+            cursor: default;
+        }
+
+        #d-hint {
+            margin-top: 9px;
+            font: 500 11.5px/1.5 'Rajdhani';
+            color: #c9a86a;
+        }
+
+        /* pattern challenge */
+        #seqRow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            margin: 4px 0 12px;
+            min-height: 30px;
+            flex-wrap: wrap;
+        }
+
+        .tok {
+            font: 700 12px 'Rajdhani';
+            letter-spacing: .16em;
+            color: #8d8672;
+            border: 1px solid #33373f;
+            padding: 5px 10px;
+            border-radius: 3px;
+            transition: .25s;
+        }
+
+        .tok.hit {
+            color: #17110a;
+            background: #e9bd5a;
+            border-color: #f7d878;
+            box-shadow: 0 0 14px rgba(233, 189, 90, .4);
+        }
+
+        .seq-arrow {
+            width: 13px;
+            height: 13px;
+            color: #7d8590;
+            flex: none;
+        }
+
+        .grp-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .gbtn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            padding: 9px 4px;
+            background: #15181f;
+            border: 1px solid rgba(233, 189, 90, .3);
+            color: #e6d9b8;
+            font: 600 13px 'Rajdhani';
+            letter-spacing: .12em;
+            cursor: pointer;
+            transition: .18s;
+            border-radius: 3px;
+        }
+
+        .gbtn:hover:not(:disabled) {
+            border-color: rgba(247, 216, 120, .75);
+            background: #1a1e27;
+            transform: translateY(-1px);
+        }
+
+        .gbtn:disabled {
+            opacity: .35;
+            cursor: default;
+        }
+
+        .gbtn .dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--dc);
+            box-shadow: 0 0 8px var(--dc);
+            flex: none;
+        }
+
+        .gbtn[data-g="outer"] {
+            --dc: #c8912f;
+        }
+
+        .gbtn[data-g="middle"] {
+            --dc: #e9bd5a;
+        }
+
+        .gbtn[data-g="inner"] {
+            --dc: #f9e29a;
+        }
+
+        .gbtn kbd {
+            font: 500 10px 'IBM Plex Mono', monospace;
+            color: #8d8672;
+            border: 1px solid #33373f;
+            padding: 1px 4px;
+            border-radius: 3px;
+        }
+
+        /* restart */
+        #restart {
+            position: fixed;
+            right: 20px;
+            bottom: 18px;
+            z-index: 25;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            background: rgba(16, 18, 24, .8);
+            border: 1px solid rgba(233, 189, 90, .3);
+            color: #d9cba6;
+            font: 600 12px 'Rajdhani';
+            letter-spacing: .18em;
+            padding: 9px 14px;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: .18s;
+        }
+
+        #restart:hover {
+            border-color: rgba(247, 216, 120, .8);
+            color: #f7d878;
+        }
+
+        #restart svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* center flash */
+        #flash {
+            position: fixed;
+            left: 50%;
+            top: 38%;
+            transform: translate(-50%, -50%);
+            z-index: 40;
+            pointer-events: none;
+            opacity: 0;
+            text-align: center;
+        }
+
+        #flash span {
+            font: 800 clamp(21px, 4.4vw, 44px)/1.15 'Cinzel', serif;
+            letter-spacing: .18em;
+            color: #f7d878;
+            text-shadow: 0 2px 24px rgba(0, 0, 0, .85), 0 0 46px rgba(214, 164, 64, .3);
+            white-space: nowrap;
+        }
+
+        #flash.show {
+            animation: flashIn 2.3s ease forwards;
+        }
+
+        @keyframes flashIn {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(.92);
+            }
+
+            12% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.01);
+            }
+
+            75% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(1.05);
+            }
+        }
+
+        /* ---------------- mission description panel & continue button ---------------- */
+        #mission-panel {
+            position: absolute;
+            left: 50%;
+            bottom: calc(clamp(16px, 3vh, 36px) + env(safe-area-inset-bottom, 0px));
+            transform: translate(-50%, 0);
+            width: min(900px, calc(100% - 32px));
+            z-index: 24;
+            padding: clamp(12px, 1.8vw, 16px) clamp(16px, 2.8vw, 28px);
+            background: rgba(13, 15, 20, 0.88);
+            border: 1px solid rgba(233, 189, 90, 0.28);
+            border-top: 1px solid rgba(247, 216, 120, 0.55);
+            border-radius: 6px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.65), 0 0 24px rgba(214, 164, 64, 0.12), inset 0 1px 0 rgba(255, 235, 175, 0.15);
+            text-align: center;
+            pointer-events: auto;
+        }
+
+        #mission-panel .mission-title {
+            font: 700 clamp(15px, 1.8vw, 18.5px)/1.2 'Cinzel', serif;
+            letter-spacing: 0.18em;
+            color: #f7d878;
+            text-shadow: 0 2px 14px rgba(0, 0, 0, 0.8), 0 0 16px rgba(233, 189, 90, 0.35);
+            margin-bottom: 6px;
+        }
+
+        #mission-panel .mission-desc {
+            font: 600 clamp(12.5px, 1.3vw, 14.5px)/1.45 'Rajdhani', sans-serif;
+            letter-spacing: 0.04em;
+            color: #e8dcc0;
+            margin: 0 auto;
+            max-width: 820px;
+            text-wrap: balance;
+            text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7);
+        }
+
+        /* Entrance animation: smoothly descends into bottom-screen position */
+        #mission-panel.panel-entering {
+            animation: missionPanelDescend 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes missionPanelDescend {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -24px);
+            }
+            100% {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
+        }
+
+        /* Exit animation: smoothly continues downward while fading out */
+        #mission-panel.panel-exiting {
+            animation: missionPanelExit 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes missionPanelExit {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, 28px);
+            }
+        }
+
+        #continue-btn {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: calc(clamp(16px, 3vh, 36px) + 98px + env(safe-area-inset-bottom, 0px));
+            z-index: 25;
+            background: linear-gradient(135deg, #c8912f 0%, #8e5e18 100%);
+            border: 1px solid rgba(247, 216, 120, 0.65);
+            border-radius: 4px;
+            color: #0d0f14;
+            font: 700 13px 'Rajdhani', sans-serif;
+            letter-spacing: 0.22em;
+            padding: 8px 26px;
+            cursor: pointer;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5), 0 0 16px rgba(233, 189, 90, 0.3);
+            transition: background 0.2s, transform 0.2s, box-shadow 0.2s, opacity 0.4s ease;
+            animation: continueBtnDescend 0.75s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+            animation-delay: 0.12s;
+        }
+
+        @keyframes continueBtnDescend {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -18px);
+            }
+            100% {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
+        }
+
+        #continue-btn:hover {
+            background: linear-gradient(135deg, #f7d878 0%, #c8912f 100%);
+            box-shadow: 0 6px 22px rgba(0, 0, 0, 0.65), 0 0 22px rgba(247, 216, 120, 0.6);
+            transform: translateX(-50%) translateY(-2px);
+        }
+
+        #continue-btn:active {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        #continue-btn.btn-exiting {
+            opacity: 0 !important;
+            transform: translateX(-50%) translateY(20px) !important;
+            pointer-events: none !important;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        /* Reduced motion preference */
+        @media (prefers-reduced-motion: reduce) {
+            #mission-panel,
+            #mission-panel.panel-entering,
+            #mission-panel.panel-exiting,
+            #continue-btn,
+            #continue-btn.btn-exiting {
+                animation: none !important;
+                transition: none !important;
+                transform: translate(-50%, 0) !important;
+            }
+        }
+
+        @media (max-width: 1100px) {
+            #restart {
+                top: 18px;
+                bottom: auto;
+                right: 20px;
+            }
+        }
+
+        @media (max-width:760px) {
+            #figure-wrap {
+                left: 50%;
+                top: 41%;
+            }
+
+            #restart {
+                top: 12px;
+                bottom: auto;
+                right: 12px;
+                padding: 7px 11px;
+                font-size: 11px;
+            }
+
+            body:not(.mission-dismissed) #panel {
+                bottom: calc(clamp(16px, 3vh, 36px) + 160px + env(safe-area-inset-bottom, 0px));
+                transition: bottom 0.4s ease;
+            }
+
+            body.mission-dismissed #panel {
+                bottom: 10px;
+                transition: bottom 0.4s ease;
+            }
+
+            #panel {
+                left: 10px;
+                right: 10px;
+                top: auto;
+                bottom: 10px;
+                width: auto;
+                transform: none;
+            }
+
+            #panel-box {
+                max-height: 44vh;
+                overflow: auto;
+            }
+
+            #title-block {
+                left: 14px;
+                top: 10px;
+                max-width: calc(100vw - 120px);
+            }
+
+            #title-block h1 {
+                font-size: 17px;
+            }
+
+            #mission {
+                font-size: 11px;
+                max-width: 56vw;
+            }
+
+            #objective {
+                font-size: 11px;
+                max-width: 56vw;
+            }
+
+            #mission-panel {
+                padding: 10px 14px;
+                width: calc(100% - 20px);
+            }
+
+            #mission-panel .mission-title {
+                font-size: 14.5px;
+                margin-bottom: 4px;
+            }
+
+            #mission-panel .mission-desc {
+                font-size: 12px;
+                line-height: 1.4;
+            }
+        }
+    </style>
+</head>
+
+<body class="broken">
+
+    <div id="stage">
+        <div id="figure-wrap">
+            <div class="ambient"></div>
+            <div class="ground g1"></div>
+            <div class="ground g2"></div>
+
+            <!-- Ethereal mountain mist/cloud behind Shang-Chi -->
+            <div class="ground-mist-back"></div>
+
+            <!-- Shang-Chi — cinematic character sprite with chi energy overlays and dynamic breathing -->
+            <div id="hero" class="hero-character">
+                <img id="hero-shadow" class="hero-layer" src="assets/contact_shadow.png" alt="" />
+                <div class="hero-body-wrap">
+                    <img id="hero-img" class="hero-layer" src="assets/shangchi_base.png" alt="Shang-Chi" />
+                    <img id="hero-glow" class="hero-layer glow-layer" src="assets/shangchi_glow.png" alt="" />
+                </div>
+            </div>
+
+            <!-- Foreground ground cloud blanket concealing the legs/crop boundary -->
+            <div class="ground-mist-front">
+                <div class="mist-cloud mc-1"></div>
+                <div class="mist-cloud mc-2"></div>
+                <div class="mist-cloud mc-3"></div>
+            </div>
+
+            <!-- Radiant Arm Chi Fire Aura backplates directly behind each forearm -->
+            <div class="arm-chi-fire" id="armChiL" style="left:155px; top:350px;"></div>
+            <div class="arm-chi-fire" id="armChiR" style="left:373px; top:350px;"></div>
+
+            <div class="arm-anchor" id="anchorL" style="left:155px; top:350px;"></div>
+            <div class="arm-anchor" id="anchorR" style="left:373px; top:350px;"></div>
+            <div id="shock"></div>
+        </div>
+
+        <!-- Cinematic Mission Description Panel -->
+        <section id="mission-panel" class="mission-panel panel-entering" aria-label="Mission Briefing">
+            <h2 class="mission-title">THE PATH TO THE TEN RINGS</h2>
+            <p class="mission-desc">To obtain the Ten Rings, uncover the hidden CSS animation bug, correct the mismatched animation name, and apply the fix. Restore the animation to awaken the rings and unlock their full power around Shang-Chi.</p>
+        </section>
+
+        <!-- Continue Button -->
+        <button id="continue-btn" type="button" class="continue-btn" aria-label="Continue to game" data-action="continue">CONTINUE</button>
+    </div>
+
+    <div id="motes"></div>
+    <div id="vignette"></div>
+
+    <header id="title-block">
+        <div class="t-sup">
+            <div id="orn"><i></i></div>
+        </div>
+        <h1><em>SHANG-CHI</em>BROKEN HARMONY</h1>
+        <p id="mission">The Ten Rings have lost synchronization. Fix the CSS bug to regain control and restore their
+            formation.</p>
+        <p id="objective">OBJECTIVE — Repair the ring engine: correct the mismatched animation-name.</p>
+    </header>
+
+    <section id="panel">
+        <div id="panel-box">
+
+            <div id="debug-mode">
+                <div class="p-head">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                        stroke-linecap="round">
+                        <circle cx="12" cy="13" r="5.2" />
+                        <path
+                            d="M12 7.8V5.5M8.5 9.5 6.8 7.8M15.5 9.5l1.7-1.7M6.8 13H4.4M19.6 13h-2.4M8.5 16.5l-1.7 1.7M15.5 16.5l1.7 1.7" />
+                    </svg>
+                    <b>CSS DEBUGGER</b><span class="file">ring-engine.css</span>
+                </div>
+                <pre class="code"><span class="c-com">/* ten-rings orbit engine — core */</span>
+<span class="c-kw">@keyframes</span> <span class="c-sel">ring-orbit</span> {
+  from { transform: <span class="c-fn">rotate</span>(<span class="c-num">0deg</span>); }
+  to   { transform: <span class="c-fn">rotate</span>(<span class="c-num">360deg</span>); }
+}
+
+<span class="c-sel">.ring</span> {
+  animation: <input id="name-edit" value="ringOrbit" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="animation-name value"> <span class="c-num">2s</span> linear infinite;
+}</pre>
+                <div id="d-status" class="p-status err"></div>
+                <div class="btnrow">
+                    <button id="apply-btn" type="button">APPLY FIX</button>
+                    <button id="hint-btn" type="button">HINT</button>
+                    <button id="bypass-btn" type="button">BYPASS</button>
+                </div>
+                <p id="d-hint" hidden>Hint: keyframes names are kebab-case and case-sensitive — mirror the @keyframes
+                    block above exactly.</p>
+            </div>
+
+            <div id="pattern-mode" hidden>
+                <div class="p-head">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <circle cx="12" cy="12" r="8.5" />
+                        <circle cx="12" cy="12" r="4.5" />
+                        <circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none" />
+                    </svg>
+                    <b>RESTORE THE TEN RINGS</b><span class="pcount" id="pcount">— 0/3</span>
+                </div>
+                <div id="seqRow"></div>
+                <div class="grp-btns">
+                    <button class="gbtn" data-g="outer" type="button"><i class="dot"></i>OUTER<kbd>1</kbd></button>
+                    <button class="gbtn" data-g="middle" type="button"><i class="dot"></i>MIDDLE<kbd>2</kbd></button>
+                    <button class="gbtn" data-g="inner" type="button"><i class="dot"></i>INNER<kbd>3</kbd></button>
+                </div>
+                <div id="p-status" class="p-status"></div>
+                <div class="pattern-skip-row">
+                    <button id="skip-pattern-btn" type="button">SKIP STAGE</button>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <button id="restart" type="button" aria-label="Restart game">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M4 10a8 8 0 1 1 2.3 6.3" />
+            <path d="M4 5v5h5" />
+        </svg>
+        RESTART
+    </button>
+
+    <div id="flash"><span id="flash-text"></span></div>
+
+    <script>
+        'use strict';
+        const $ = s => document.querySelector(s);
+        const $$ = s => [...document.querySelectorAll(s)];
+        const body = document.body;
+
+        /* ---------------- synthesized audio (no assets) ---------------- */
+        let AC = null;
+        function audio() {
+            try {
+                if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
+                if (AC.state === 'suspended') AC.resume();
+            } catch (e) { AC = null; } return AC;
+        }
+        function tone(f0, f1, dur, type, vol, when) {
+            const a = audio(); if (!a) return; when = when || 0;
+            const t = a.currentTime + when, o = a.createOscillator(), g = a.createGain();
+            o.type = type || 'sine'; o.frequency.setValueAtTime(f0, t);
+            if (f1 && f1 !== f0) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+            g.gain.setValueAtTime(.0001, t);
+            g.gain.exponentialRampToValueAtTime(vol || .05, t + .02);
+            g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+            o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + dur + .06);
+        }
+        const sfx = {
+            ping(g) {
+                const f = { outer: 520, middle: 742, inner: 1058 }[g] || 600;
+                tone(f, f * .985, .34, 'sine', .05); tone(f * 2.02, f * 2.01, .16, 'sine', .018);
+            },
+            err() { tone(150, 88, .26, 'sawtooth', .03); },
+            fix() { [523, 659, 784, 1047].forEach((f, i) => tone(f, f, .5, 'sine', .045, i * .085)); },
+            stage() { tone(659, 659, .4, 'sine', .05); tone(988, 988, .55, 'sine', .038, .12); },
+            gong() { tone(131, 127, 2.8, 'sine', .09); tone(197, 193, 2.3, 'sine', .05, .03); tone(262, 258, 1.9, 'triangle', .028, .05); }
+        };
+        document.addEventListener('pointerdown', () => audio());
+
+        /* ---------------- the ten rings: per-ring configuration ----------------
+           Each ring: own orbit radius, period, phase, plane squash, plane angle,
+           size, tilt, sheen speed/direction, group tag, scatter spot.           */
+        const FIST = { L: { x: 155, y: 350 }, R: { x: 373, y: 350 } };
+        const CFG = [
+            { a: 'L', g: 'inner', d: 46, r: 32, ph: 15, t: 3.8, dl: -1.2, sq: .44, rho: -6, tilt: 10, spin: 7.5, sd: 1 },
+            { a: 'L', g: 'middle', d: 56, r: 52, ph: 95, t: 5.4, dl: -3.1, sq: .60, rho: 4, tilt: -8, spin: 9.2, sd: -1 },
+            { a: 'L', g: 'middle', d: 62, r: 70, ph: 200, t: 7.1, dl: -5.4, sq: .36, rho: -14, tilt: 20, spin: 11, sd: 1 },
+            { a: 'L', g: 'outer', d: 70, r: 88, ph: 285, t: 8.9, dl: -2.2, sq: .54, rho: 12, tilt: -12, spin: 8.4, sd: -1 },
+            { a: 'L', g: 'outer', d: 78, r: 104, ph: 345, t: 11.5, dl: -7.7, sq: .32, rho: -4, tilt: 6, spin: 12.5, sd: 1 },
+            { a: 'R', g: 'inner', d: 46, r: 32, ph: 140, t: 3.8, dl: -2.6, sq: .44, rho: 6, tilt: -10, spin: 8.1, sd: -1 },
+            { a: 'R', g: 'middle', d: 56, r: 52, ph: 230, t: 5.4, dl: -0.4, sq: .60, rho: -4, tilt: 8, spin: 10, sd: 1 },
+            { a: 'R', g: 'middle', d: 62, r: 70, ph: 20, t: 7.1, dl: -4.3, sq: .36, rho: 14, tilt: -20, spin: 9.6, sd: -1 },
+            { a: 'R', g: 'outer', d: 70, r: 88, ph: 105, t: 8.9, dl: -6.1, sq: .54, rho: -12, tilt: 12, spin: 11.8, sd: 1 },
+            { a: 'R', g: 'outer', d: 78, r: 104, ph: 165, t: 11.5, dl: -3.5, sq: .32, rho: 4, tilt: -6, spin: 8.8, sd: -1 },
+        ];
+        const SCAT = [ /* broken-state scatter offsets from each arm anchor */
+            { x: -45, y: -120, rot: 38 }, { x: 38, y: -70, rot: -30 }, { x: -70, y: -15, rot: 64 },
+            { x: 18, y: -150, rot: -52 }, { x: 75, y: -40, rot: 20 }, { x: 45, y: -130, rot: -40 },
+            { x: -35, y: -75, rot: 28 }, { x: 70, y: -15, rot: -66 }, { x: -10, y: -160, rot: 48 },
+            { x: -80, y: -35, rot: -18 },
+        ];
+        const BZ = [6, 4, 6, 4, 6, 4, 6, 4, 6, 4];
+        const FR = { inner: 68, middle: 96, outer: 126 };   /* final halo radii */
+        const FSQ = { inner: .50, middle: .55, outer: .60 }; /* final plane squash */
+
+        const rings = [];
+        function buildRings() {
+            const anch = { L: $('#anchorL'), R: $('#anchorR') };
+            CFG.forEach((c, i) => {
+                const u = document.createElement('div'); u.className = 'ring-unit';
+                const p = document.createElement('div'); p.className = 'ring-plane';
+                const gth = document.createElement('div'); gth.className = 'ring-gather';
+                const rg = document.createElement('div'); rg.className = 'ring';
+                const b = document.createElement('div'); b.className = 'r-body';
+                const t = document.createElement('div'); t.className = 'r-tilt';
+                const dp = document.createElement('div'); dp.className = 'r-depth';
+                const mt = document.createElement('div'); mt.className = 'r-metal';
+                const gl = document.createElement('div'); gl.className = 'r-gloss';
+                t.append(dp, mt, gl); b.append(t); rg.append(b); gth.append(rg); p.append(gth); u.append(p);
+                anch[c.a].append(u);
+                u.dataset.g = c.g; u.dataset.i = i;
+                b.style.cssText = `--d:${c.d}px;width:${c.d}px;height:${c.d}px;`;
+                mt.style.animation = `sheen ${c.spin}s linear infinite`;
+                mt.style.animationDirection = c.sd > 0 ? 'normal' : 'reverse';
+                rings.push({
+                    cfg: c, i, unit: u, plane: p, ring: rg,
+                    ax: FIST[c.a].x, ay: FIST[c.a].y, idx: i % 5,
+                    ph: c.ph, t: c.t, dl: c.dl,
+                    fa: (c.a === 'L' ? 165 : 345) + (i % 5) * 36,
+                    fr: FR[c.g], fsq: FSQ[c.g],
+                    rhoF: (c.a === 'L' ? 165 : 345) + (i % 5) * 36 + 90 + ((i % 2) ? 8 : -8)
+                });
+            });
+        }
+
+        /* broken-state scatter + all per-ring CSS variables */
+        function resetWorld() {
+            rings.forEach((r, i) => {
+                const c = r.cfg, s = SCAT[i];
+                const jx = 10 + (i * 37) % 20, jy = -(8 + (i * 23) % 18), jr = 8 + (i * 13) % 14;
+                const bt = 1.7 + ((i * 29) % 22) / 10, bd = -((i * 53) % 30) / 10;
+                const bs = 2.2 + ((i * 17) % 30) / 10, bsd = i % 2 ? 'reverse' : 'normal';
+                r.ph = c.ph; r.t = c.t; r.dl = c.dl;
+                r.unit.style.transition = 'none'; r.plane.style.transition = 'none';
+                r.unit.style.cssText =
+                    `--ph:${c.ph};--orb-r:${c.r}px;--t:${c.t}s;--dl:${c.dl}s;--rho:${c.rho}deg;` +
+                    `--cx:${s.x}px;--cy:${s.y}px;--cr:${c.rho + s.rot}deg;` +
+                    `--jx:${jx}px;--jy:${jy}px;--jr:${jr}deg;` +
+                    `--bt:${bt}s;--bd:${bd}s;--bs:${bs}s;--bsd:${bsd};` +
+                    `z-index:${BZ[i]};transform:translate(${s.x}px,${s.y}px) rotate(${c.rho + s.rot}deg);`;
+                r.plane.style.transform = `scaleY(${c.sq})`;
+                r.ring.style.animation = '';
+            });
+            void $('#stage').offsetWidth;
+            rings.forEach(r => { r.unit.style.transition = ''; r.plane.style.transition = ''; });
+        }
+
+        /* ---------------- formations (morphed smoothly via slot transitions) ---------------- */
+        function stageTransform(r, k) {
+            const m = r.cfg.a === 'R' ? -1 : 1;
+            const lad = [0, 16, 32, 48, 62][r.idx];
+            const dx = m * .14 * lad, dy = -.99 * lad, rho = r.cfg.rho;
+            if (k === 0) return `rotate(${rho}deg) translate(${dx}px,${dy}px)`;
+            if (k === 1) return `rotate(${rho + m * 5}deg) translate(${dx * 1.6}px,${dy * 1.6 - 24}px)`;
+            if (k === 2) return `rotate(${rho + m * 10}deg) translate(${dx * 2.2 + m * 10}px,${dy * 2.2 - 50}px) scale(1.05)`;
+            const a = r.fa * Math.PI / 180; /* final: two interlocking halos around the chest */
+            const cx = 260 + Math.cos(a) * r.fr - r.ax;
+            const cy = 215 + Math.sin(a) * r.fr - r.ay;
+            return `rotate(${r.rhoF}deg) translate(${cx.toFixed(1)}px,${cy.toFixed(1)}px) scale(1.03)`;
+        }
+        function stageSq(r, k) {
+            if (k === 3) return r.fsq;
+            return [1, 1.12, .85][k] * r.cfg.sq;
+        }
+        function applyFormation(k) {
+            rings.forEach(r => {
+                r.unit.style.transform = stageTransform(r, k);
+                r.plane.style.transform = `scaleY(${stageSq(r, k).toFixed(3)})`;
+            });
+        }
+
+        /* ---------------- depth-aware layering: rings dip behind the body ---------------- */
+        let fixedAt = 0, lastZ = 0;
+        function zTick() {
+            requestAnimationFrame(zTick);
+            if (!body.classList.contains('fixed') || phase === 'final') return;
+            const now = performance.now(); if (now - lastZ < 60) return; lastZ = now;
+            const el = (now - fixedAt) / 1000;
+            for (const r of rings) {
+                const p = ((el - r.dl) / r.t) % 1;
+                const A = (r.ph + 360 * p) * Math.PI / 180;
+                r.unit.style.zIndex = Math.sin(A) > 0 ? 6 : 4; /* lower arc = in front of Shang-Chi */
+            }
+        }
+
+        /* ---------------- state machine ---------------- */
+        const MISSION = 'The Ten Rings have lost synchronization. Fix the CSS bug to regain control and restore their formation.';
+        const BUGGY_CSS = `/* ten-rings orbit engine — core */
+@keyframes ring-orbit {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.ring {
+  animation: ringOrbit 2s linear infinite;
+}`;
+        const GNAME = { outer: 'OUTER', middle: 'MIDDLE', inner: 'INNER' };
+        const SEQS = [['outer', 'middle', 'inner'], null, null];
+        let phase = 'debug', stageIdx = 0, attempt = [], locked = false, fails = 0;
+        let gaTimer = 0, fixTimer = 0;
+
+        const nameIn = $('#name-edit'), dStatus = $('#d-status'), dHint = $('#d-hint');
+
+        function setStatus(el, txt, ok) { el.textContent = txt; el.className = 'p-status ' + (ok ? 'ok' : 'err'); }
+        function setPStatus(txt, ok) { const el = $('#p-status'); el.textContent = txt; el.className = 'p-status ' + (ok ? 'ok' : ''); }
+        function shakePanel() { const b = $('#panel-box'); b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); }
+        function shock() { const s = $('#shock'); s.classList.remove('go'); void s.offsetWidth; s.classList.add('go'); }
+        function flash(txt) { $('#flash-text').textContent = txt; const f = $('#flash'); f.classList.remove('show'); void f.offsetWidth; f.classList.add('show'); }
+
+        /* ---------------- CSS debugging challenge ---------------- */
+        function tryFix() {
+            if (phase !== 'debug') return;
+            const raw = nameIn.value.trim();
+            const v = raw.replace(/\s+/g, '').toLowerCase();
+            if (v === 'ring-orbit') {
+                /* the actual page stylesheet is repaired — the animation-name now resolves */
+                $('#ring-css').textContent = BUGGY_CSS.replace('ringOrbit', 'ring-orbit');
+                nameIn.value = 'ring-orbit'; nameIn.disabled = true;
+                $('#apply-btn').disabled = true; $('#hint-btn').disabled = true;
+                const b = $('#bypass-btn'); if (b) b.disabled = true;
+                succeedFix();
+            } else {
+                fails++;
+                setStatus(dStatus, `\u2717 '${raw || '\u2026'}' does not match any @keyframes \u2014 orbit engine offline.`, false);
+                shakePanel(); dHint.hidden = fails < 2; sfx.err();
+                nameIn.focus(); nameIn.select();
+            }
+        }
+        function bypassCode() {
+            if (phase !== 'debug') return;
+            nameIn.value = 'ring-orbit';
+            nameIn.style.width = '11ch';
+            nameIn.disabled = true;
+            $('#ring-css').textContent = BUGGY_CSS.replace('ringOrbit', 'ring-orbit');
+            $('#apply-btn').disabled = true;
+            $('#hint-btn').disabled = true;
+            const b = $('#bypass-btn'); if (b) b.disabled = true;
+            succeedFix();
+        }
+        function skipPattern() {
+            if (phase !== 'pattern' || locked) return;
+            stageIdx = 3;
+            updateCount();
+            goFinal();
+        }
+        function succeedFix() {
+            phase = 'transition'; locked = true;
+            dismissMissionPanel();
+            setStatus(dStatus, '\u2713 BUG FIXED \u2014 TEN RINGS UNLOCKED', true);
+            /* 1. freeze the chaos exactly where each ring is right now (no jump) */
+            rings.forEach(r => {
+                const m = getComputedStyle(r.unit).transform;
+                r.unit.style.transition = 'none';
+                r.unit.style.transform = (m && m !== 'none') ? m : 'translate(0px,0px)';
+            });
+            void $('#stage').offsetWidth;
+            /* 2. swap the world to the synchronized engine */
+            body.classList.remove('broken'); body.classList.add('fixed');
+            fixedAt = performance.now();
+            rings.forEach(r => { r.unit.style.transition = ''; });
+            applyFormation(0);
+            /* 3. fanfare */
+            shock(); flash('BUG FIXED \u2014 TEN RINGS UNLOCKED'); sfx.fix();
+            $('#objective').textContent = 'OBJECTIVE \u2014 Echo each sequence to restore the halos. Buttons or keys 1 / 2 / 3.';
+            fixTimer = setTimeout(() => {
+                $('#debug-mode').hidden = true; $('#pattern-mode').hidden = false;
+                stageIdx = 0; attempt = []; renderSeq(); updateCount();
+                setPStatus('Watch the target \u2014 then echo it in order.');
+                phase = 'pattern'; locked = false;
+            }, 1700);
+        }
+
+        /* ---------------- ring-pattern challenges ---------------- */
+        function genSeq(n, start) {
+            const G = ['outer', 'middle', 'inner'], s = [start];
+            while (s.length < n) {
+                let g; do { g = G[(Math.random() * 3) | 0]; } while (g === s[s.length - 1]);
+                s.push(g);
+            }
+            return s;
+        }
+        function renderSeq() {
+            const row = $('#seqRow'); row.innerHTML = '';
+            SEQS[stageIdx].forEach((g, i) => {
+                if (i) row.insertAdjacentHTML('beforeend',
+                    '<svg class="seq-arrow" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+                const t = document.createElement('span');
+                t.className = 'tok'; t.dataset.g = g; t.textContent = GNAME[g];
+                row.append(t);
+            });
+        }
+        function updateCount() { $('#pcount').textContent = '\u2014 ' + stageIdx + '/3'; }
+
+        function onGroup(g) {
+            if (phase !== 'pattern' || locked) return;
+            body.classList.remove('ga-outer', 'ga-middle', 'ga-inner'); void body.offsetWidth;
+            body.classList.add('ga-' + g);
+            clearTimeout(gaTimer);
+            gaTimer = setTimeout(() => body.classList.remove('ga-outer', 'ga-middle', 'ga-inner'), 900);
+            sfx.ping(g);
+            const seq = SEQS[stageIdx];
+            if (seq[attempt.length] === g) {
+                attempt.push(g);
+                const tok = $$('#seqRow .tok')[attempt.length - 1]; if (tok) tok.classList.add('hit');
+                if (attempt.length === seq.length) { stageComplete(); }
+                else setPStatus(`${GNAME[g]} acknowledged \u2014 ${seq.length - attempt.length} to go.`);
+            } else {
+                attempt = []; /* only the current attempt resets, never overall progress */
+                $$('#seqRow .tok').forEach(t => t.classList.remove('hit'));
+                setPStatus('Sequence broken \u2014 attempt reset. Echo again from the start.');
+                shakePanel(); sfx.err();
+            }
+        }
+        function stageComplete() {
+            locked = true; stageIdx++; updateCount();
+            if (stageIdx >= 3) { goFinal(); return; }
+            applyFormation(stageIdx); /* the actual formation visibly changes */
+            setPStatus(`${GNAME[SEQS[stageIdx - 1][0]]} HALO RESTORED \u2014 ${stageIdx}/3`);
+            shock(); sfx.stage();
+            setTimeout(() => {
+                SEQS[stageIdx] = genSeq(stageIdx === 1 ? 3 : 4, stageIdx === 1 ? 'middle' : 'inner');
+                attempt = []; renderSeq();
+                setPStatus('Halo stabilized \u2014 next sequence ready.');
+                locked = false;
+            }, 1500);
+        }
+        /* ---------------- final stage: 5 Left / 5 Right Hand Placement & User Hover Controls ---------------- */
+        let blastPulse = 0;
+        let finalRAF = 0;
+
+        function finalTick() {
+            if (phase !== 'final') return;
+            finalRAF = requestAnimationFrame(finalTick);
+
+            blastPulse *= 0.88;
+
+            // Movie-Accurate calibrated forearm splines: reduced 12-14% for tailored fit, spanning wrist to elbow
+            const leftArmSpline = [
+                { x: -2.2, y:  44.0, rot: -6.5, w: 33.0, h: 14.4 }, // Ring 0 (Wrist base)
+                { x: -3.0, y:  22.0, rot: -6.2, w: 36.5, h: 14.8 }, // Ring 1
+                { x: -1.0, y:   0.0, rot: -5.8, w: 40.0, h: 15.2 }, // Ring 2 (Mid-forearm)
+                { x:  0.6, y: -22.0, rot: -5.3, w: 43.5, h: 15.6 }, // Ring 3
+                { x:  4.1, y: -44.0, rot: -4.8, w: 47.0, h: 16.0 }  // Ring 4 (Upper forearm near elbow)
+            ];
+
+            const rightArmSpline = [
+                { x: -1.8, y:  44.0, rot:  6.5, w: 33.0, h: 14.4 }, // Ring 0 (Wrist base)
+                { x:  3.3, y:  22.0, rot:  6.2, w: 36.5, h: 14.8 }, // Ring 1
+                { x:  1.4, y:   0.0, rot:  5.8, w: 40.0, h: 15.2 }, // Ring 2 (Mid-forearm)
+                { x: -1.8, y: -22.0, rot:  5.3, w: 43.5, h: 15.6 }, // Ring 3
+                { x: -6.2, y: -44.0, rot:  4.8, w: 47.0, h: 16.0 }  // Ring 4 (Upper forearm near elbow)
+            ];
+
+            rings.forEach(r => {
+                const isLeft = r.cfg.a === 'L';
+                const k = r.i % 5;
+                const spline = isLeft ? leftArmSpline[k] : rightArmSpline[k];
+                const x = spline.x;
+                const y = spline.y;
+                const rot = spline.rot;
+                const w = spline.w * (1 + blastPulse * 0.08);
+                const h = spline.h * (1 + blastPulse * 0.08);
+
+                r.unit.style.transform = `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) rotate(${rot.toFixed(1)}deg)`;
+                r.plane.style.transform = 'none';
+                r.unit.style.zIndex = 12 - k;
+                r.ring.style.width = `${w.toFixed(1)}px`;
+                r.ring.style.height = `${h.toFixed(1)}px`;
+                r.ring.style.margin = `${(-h / 2).toFixed(1)}px 0 0 ${(-w / 2).toFixed(1)}px`;
+            });
+        }
+
+        function goFinal() {
+            phase = 'converge';
+            locked = true;
+            cancelAnimationFrame(finalRAF);
+
+            // Staged gathering audio charge sweep
+            [440, 554, 659, 831, 988].forEach((f, i) => tone(f, f * 1.15, 0.35, 'sine', 0.04, i * 0.09));
+            flash('GATHERING THE TEN RINGS');
+
+            // Movie-Accurate calibrated forearm splines: reduced 12-14%
+            const leftArmSpline = [
+                { x: -2.2, y:  44.0, rot: -6.5, w: 33.0, h: 14.4 },
+                { x: -3.0, y:  22.0, rot: -6.2, w: 36.5, h: 14.8 },
+                { x: -1.0, y:   0.0, rot: -5.8, w: 40.0, h: 15.2 },
+                { x:  0.6, y: -22.0, rot: -5.3, w: 43.5, h: 15.6 },
+                { x:  4.1, y: -44.0, rot: -4.8, w: 47.0, h: 16.0 }
+            ];
+
+            const rightArmSpline = [
+                { x: -1.8, y:  44.0, rot:  6.5, w: 33.0, h: 14.4 },
+                { x:  3.3, y:  22.0, rot:  6.2, w: 36.5, h: 14.8 },
+                { x:  1.4, y:   0.0, rot:  5.8, w: 40.0, h: 15.2 },
+                { x: -1.8, y: -22.0, rot:  5.3, w: 43.5, h: 15.6 },
+                { x: -6.2, y: -44.0, rot:  4.8, w: 47.0, h: 16.0 }
+            ];
+
+            // 1. Snapshot current computed transforms so there is zero teleportation
+            rings.forEach(r => {
+                const uTr = getComputedStyle(r.unit).transform;
+                const pTr = getComputedStyle(r.plane).transform;
+                r.unit.style.transition = 'none';
+                r.plane.style.transition = 'none';
+                r.ring.style.animation = 'none';
+                if (uTr && uTr !== 'none') r.unit.style.transform = uTr;
+                if (pTr && pTr !== 'none') r.plane.style.transform = pTr;
+            });
+
+            void $('#stage').offsetWidth; // Force layout reflow
+
+            // 2. Add final class so bracer styling and arm Chi fire flare up
+            body.classList.add('final');
+            $('#objective').textContent = 'HARMONIZING — Ten Rings converging onto forearms...';
+            setPStatus('Converging... 5 Left · 5 Right locking into hands.', true);
+
+            // 3. Staggered flying transition onto the hands:
+            // Rings fly sequentially from wrist (Ring 0) up to elbow (Ring 4)
+            rings.forEach(r => {
+                const isLeft = r.cfg.a === 'L';
+                const k = r.i % 5;
+                const spline = isLeft ? leftArmSpline[k] : rightArmSpline[k];
+                const delay = k * 0.10; // Staggered arrival
+
+                r.unit.style.transition = `transform 0.95s cubic-bezier(0.18, 0.89, 0.32, 1.15) ${delay.toFixed(2)}s`;
+                r.plane.style.transition = `transform 0.95s cubic-bezier(0.18, 0.89, 0.32, 1.15) ${delay.toFixed(2)}s`;
+                r.ring.style.transition = `width 0.95s cubic-bezier(0.18, 0.89, 0.32, 1.15) ${delay.toFixed(2)}s, height 0.95s cubic-bezier(0.18, 0.89, 0.32, 1.15) ${delay.toFixed(2)}s, margin 0.95s cubic-bezier(0.18, 0.89, 0.32, 1.15) ${delay.toFixed(2)}s`;
+
+                r.unit.style.zIndex = 12 - k;
+                r.unit.style.transform = `translate(${spline.x.toFixed(1)}px,${spline.y.toFixed(1)}px) rotate(${spline.rot.toFixed(1)}deg)`;
+                r.plane.style.transform = 'none';
+                r.ring.style.width = `${spline.w.toFixed(1)}px`;
+                r.ring.style.height = `${spline.h.toFixed(1)}px`;
+                r.ring.style.margin = `${(-spline.h / 2).toFixed(1)}px 0 0 ${(-spline.w / 2).toFixed(1)}px`;
+
+                // Individual metallic chime and impact as each ring locks onto the arm
+                setTimeout(() => {
+                    sfx.ping(k % 2 === 0 ? 'middle' : 'inner');
+                }, (delay + 0.65) * 1000);
+            });
+
+            // 4. Final Lock & Full Harmony after convergence animation completes (~1.5s)
+            setTimeout(() => {
+                phase = 'final';
+                locked = false;
+                shock(); flash('TEN RINGS MASTERED'); sfx.gong(); blastPulse = 1.0;
+                $('#objective').textContent = 'OBJECTIVE COMPLETE — Ten Rings Mastered: 5 on left arm, 5 on right arm.';
+                setPStatus('5 Left · 5 Right equipped. Ten Rings mastered in perfect harmony.', true);
+                $$('#seqRow .tok').forEach(t => t.classList.add('hit'));
+                $$('.gbtn').forEach(b => b.disabled = true);
+                const s = $('#skip-pattern-btn'); if (s) s.disabled = true;
+
+                // Clear inline transitions so dynamic hover/blast reactions are instant & fluid
+                rings.forEach(r => {
+                    r.unit.style.transition = '';
+                    r.plane.style.transition = '';
+                    r.ring.style.transition = '';
+                });
+
+                finalTick();
+            }, 1500);
+        }
+
+        /* ---------------- restart: full reset to the broken state ---------------- */
+        function restart() {
+            clearTimeout(fixTimer); clearTimeout(gaTimer);
+            cancelAnimationFrame(finalRAF);
+            blastPulse = 0;
+            $('#ring-css').textContent = BUGGY_CSS; /* restore the genuine bug */
+            nameIn.disabled = false; nameIn.value = 'ringOrbit'; nameIn.style.width = '10ch';
+            $('#apply-btn').disabled = false; $('#hint-btn').disabled = false;
+            const b = $('#bypass-btn'); if (b) b.disabled = false;
+            const s = $('#skip-pattern-btn'); if (s) s.disabled = false;
+            fails = 0; dHint.hidden = true;
+            setStatus(dStatus, "\u2717 'ringOrbit' does not match any @keyframes \u2014 orbit engine offline.", false);
+            phase = 'debug'; stageIdx = 0; attempt = []; locked = false;
+            SEQS[1] = null; SEQS[2] = null;
+            body.className = 'broken';
+            body.classList.remove('ga-outer', 'ga-middle', 'ga-inner', 'fixed', 'final');
+            rings.forEach(r => r.ring.classList.remove('projected'));
+            $('#debug-mode').hidden = false; $('#pattern-mode').hidden = true;
+            $$('.gbtn').forEach(b => b.disabled = false);
+            $('#mission').textContent = MISSION;
+            $('#objective').textContent = 'OBJECTIVE \u2014 Repair the ring engine: correct the mismatched animation-name.';
+            $('#flash').classList.remove('show');
+            resetWorld();
+            showMissionPanel();
+        }
+
+        /* ---------------- mission panel lifecycle ---------------- */
+        let isDismissingMission = false, missionDismissed = false;
+
+        function fitMissionUI() {
+            const panel = $('#mission-panel');
+            const btn = $('#continue-btn');
+            if (!panel || !btn || panel.style.display === 'none' || missionDismissed) return;
+            const h = panel.offsetHeight;
+            if (h > 0) {
+                btn.style.bottom = `calc(clamp(16px, 3vh, 36px) + ${h + 10}px + env(safe-area-inset-bottom, 0px))`;
+            }
+        }
+
+        function dismissMissionPanel() {
+            if (isDismissingMission || missionDismissed) return;
+            const panel = $('#mission-panel');
+            const btn = $('#continue-btn');
+            if (!panel) return;
+
+            isDismissingMission = true;
+            missionDismissed = true;
+
+            panel.classList.remove('panel-entering');
+            panel.classList.add('panel-exiting');
+
+            if (btn) {
+                btn.classList.add('btn-exiting');
+                btn.style.pointerEvents = 'none';
+            }
+
+            const onComplete = () => {
+                panel.removeEventListener('animationend', onComplete);
+                panel.style.display = 'none';
+                panel.style.pointerEvents = 'none';
+                if (btn) {
+                    btn.style.display = 'none';
+                    btn.style.pointerEvents = 'none';
+                }
+                body.classList.add('mission-dismissed');
+                isDismissingMission = false;
+            };
+
+            panel.addEventListener('animationend', onComplete, { once: true });
+            setTimeout(onComplete, 550);
+        }
+
+        function showMissionPanel() {
+            isDismissingMission = false;
+            missionDismissed = false;
+            body.classList.remove('mission-dismissed');
+            const panel = $('#mission-panel');
+            const btn = $('#continue-btn');
+            if (panel) {
+                panel.style.display = '';
+                panel.style.pointerEvents = 'auto';
+                panel.classList.remove('panel-exiting');
+                panel.classList.add('panel-entering');
+            }
+            if (btn) {
+                btn.style.display = '';
+                btn.style.pointerEvents = 'auto';
+                btn.classList.remove('btn-exiting');
+            }
+            requestAnimationFrame(fitMissionUI);
+        }
+
+        /* ---------------- responsive fit ---------------- */
+        function fit() {
+            const vw = innerWidth, vh = innerHeight, mobile = vw < 761;
+            const s = Math.min(vw * .94 / 520, (mobile ? vh * .46 : vh * .72) / 560, 1.18);
+            $('#figure-wrap').style.transform = `translate(-50%,-50%) scale(${s.toFixed(3)})`;
+            fitMissionUI();
+        }
+
+        /* ---------------- wiring ---------------- */
+        $('#apply-btn').addEventListener('click', tryFix);
+        $('#hint-btn').addEventListener('click', () => { dHint.hidden = false; });
+        $('#bypass-btn').addEventListener('click', bypassCode);
+        $('#continue-btn').addEventListener('click', dismissMissionPanel);
+        $('#skip-pattern-btn').addEventListener('click', skipPattern);
+        nameIn.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); tryFix(); } });
+        nameIn.addEventListener('input', () => { nameIn.style.width = Math.max(9, nameIn.value.length + 1) + 'ch'; });
+        $$('.gbtn').forEach(b => b.addEventListener('click', () => onGroup(b.dataset.g)));
+        $('#restart').addEventListener('click', restart);
+        document.addEventListener('keydown', e => {
+            if (phase === 'debug') {
+                if (e.key === 'Enter' && document.activeElement !== nameIn) tryFix();
+                return;
+            }
+            const g = { '1': 'outer', '2': 'middle', '3': 'inner', 'o': 'outer', 'm': 'middle', 'i': 'inner' }[e.key.toLowerCase()];
+            if (g) onGroup(g);
+        });
+
+        $('#stage').addEventListener('click', () => {
+            if (phase !== 'final') return;
+            blastPulse = 1.0;
+            sfx.gong();
+            sfx.ping('outer');
+            shock();
+            flash('CHI BLAST!');
+            const wrap = $('.hero-body-wrap');
+            if (wrap) {
+                wrap.classList.remove('blast');
+                void wrap.offsetWidth;
+                wrap.classList.add('blast');
+            }
+            const glow = $('#hero-glow');
+            if (glow) {
+                glow.classList.remove('flare');
+                void glow.offsetWidth;
+                glow.classList.add('flare');
+            }
+            const aL = $('#armChiL'), aR = $('#armChiR');
+            if (aL && aR) {
+                aL.classList.remove('flare'); aR.classList.remove('flare');
+                void aL.offsetWidth;
+                aL.classList.add('flare'); aR.classList.add('flare');
+            }
+        });
+        window.addEventListener('resize', fit);
+
+        /* ---------------- boot ---------------- */
+        (function motes() {
+            const box = $('#motes');
+            for (let i = 0; i < 14; i++) {
+                const m = document.createElement('i');
+                m.style.cssText = `left:${(Math.random() * 100).toFixed(1)}%;` +
+                    `animation-duration:${(9 + Math.random() * 9).toFixed(1)}s;` +
+                    `animation-delay:-${(Math.random() * 14).toFixed(1)}s;`;
+                box.append(m);
+            }
+        })();
+        buildRings();
+        resetWorld();
+        fit();
+        requestAnimationFrame(zTick);
+        requestAnimationFrame(fitMissionUI);
+        setStatus(dStatus, "\u2717 'ringOrbit' does not match any @keyframes \u2014 orbit engine offline.", false);
+    </script>
+</body>
+
+</html>
