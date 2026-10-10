@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>INFINITY: The Final Snap — Debug the Universe</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <main id="stage" aria-hidden="true">
+        <div id="camera">
+            <div id="pusher">
+                <div id="shaker">
+
+                    <!-- Authentic Cinematic Endgame Battlefield Environment -->
+                    <div id="bgImage"></div>
+                    <div id="sky-lightning"></div>
+                    <div id="heroAmbient"></div>
+
+                    <div id="groundHaze"></div>
+                    <div id="warGlow"></div>
+
+                    <div id="smokeBack" class="layer">
+                        <div class="smoke s1"></div>
+                        <div class="smoke s2"></div>
+                        <div class="plume p1"></div>
+                        <div class="plume p2"></div>
+                        <div class="plume p3"></div>
+                    </div>
+
+
+
+                    <div id="fires">
+                        <div class="fhalo h1"></div>
+                        <div class="fhalo h2"></div>
+                        <div class="fhalo h3"></div>
+                        <div class="fire f1"></div>
+                        <div class="fire f2"></div>
+                        <div class="fire f3"></div>
+                        <div class="frefl r1"></div>
+                        <div class="frefl r2"></div>
+                    </div>
+
+                    <!-- THE TITAN: Thanos with raised snapping gauntlet & shocked expression on snap fail -->
+                    <div id="enemy">
+                        <svg viewBox="0 0 622 401" aria-hidden="true">
+                            <defs>
+                                <linearGradient id="tFade" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="#fff" />
+                                    <stop offset="68%" stop-color="#fff" />
+                                    <stop offset="94%" stop-color="#000" />
+                                </linearGradient>
+                                <mask id="tMask" maskContentUnits="objectBoundingBox">
+                                    <rect x="0" y="0" width="1" height="1" fill="url(#tFade)" />
+                                </mask>
+                            </defs>
+                            <g id="g-enemy">
+                                <g id="g-titan">
+                                    <image id="thanos-smug" href="assets/images/thanos.png" xlink:href="assets/images/thanos.png" x="0" y="0" width="622" height="401" />
+                                    <image id="thanos-shocked" href="assets/images/thanos_shocked.png" xlink:href="assets/images/thanos_shocked.png" x="135" y="38" width="675" height="380" mask="url(#tMask)" />
+                                </g>
+                            </g>
+                        </svg>
+                    </div>
+
+                    <!-- THE HERO: Tony Stark / Iron Man with mapped Infinity Stones on Nano-Gauntlet -->
+                    <div id="hero">
+                        <svg viewBox="0 0 666 375" aria-hidden="true">
+                            <defs>
+                                <filter id="hglow" x="-80%" y="-80%" width="260%" height="260%">
+                                    <feGaussianBlur stdDeviation="3.5" result="b" />
+                                    <feMerge>
+                                        <feMergeNode in="b" />
+                                        <feMergeNode in="SourceGraphic" />
+                                    </feMerge>
+                                </filter>
+                                <radialGradient id="reactor">
+                                    <stop offset="0" stop-color="#eaffff" />
+                                    <stop offset=".45" stop-color="#8fe3ff" />
+                                    <stop offset="1" stop-color="#8fe3ff" stop-opacity="0" />
+                                </radialGradient>
+                            </defs>
+                            <g id="g-hero">
+                                <g id="g-lean">
+                                    <!-- Tony Stark Photo Layer -->
+                                    <image href="assets/images/tony.png" xlink:href="assets/images/tony.png" x="0" y="0" width="666" height="375" />
+
+                                    <!-- Chest Arc Reactor Glow Overlay -->
+                                    <g id="g-reactor">
+                                        <polygon points="338.5,218 351,239 326,239" fill="url(#reactor)" opacity=".85" />
+                                        <polygon points="338.5,223 346,236 331,236" fill="#eaffff" filter="url(#hglow)" opacity=".95" />
+                                    </g>
+
+                                    <!-- Raised right arm with the nano-gauntlet and infinity stones -->
+                                    <g id="g-arm">
+                                        <!-- Space Stone (Blue) - pinky knuckle -->
+                                        <g class="stone" style="--c:#54c8ff;--d:.3s">
+                                            <circle class="halo3" cx="197" cy="108" r="14" />
+                                            <circle class="halo2" cx="197" cy="108" r="8" />
+                                            <circle class="core2" cx="197" cy="108" r="3.2" />
+                                        </g>
+
+                                        <!-- Power Stone (Purple) - ring knuckle -->
+                                        <g class="stone" style="--c:#a06bff">
+                                            <circle class="halo3" cx="207" cy="106" r="15" />
+                                            <circle class="halo2" cx="207" cy="106" r="9" />
+                                            <circle class="core2" cx="207" cy="106" r="3.6" />
+                                        </g>
+
+                                        <!-- Reality Stone (Red) - middle knuckle -->
+                                        <g class="stone" style="--c:#ff4e5e;--d:.6s">
+                                            <circle class="halo3" cx="217" cy="107" r="15" />
+                                            <circle class="halo2" cx="217" cy="107" r="9" />
+                                            <circle class="core2" cx="217" cy="107" r="3.6" />
+                                        </g>
+
+                                        <!-- Soul Stone (Orange) - index knuckle -->
+                                        <g class="stone" style="--c:#ffa03c;--d:.9s">
+                                            <circle class="halo3" cx="227" cy="114" r="16" />
+                                            <circle class="halo2" cx="227" cy="114" r="10" />
+                                            <circle class="core2" cx="227" cy="114" r="4.0" />
+                                        </g>
+
+                                        <!-- Time Stone (Green) - thumb base -->
+                                        <g class="stone" style="--c:#57e07a;--d:1.2s">
+                                            <circle class="halo3" cx="237" cy="123" r="15" />
+                                            <circle class="halo2" cx="237" cy="123" r="9" />
+                                            <circle class="core2" cx="237" cy="123" r="3.6" />
+                                        </g>
+
+                                        <!-- Mind Stone (Yellow - Large) - back of gauntlet -->
+                                        <g class="stone big" style="--c:#ffd24a;--d:.15s">
+                                            <circle class="halo3" cx="205" cy="146" r="24" />
+                                            <circle class="halo2" cx="205" cy="146" r="15" />
+                                            <circle class="core2" cx="205" cy="146" r="6.0" />
+                                        </g>
+
+                                        <!-- Snap shockwave circle -->
+                                        <circle id="shock" cx="212" cy="110" r="14" fill="none" stroke="#ffddb0"
+                                            stroke-width="4" />
+                                    </g>
+
+                                    <!-- Energy arcs crackling across forearm (reveal & charging beat) -->
+                                    <g id="g-arcs">
+                                        <path class="arc a1" d="M205,146 L198,185 L206,225 L196,275" />
+                                        <path class="arc a2" d="M217,144 L212,180 L219,215 L211,260" />
+                                        <path class="arc a3" d="M227,140 L224,175 L218,210 L225,250" />
+                                        <path class="arc a4" d="M197,165 L208,195 L200,230 L215,265" />
+                                    </g>
+                                </g>
+                            </g>
+                        </svg>
+                    </div>
+
+                    <div id="smokeFront" class="layer">
+                        <div class="smoke s3"></div>
+                    </div>
+                    <div id="ray" class="layer"></div>
+                    <div id="layer-fore" class="layer">
+                        <svg viewBox="0 0 1600 900" aria-hidden="true">
+                            <path d="M-20,900 L-20,792 Q120,756 250,818 Q370,864 410,900 Z" fill="#04060a" />
+                            <path d="M1160,900 Q1290,796 1430,826 Q1540,848 1620,900 Z" fill="#04060a" />
+                            <path d="M1198,910 L1292,756 L1304,762 L1214,910 Z" fill="#05070b" />
+                            <path d="M-10,910 L60,770 L74,776 L10,910 Z" fill="#05070b" />
+                            <path d="M470,910 L520,812 L546,820 L506,910 Z" fill="#05070b" />
+                        </svg>
+                    </div>
+
+                    <div id="embers"></div>
+                    <div id="ash"></div>
+
+                    <!-- THE broken element: everything of the primary pathway lives in here -->
+                    <div class="cosmic-energy" id="cosmicEnergy" aria-hidden="true">
+                        <svg viewBox="0 0 1600 900" aria-hidden="true">
+                            <defs>
+                                <linearGradient id="beamGrad" x1="407" y1="455" x2="1280" y2="500"
+                                    gradientUnits="userSpaceOnUse">
+                                    <stop offset="0" stop-color="#ffd27a" />
+                                    <stop offset=".45" stop-color="#ff9d3c" />
+                                    <stop offset="1" stop-color="#ffe9b0" />
+                                </linearGradient>
+                                <filter id="eblur" x="-30%" y="-30%" width="160%" height="160%">
+                                    <feGaussianBlur stdDeviation="10" />
+                                </filter>
+                            </defs>
+                            <path class="beam halo" pathLength="100" d="M407,455 C650,210 980,650 1280,500" />
+                            <path class="beam core" pathLength="100" d="M407,455 C650,210 980,650 1280,500" />
+                            <path class="beam hot" pathLength="100" d="M407,455 C650,210 980,650 1280,500" />
+                        </svg>
+                        <div id="sparks"></div>
+                        <div class="bloom"></div>
+                    </div>
+
+                    <div id="dissolve"></div>
+                    <div id="flash"></div>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="vignette"></div>
+    <svg id="grain" aria-hidden="true">
+        <filter id="gfn">
+            <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" stitchTiles="stitch" />
+            <feColorMatrix type="saturate" values="0" />
+        </filter>
+        <rect width="100%" height="100%" filter="url(#gfn)" />
+    </svg>
+
+    <div id="ui">
+        <div id="hud" aria-live="polite"></div>
+        <div id="caption" aria-live="polite"></div>
+        <div id="toast">PATHWAY RESTORED</div>
+
+        <section id="debug" role="alert" tabindex="-1" aria-labelledby="dbgTitle">
+            <h2 id="dbgTitle">COSMIC ENERGY PATHWAY OFFLINE</h2>
+            <p class="lead">The snap succeeded — but the energy pathway is not being rendered.</p>
+            <p class="mission"><strong>MISSION</strong> — Inspect the <code>.cosmic-energy</code> element and correct
+                the CSS property that keeps it hidden. The game is paused; no timer will advance it.</p>
+            <ol>
+                <li>Open DevTools: <code>F12</code> or <code>Ctrl+Shift+I</code> (macOS: <code>Cmd+Option+I</code>).
+                </li>
+                <li>In the Elements panel, press <code>Ctrl+F</code> (macOS: <code>Cmd+F</code>) and search
+                    <code>cosmic-energy</code>.</li>
+                <li>Inspect its Styles / Computed rules.</li>
+                <li>Find the actual <code>display: none</code> declaration.</li>
+                <li>Disable or remove it — or change it to <code>display: block</code>.</li>
+                <li>Return here. The sequence resumes once the real computed style changes.</li>
+            </ol>
+            <p class="small">This challenge requires a regular desktop browser with Developer Tools access.</p>
+            <p class="pulse"><i></i>POLLING COMPUTED STYLE · 250&nbsp;MS</p>
+            <!-- BYPASS (temporary testing aid — remove this block for the final build) -->
+            <div class="bypassRow">
+                <button id="bypass" class="cta mini" type="button">Bypass check (testing)</button>
+                <span class="bypassHint">applies the fix and resumes</span>
+            </div>
+        </section>
+
+        <div id="title">
+            <div>
+                <p class="kicker">A CINEMATIC DEBUGGING EXPERIENCE</p>
+                <h1>INFINITY<span class="t2">THE FINAL SNAP</span></h1>
+                <div class="rule"></div>
+                <p class="sub">DEBUG THE UNIVERSE</p>
+                <div><button id="begin" class="cta">Begin</button></div>
+                <p class="note">Headphones optional · Developer Tools will be required later — press <code>F12</code>
+                    when the moment comes.</p>
+            </div>
+        </div>
+
+        <div id="end" role="dialog" aria-labelledby="endTitle">
+            <div>
+                <p class="kicker">SIGNAL RESTORED · REALITY HOLDS</p>
+                <h2 id="endTitle">MISSION COMPLETE</h2>
+                <p class="sub">You restored the cosmic energy pathway.</p>
+                <div><button id="restart" class="cta">Restart</button></div>
+                <p class="note">Restarting reloads the page — the fault returns with it.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+
+</html>

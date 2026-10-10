@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spider-Man: Web Chase | Interactive Superhero Web Game</title>
+  <meta name="description" content="Cinematic 2.5D momentum web-swinging game across the Manhattan skyline featuring Spider-Man.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🕷️</text></svg>">
+  <style>
+    :root {
+      --bg: #050711;
+      --card-bg: rgba(12, 17, 30, 0.92);
+      --border: rgba(229, 16, 37, 0.45);
+      --red: #e51025;
+      --red-glow: rgba(229, 16, 37, 0.6);
+      --blue: #0984e3;
+      --text: #e0ecff;
+      --muted: #8da4c4;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: radial-gradient(circle at 50% 20%, #1a0812 0%, #050711 100%);
+      color: var(--text);
+      font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 760px;
+      width: 100%;
+      text-align: center;
+    }
+    .badge {
+      font-size: 11px;
+      letter-spacing: 4px;
+      font-weight: 800;
+      color: #ff3b4e;
+      border: 1px solid rgba(229, 16, 37, 0.4);
+      display: inline-block;
+      padding: 6px 16px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+      background: rgba(229, 16, 37, 0.1);
+      text-transform: uppercase;
+    }
+    h1 {
+      font-size: 44px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      margin-bottom: 12px;
+      background: linear-gradient(180deg, #ffffff 0%, #ff6b7a 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-transform: uppercase;
+    }
+    p.subtitle {
+      font-size: 16px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+    .game-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 36px 32px;
+      text-align: left;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(229, 16, 37, 0.15);
+      backdrop-filter: blur(12px);
+      position: relative;
+      overflow: hidden;
+    }
+    .game-card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, #e51025, #ff5722, #0984e3);
+    }
+    .game-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .tag {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: #ff3b4e;
+    }
+    .engine {
+      font-size: 11px;
+      font-family: monospace;
+      color: #728fae;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+    .game-title {
+      font-size: 28px;
+      font-weight: 900;
+      color: #ffffff;
+      margin-bottom: 12px;
+    }
+    .game-desc {
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    .features-list {
+      list-style: none;
+      margin-bottom: 28px;
+      font-size: 13px;
+      color: #c0d2eb;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 10px;
+    }
+    .features-list li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .features-list li::before {
+      content: "✦";
+      color: #ff3b4e;
+      font-size: 11px;
+    }
+    .actions {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .btn-play {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: linear-gradient(135deg, #e51025 0%, #a00b1a 100%);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 800;
+      font-size: 16px;
+      letter-spacing: 1px;
+      padding: 16px 36px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 100, 100, 0.5);
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 18px var(--red-glow);
+    }
+    .btn-play:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 26px rgba(229, 16, 37, 0.8);
+      background: linear-gradient(135deg, #ff2238 0%, #b80d1e 100%);
+    }
+    .controls-hint {
+      font-size: 12px;
+      color: #728fae;
+      font-family: monospace;
+    }
+    footer {
+      margin-top: 36px;
+      font-size: 12px;
+      color: #557294;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="badge">MANHATTAN PURSUIT</div>
+    <h1>SPIDER-MAN: WEB CHASE</h1>
+    <p class="subtitle">A cinematic 2.5D momentum-based web-swinging adventure with dynamic anchor physics and an interactive diagnostic workbench repair sequence.</p>
+
+    <div class="game-card">
+      <div class="game-header">
+        <span class="tag">01 // OSCORP ROOFTOPS</span>
+        <span class="engine">FOLDER: /spiderman // PHASER 4</span>
+      </div>
+      <h2 class="game-title">HIGH-SPEED SKYLINE PURSUIT</h2>
+      <p class="game-desc">Chase down a high-velocity Golden Cyber-Falcon across New York skyscrapers, calibrate your web-shooter at 450 PSI during an unexpected mid-chase diagnostic malfunction, and execute a summit interception.</p>
+      
+      <ul class="features-list">
+        <li>Dynamic physics-driven web swinging & high dive boosts</li>
+        <li>Interactive 3D Web Shooter workbench & 7-point integrity test</li>
+        <li>13-state animated Spider-Man sprite kinematics</li>
+        <li>Oscorp Summit pursuit checkpoint with dynamic camera follow</li>
+      </ul>
+
+      <div class="actions">
+        <a href="spiderman/index.html" class="btn-play">▶ LAUNCH GAME</a>
+        <span class="controls-hint">Controls: Click / Spacebar to swing & dive boost</span>
+      </div>
+    </div>
+
+    <footer>
+      <span>SPIDER-MAN WEB GAME // FULLY PRESERVED</span>
+    </footer>
+  </div>
+</body>
+</html>

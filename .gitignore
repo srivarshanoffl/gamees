@@ -1,0 +1,17 @@
+# Excluded per user request
+doctor strange wanda visison/
+doctor strange wanda vision/
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Local git backups
+**/.git_backup/
+
+# Logs & temp
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

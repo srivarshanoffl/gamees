@@ -1,0 +1,2512 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>INFINITY: The Final Snap — Debug the Universe</title>
+    <style>
+        /* ============================================================
+   INFINITY: THE FINAL SNAP — single-file cinematic debugging game
+   The intentional fault: .cosmic-energy { display: none }
+   ============================================================ */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        html,
+        body {
+            height: 100%
+        }
+
+        body {
+            background: #020304;
+            overflow: hidden;
+            user-select: none;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        code {
+            font-family: Consolas, 'Courier New', monospace
+        }
+
+        /* ---------- Stage: fixed 1600x900 design space, cover-scaled ---------- */
+        #stage {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 1600px;
+            height: 900px;
+            transform: translate(-50%, -50%) scale(var(--s, 1));
+            transform-origin: center;
+        }
+
+        #camera {
+            position: absolute;
+            inset: 0;
+            animation: camDrift 38s ease-in-out infinite alternate;
+        }
+
+        @keyframes camDrift {
+            0% {
+                transform: translate(0, 0) scale(1)
+            }
+
+            50% {
+                transform: translate(6px, -5px) scale(1.012)
+            }
+
+            100% {
+                transform: translate(-7px, 4px) scale(1.022)
+            }
+        }
+
+        /* Camera moves are BOUNDED: |tx| <= (s-1)*800 and |ty| <= (s-1)*450,
+   so the scene can never pull away from the viewport edges. */
+        #pusher {
+            position: absolute;
+            inset: 0;
+            transition: transform 4.5s cubic-bezier(.3, 0, .25, 1);
+        }
+
+        #pusher.pan {
+            transition-duration: 2.6s
+        }
+
+        #pusher.creep {
+            transition-duration: 6s
+        }
+
+        #pusher.in {
+            transform: scale(1.1)
+        }
+
+        #pusher.toEnemy {
+            transform: translate(-210px, 24px) scale(1.27)
+        }
+
+        #pusher.toEnemy.creep {
+            transform: translate(-232px, 18px) scale(1.33)
+        }
+
+        #pusher.toHero {
+            transform: translate(185px, -6px) scale(1.24)
+        }
+
+        #pusher.toHero.creep {
+            transform: translate(205px, -10px) scale(1.28)
+        }
+
+        #shaker {
+            position: absolute;
+            inset: 0;
+        }
+
+        #shaker.go {
+            animation: shk .7s cubic-bezier(.36, .07, .19, .97) both;
+        }
+
+        @keyframes shk {
+            10% {
+                transform: translate(-8px, 5px) rotate(-.35deg)
+            }
+
+            30% {
+                transform: translate(7px, -4px) rotate(.3deg)
+            }
+
+            50% {
+                transform: translate(-5px, 3px)
+            }
+
+            70% {
+                transform: translate(3px, -2px)
+            }
+
+            90% {
+                transform: translate(-2px, 1px)
+            }
+
+            100% {
+                transform: none
+            }
+        }
+
+        /* ---------- Shared layer base (characters positioned individually) ---------- */
+        .layer,
+        #sky,
+        #horizonGlow,
+        #warGlow,
+        #clouds,
+        #smokeBack,
+        #smokeFront,
+        #ground,
+        #layer-far,
+        #layer-mid,
+        #fires,
+        #layer-fore,
+        #embers,
+        #ash,
+        #dissolve,
+        #ray {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .layer svg,
+        #ground svg,
+        #layer-far svg,
+        #layer-mid svg,
+        #layer-fore svg,
+        #enemy svg,
+        #hero svg {
+            display: block;
+            width: 100%;
+            height: 100%
+        }
+
+        #enemy svg,
+        #hero svg {
+            overflow: visible
+        }
+
+        /* ---------- Pointer parallax (energy must track the hand exactly) ---------- */
+        #layer-far,
+        #smokeBack,
+        #clouds,
+        #ray,
+        #warGlow {
+            transform: translate3d(calc(var(--px, 0)*-6px), calc(var(--py, 0)*-2.5px), 0);
+            transition: transform 1.4s cubic-bezier(.22, .61, .36, 1);
+        }
+
+        #ground,
+        #layer-mid,
+        #fires,
+        #enemy,
+        #hero,
+        .cosmic-energy {
+            transform: translate3d(calc(var(--px, 0)*-10px), calc(var(--py, 0)*-4px), 0);
+            transition: transform 1.4s cubic-bezier(.22, .61, .36, 1);
+        }
+
+        #layer-fore,
+        #smokeFront,
+        #embers,
+        #ash {
+            transform: translate3d(calc(var(--px, 0)*-18px), calc(var(--py, 0)*-7px), 0);
+            transition: transform 1.4s cubic-bezier(.22, .61, .36, 1);
+        }
+
+        /* ---------- Sky, clouds, horizon haze ---------- */
+        #sky {
+            z-index: 0;
+            background: linear-gradient(180deg, #020308 0%, #080c14 30%, #131722 52%, #221a12 72%, #33200f 88%, #46290f 100%);
+        }
+
+        #clouds {
+            z-index: 2
+        }
+
+        #clouds svg {
+            animation: cloudsDrift 80s ease-in-out infinite alternate
+        }
+
+        @keyframes cloudsDrift {
+            from {
+                transform: translateX(-14px)
+            }
+
+            to {
+                transform: translateX(14px)
+            }
+        }
+
+        #horizonGlow {
+            z-index: 1;
+            left: 6%;
+            right: 18%;
+            bottom: 10%;
+            height: 38%;
+            top: auto;
+            background: radial-gradient(ellipse at 40% 78%, rgba(255, 150, 55, .65), rgba(210, 100, 35, .24) 45%, transparent 72%);
+            filter: blur(6px);
+            mix-blend-mode: screen;
+            opacity: .62;
+            animation: hgFlick 7s ease-in-out infinite alternate;
+            transition: opacity 2.5s ease;
+        }
+
+        @keyframes hgFlick {
+            from {
+                opacity: .52
+            }
+
+            to {
+                opacity: .75
+            }
+        }
+
+        .energized #horizonGlow {
+            animation: none;
+            opacity: .95
+        }
+
+        .calm #horizonGlow {
+            animation: none;
+            opacity: .3
+        }
+
+        #warGlow {
+            z-index: 2;
+            left: auto;
+            top: auto;
+            right: 2%;
+            bottom: 16%;
+            width: 40%;
+            height: 40%;
+            background: radial-gradient(ellipse at 55% 62%, rgba(235, 80, 45, .45), rgba(160, 35, 25, .16) 50%, transparent 72%);
+            filter: blur(8px);
+            mix-blend-mode: screen;
+            opacity: .55;
+            transition: opacity 2.5s ease;
+        }
+
+        .energized #warGlow {
+            opacity: .85
+        }
+
+        .calm #warGlow {
+            opacity: .18
+        }
+
+        /* ---------- Smoke & plumes (restrained) ---------- */
+        #smokeBack {
+            z-index: 3
+        }
+
+        #smokeFront {
+            z-index: 9
+        }
+
+        #ray {
+            z-index: 9;
+            mix-blend-mode: screen;
+            background: linear-gradient(115deg, transparent 40%, rgba(255, 190, 120, .05) 49%, rgba(255, 190, 120, .03) 53%, transparent 62%);
+        }
+
+        .smoke {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(ellipse, rgba(150, 158, 172, .09), rgba(90, 100, 115, .04) 55%, transparent 72%);
+            filter: blur(14px);
+        }
+
+        .smoke.s1 {
+            left: -6%;
+            top: 44%;
+            width: 56%;
+            height: 34%;
+            animation: smokeA 34s ease-in-out infinite alternate
+        }
+
+        .smoke.s2 {
+            left: 44%;
+            top: 36%;
+            width: 48%;
+            height: 30%;
+            animation: smokeA 44s ease-in-out -14s infinite alternate-reverse
+        }
+
+        .smoke.s3 {
+            left: 14%;
+            top: 58%;
+            width: 74%;
+            height: 24%;
+            animation: smokeB 52s ease-in-out -22s infinite alternate
+        }
+
+        @keyframes smokeA {
+            from {
+                transform: translateX(-3%)
+            }
+
+            to {
+                transform: translateX(6%)
+            }
+        }
+
+        @keyframes smokeB {
+            from {
+                transform: translate(4%, 0)
+            }
+
+            to {
+                transform: translate(-5%, -2%)
+            }
+        }
+
+        .plume {
+            position: absolute;
+            bottom: 26%;
+            width: 110px;
+            height: 340px;
+            border-radius: 50% 50% 42% 42%;
+            background: linear-gradient(to top, rgba(70, 52, 36, .22), rgba(40, 34, 34, .1) 55%, transparent 85%);
+            filter: blur(16px);
+            transform-origin: 50% 100%;
+            animation: plumeSway 26s ease-in-out infinite alternate;
+        }
+
+        .plume.p1 {
+            left: 20%
+        }
+
+        .plume.p2 {
+            left: 46%;
+            height: 410px;
+            animation-delay: -9s
+        }
+
+        .plume.p3 {
+            left: 71%;
+            animation-delay: -17s
+        }
+
+        @keyframes plumeSway {
+            from {
+                transform: translateY(4%) skewX(0deg);
+                opacity: .6
+            }
+
+            to {
+                transform: translateY(-7%) skewX(3deg);
+                opacity: .85
+            }
+        }
+
+        /* ---------- Ground & wreckage ---------- */
+        #ground {
+            z-index: 4
+        }
+
+        #layer-mid {
+            z-index: 5
+        }
+
+        #fires {
+            z-index: 6
+        }
+
+        .fire {
+            position: absolute;
+            width: 170px;
+            height: 100px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 170, 70, .75), rgba(255, 110, 30, .28) 55%, transparent 76%);
+            filter: blur(10px);
+            mix-blend-mode: screen;
+            animation: fireFlick 2.8s ease-in-out infinite alternate;
+            transition: opacity 2.5s ease;
+        }
+
+        .fire.f1 {
+            left: 13%;
+            top: 71%
+        }
+
+        .fire.f2 {
+            left: 57%;
+            top: 72%;
+            animation-delay: -1.4s
+        }
+
+        .fire.f3 {
+            left: 79%;
+            top: 64%;
+            animation-delay: -.7s
+        }
+
+        .fhalo {
+            position: absolute;
+            width: 300px;
+            height: 170px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 150, 60, .3), transparent 70%);
+            filter: blur(22px);
+            mix-blend-mode: screen;
+            animation: fireFlick 5.2s ease-in-out infinite alternate;
+            transition: opacity 2.5s ease;
+        }
+
+        .fhalo.h1 {
+            left: 10%;
+            top: 66%
+        }
+
+        .fhalo.h2 {
+            left: 54%;
+            top: 67%;
+            animation-delay: -2s
+        }
+
+        .fhalo.h3 {
+            left: 76%;
+            top: 58%;
+            animation-delay: -3.4s
+        }
+
+        .frefl {
+            position: absolute;
+            width: 70px;
+            height: 130px;
+            mix-blend-mode: screen;
+            filter: blur(6px);
+            background: linear-gradient(to bottom, rgba(255, 140, 60, .3), transparent);
+            animation: fireFlick 3.4s ease-in-out infinite alternate;
+        }
+
+        .frefl.r1 {
+            left: 15%;
+            top: 73%
+        }
+
+        .frefl.r2 {
+            left: 59%;
+            top: 74%;
+            animation-delay: -1.6s
+        }
+
+        @keyframes fireFlick {
+            0% {
+                opacity: .5;
+                transform: scale(1)
+            }
+
+            50% {
+                opacity: .85;
+                transform: scale(1.06)
+            }
+
+            100% {
+                opacity: .55;
+                transform: scale(.97)
+            }
+        }
+
+        .calm .fire {
+            opacity: .22;
+            animation-duration: 7s
+        }
+
+        .calm .fhalo,
+        .calm .frefl {
+            opacity: .18;
+            animation-duration: 9s
+        }
+
+        .wdot {
+            animation: wd 3.6s ease-in-out infinite
+        }
+
+        @keyframes wd {
+
+            0%,
+            100% {
+                opacity: .7
+            }
+
+            50% {
+                opacity: .2
+            }
+        }
+
+        /* ---------- The Titan (massive opposing figure, empty gauntlet) ---------- */
+        #enemy {
+            position: absolute;
+            z-index: 7;
+            left: 990px;
+            top: 40px;
+            width: 560px;
+            height: 620px;
+            overflow: visible;
+            pointer-events: none
+        }
+
+        #g-enemy {
+            transform-box: view-box;
+        }
+
+        #g-titan {
+            transform-box: view-box;
+            animation: tSway 7s ease-in-out infinite alternate
+        }
+
+        @keyframes tSway {
+            from {
+                transform: translateY(0)
+            }
+
+            to {
+                transform: translateY(4px)
+            }
+        }
+
+        #enemy.dissolve #g-enemy {
+            animation: eDissolve 2.4s ease-in forwards;
+        }
+
+        @keyframes eDissolve {
+            0% {
+                opacity: 1;
+                filter: blur(0);
+                transform: translateY(0)
+            }
+
+            55% {
+                opacity: .6;
+                filter: blur(2px);
+                transform: translateY(-12px)
+            }
+
+            100% {
+                opacity: 0;
+                filter: blur(5px);
+                transform: translateY(-34px)
+            }
+        }
+
+        .erim {
+            fill: none;
+            stroke: #d9a83f;
+            stroke-width: 1.6;
+            opacity: .55;
+            stroke-linecap: round
+        }
+
+        .tcrack {
+            fill: #ff8a3c;
+            animation: wd 3.2s ease-in-out infinite
+        }
+
+        .eye {
+            fill: #ffb44a;
+            animation: blink 5s infinite
+        }
+
+        @keyframes blink {
+
+            0%,
+            90% {
+                opacity: .9
+            }
+
+            94% {
+                opacity: .15
+            }
+
+            100% {
+                opacity: .9
+            }
+        }
+
+        #g-earm {
+            transform-box: view-box;
+            transform-origin: 172px 272px;
+            transform: rotate(6deg);
+            transition: transform 1.5s cubic-bezier(.4, 0, .3, 1)
+        }
+
+        #enemy.raised #g-earm {
+            transform: rotate(0deg)
+        }
+
+        #enemy.snapE #g-earm {
+            transform: rotate(3.5deg);
+            transition-duration: .12s
+        }
+
+        #g-ehead {
+            transform-box: view-box;
+            transform-origin: 276px 205px;
+            transition: transform 1.2s ease
+        }
+
+        #enemy.confused #g-ehead {
+            transform: rotate(-7deg)
+        }
+
+        /* ---------- Armored hero ---------- */
+        #hero {
+            position: absolute;
+            z-index: 8;
+            left: 150px;
+            top: 330px;
+            width: 500px;
+            height: 470px;
+            overflow: visible;
+            pointer-events: none;
+            transition: transform 1.4s cubic-bezier(.22, .61, .36, 1), filter 2s ease;
+        }
+
+        #hero.focus {
+            filter: brightness(1.15)
+        }
+
+        #g-hero {
+            transform-box: view-box;
+            animation: breathe 5.5s ease-in-out infinite alternate
+        }
+
+        @keyframes breathe {
+            from {
+                transform: translateY(0)
+            }
+
+            to {
+                transform: translateY(3px)
+            }
+        }
+
+        /* The requested lean: tilted back on his heels from the reveal onward */
+        #g-lean {
+            transform-box: view-box;
+            transform-origin: 250px 452px;
+            transition: transform 1.6s cubic-bezier(.34, 0, .24, 1)
+        }
+
+        #hero.lean #g-lean {
+            transform: rotate(-7deg)
+        }
+
+        #hero.lean.deep #g-lean {
+            transform: rotate(-9.5deg);
+            transition-duration: .5s
+        }
+
+        #g-arm {
+            transform-box: view-box;
+            transform-origin: 320px 200px;
+            transition: transform 1.4s cubic-bezier(.4, 0, .3, 1)
+        }
+
+        #hero.charging #g-arm {
+            transform: rotate(-6deg)
+        }
+
+        #hero.snapped #g-arm {
+            transform: rotate(2.5deg) translateY(3px);
+            transition-duration: .15s
+        }
+
+        .rim {
+            fill: none;
+            stroke: #d98a3f;
+            stroke-width: 2;
+            stroke-linecap: round;
+            opacity: .4
+        }
+
+        .stone {
+            transform-box: fill-box;
+            transform-origin: center;
+            animation: stonePulse 2.4s ease-in-out var(--d, 0s) infinite alternate;
+            filter: drop-shadow(0 0 5px var(--c));
+        }
+
+        .stone .halo3 {
+            fill: var(--c);
+            opacity: .14
+        }
+
+        .stone .halo2 {
+            fill: var(--c);
+            opacity: .32
+        }
+
+        .stone .core2 {
+            fill: var(--c)
+        }
+
+        .stone.big .core2 {
+            fill: #fff2c4
+        }
+
+        @keyframes stonePulse {
+            from {
+                transform: scale(.92);
+                filter: drop-shadow(0 0 4px var(--c))
+            }
+
+            to {
+                transform: scale(1.12);
+                filter: drop-shadow(0 0 10px var(--c))
+            }
+        }
+
+        #hero.focus .stone {
+            animation-duration: 1.2s
+        }
+
+        #hero.reveal .stone {
+            animation-duration: .8s
+        }
+
+        #hero.reveal .stone .halo2 {
+            opacity: .6
+        }
+
+        #hero.charging .stone {
+            animation-duration: .5s
+        }
+
+        #hero.charging .stone .halo2 {
+            opacity: .68
+        }
+
+        .arc {
+            fill: none;
+            stroke: #bfe9ff;
+            stroke-width: 2.2;
+            stroke-linecap: round;
+            opacity: 0;
+            filter: drop-shadow(0 0 3px #9fe8ff)
+        }
+
+        #hero.reveal .arc {
+            animation: arcFlick .5s steps(3) infinite alternate
+        }
+
+        #hero.reveal .arc.a2 {
+            animation-delay: .13s
+        }
+
+        #hero.reveal .arc.a3 {
+            animation-delay: .27s
+        }
+
+        #hero.reveal .arc.a4 {
+            animation-delay: .41s
+        }
+
+        @keyframes arcFlick {
+            from {
+                opacity: .1
+            }
+
+            to {
+                opacity: .85
+            }
+        }
+
+        #shock {
+            opacity: 0;
+            transform-box: view-box;
+            transform-origin: 424px 92px
+        }
+
+        #shock.go {
+            animation: shock 1.1s cubic-bezier(.2, .7, .3, 1) forwards
+        }
+
+        @keyframes shock {
+            0% {
+                opacity: .9;
+                transform: scale(.2);
+                stroke-width: 5
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(9);
+                stroke-width: 1
+            }
+        }
+
+        /* ---------- Foreground & particles ---------- */
+        #layer-fore {
+            z-index: 10
+        }
+
+        #layer-fore svg {
+            filter: blur(2px)
+        }
+
+        #embers {
+            z-index: 9
+        }
+
+        #ash {
+            z-index: 9
+        }
+
+        #dissolve {
+            z-index: 12
+        }
+
+        .ember {
+            position: absolute;
+            left: var(--x);
+            top: var(--y);
+            width: var(--sz);
+            height: var(--sz);
+            border-radius: 50%;
+            background: #ffb066;
+            box-shadow: 0 0 6px 1px rgba(255, 140, 58, .8);
+            opacity: 0;
+            animation: emberUp var(--t) linear infinite;
+            animation-delay: var(--dl);
+        }
+
+        @keyframes emberUp {
+            0% {
+                transform: translate(0, 0);
+                opacity: 0
+            }
+
+            8% {
+                opacity: .9
+            }
+
+            60% {
+                opacity: .65
+            }
+
+            100% {
+                transform: translate(var(--dx), -160px);
+                opacity: 0
+            }
+        }
+
+        .ash {
+            position: absolute;
+            left: var(--x);
+            top: -4%;
+            width: var(--sz);
+            height: var(--sz);
+            border-radius: 50%;
+            background: #98a0ac;
+            opacity: 0;
+            animation: ashFall var(--t) linear infinite;
+            animation-delay: var(--dl);
+        }
+
+        @keyframes ashFall {
+            0% {
+                transform: translate(0, 0);
+                opacity: 0
+            }
+
+            10% {
+                opacity: .5
+            }
+
+            90% {
+                opacity: .35
+            }
+
+            100% {
+                transform: translate(var(--dx), 560px);
+                opacity: 0
+            }
+        }
+
+        .dp {
+            position: absolute;
+            width: var(--sz, 3px);
+            height: var(--sz, 3px);
+            border-radius: 50%;
+            background: #ffcb86;
+            box-shadow: 0 0 8px 2px rgba(255, 150, 60, .75);
+            opacity: 0;
+            animation: dFly var(--t, 1.6s) ease-out forwards;
+        }
+
+        @keyframes dFly {
+            0% {
+                opacity: 0;
+                transform: translate(0, 0)
+            }
+
+            12% {
+                opacity: .95
+            }
+
+            100% {
+                opacity: 0;
+                transform: translate(var(--dx, 0), var(--dy, -120px))
+            }
+        }
+
+        /* ============================================================
+   THE COSMIC ENERGY PATHWAY — the intentionally broken element.
+   Its only display declaration lives in this single rule.
+   ============================================================ */
+        .cosmic-energy {
+            display: none;
+            /* <- the fault. Fix it in real DevTools */
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 11;
+            mix-blend-mode: screen;
+            overflow: visible;
+        }
+
+        .cosmic-energy svg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            overflow: visible
+        }
+
+        #sparks {
+            position: absolute;
+            inset: 0
+        }
+
+        .beam {
+            fill: none;
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+            opacity: 0
+        }
+
+        .beam.halo {
+            stroke: #ff8c2e;
+            stroke-width: 32;
+            filter: url(#eblur)
+        }
+
+        .beam.core {
+            stroke: url(#beamGrad);
+            stroke-width: 6;
+            stroke-linecap: round
+        }
+
+        .beam.hot {
+            stroke: #fff3d6;
+            stroke-width: 2;
+            stroke-dasharray: 6 94;
+            stroke-dashoffset: 0
+        }
+
+        .cosmic-energy.active .beam.halo {
+            animation: draw 2.4s cubic-bezier(.65, 0, .25, 1) forwards,
+                haloPulse 3.2s ease-in-out 2.4s infinite alternate;
+        }
+
+        .cosmic-energy.active .beam.core {
+            animation: draw 2.4s cubic-bezier(.65, 0, .25, 1) forwards;
+        }
+
+        .cosmic-energy.active .beam.hot {
+            animation: appear .4s linear 2.4s forwards,
+                flow 1.15s linear 2.4s infinite;
+        }
+
+        @keyframes draw {
+            0% {
+                stroke-dashoffset: 100;
+                opacity: 0
+            }
+
+            8% {
+                opacity: 1
+            }
+
+            100% {
+                stroke-dashoffset: 0;
+                opacity: 1
+            }
+        }
+
+        @keyframes haloPulse {
+            from {
+                opacity: .85;
+                stroke-width: 28
+            }
+
+            to {
+                opacity: .5;
+                stroke-width: 40
+            }
+        }
+
+        @keyframes appear {
+            to {
+                opacity: .85
+            }
+        }
+
+        @keyframes flow {
+            to {
+                stroke-dashoffset: -100
+            }
+        }
+
+        .spark {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 9px;
+            height: 3px;
+            border-radius: 2px;
+            background: linear-gradient(90deg, rgba(255, 210, 140, 0), #ffd9a0);
+            opacity: 0;
+            offset-path: path("M535,406 C750,190 1010,640 1272,372");
+            will-change: offset-distance;
+        }
+
+        .cosmic-energy.active .spark {
+            animation: travel var(--t, 1.5s) linear infinite;
+            animation-delay: var(--dl, 0s);
+        }
+
+        @keyframes travel {
+            0% {
+                offset-distance: 0%;
+                opacity: 0
+            }
+
+            8% {
+                opacity: .95
+            }
+
+            85% {
+                opacity: .85
+            }
+
+            100% {
+                offset-distance: 100%;
+                opacity: 0
+            }
+        }
+
+        .mote {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--c, #ffd24a);
+            box-shadow: 0 0 12px 3px var(--c, #ffd24a);
+            opacity: 0;
+            offset-path: path("M535,406 C750,190 1010,640 1272,372");
+        }
+
+        .cosmic-energy.active .mote {
+            animation: travel var(--t, 2.4s) cubic-bezier(.45, .05, .55, .95) infinite;
+            animation-delay: var(--dl, 0s);
+        }
+
+        .bloom {
+            position: absolute;
+            left: 1272px;
+            top: 372px;
+            width: 14px;
+            height: 14px;
+            margin: -7px 0 0 -7px;
+            border-radius: 50%;
+            opacity: 0;
+            background: radial-gradient(circle, #fff6dd 0%, rgba(255, 190, 90, .7) 40%, rgba(255, 140, 50, 0) 72%);
+        }
+
+        .cosmic-energy.active .bloom {
+            animation: bloomIn 2.2s ease-out 1.7s forwards;
+        }
+
+        @keyframes bloomIn {
+            0% {
+                opacity: 0;
+                transform: scale(.4)
+            }
+
+            100% {
+                opacity: .95;
+                transform: scale(7)
+            }
+        }
+
+        .calm .cosmic-energy {
+            opacity: .55;
+            transition: opacity 2.5s ease, transform 1.4s cubic-bezier(.22, .61, .36, 1)
+        }
+
+        /* ---------- Snap flash (separate from the energy pathway) ---------- */
+        #flash {
+            position: absolute;
+            inset: 0;
+            z-index: 13;
+            opacity: 0;
+            mix-blend-mode: screen;
+            background: radial-gradient(circle at 33.5% 45%, #fff8ea 0%, #ffd9a0 18%, rgba(255, 150, 60, .55) 38%, rgba(255, 120, 40, 0) 68%);
+        }
+
+        #flash.go {
+            animation: flash 1s ease-out forwards
+        }
+
+        @keyframes flash {
+            0% {
+                opacity: 0
+            }
+
+            6% {
+                opacity: 1
+            }
+
+            22% {
+                opacity: .85
+            }
+
+            100% {
+                opacity: 0
+            }
+        }
+
+        /* ---------- Cinematic frame ---------- */
+        #vignette {
+            position: fixed;
+            inset: 0;
+            z-index: 40;
+            pointer-events: none;
+            background:
+                linear-gradient(180deg, rgba(0, 0, 0, .68), transparent 11%, transparent 89%, rgba(0, 0, 0, .68)),
+                radial-gradient(ellipse at 50% 44%, transparent 44%, rgba(0, 0, 0, .4) 78%, rgba(0, 0, 0, .68) 100%);
+        }
+
+        #grain {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 39;
+            pointer-events: none;
+            opacity: .055;
+            mix-blend-mode: overlay
+        }
+
+        /* ============================================================ UI ============================================================ */
+        #ui {
+            position: fixed;
+            inset: 0;
+            z-index: 60;
+            pointer-events: none
+        }
+
+        #hud {
+            position: absolute;
+            left: 38px;
+            bottom: 34px;
+            max-width: 60vw;
+            font: 600 12px/1.6 'Segoe UI', system-ui, sans-serif;
+            letter-spacing: .32em;
+            text-transform: uppercase;
+            color: #c8b28c;
+            opacity: 0;
+            transition: opacity .9s ease;
+            text-shadow: 0 1px 8px rgba(0, 0, 0, .75);
+        }
+
+        #hud.on {
+            opacity: .92
+        }
+
+        #caption {
+            position: absolute;
+            left: 50%;
+            bottom: 88px;
+            transform: translateX(-50%);
+            max-width: 76vw;
+            text-align: center;
+            font-style: italic;
+            font-family: Georgia, 'Times New Roman', serif;
+            font-weight: 400;
+            font-size: clamp(20px, 2.4vw, 30px);
+            letter-spacing: .04em;
+            color: #ece5d2;
+            opacity: 0;
+            transition: opacity .7s ease, transform .7s ease;
+            text-shadow: 0 2px 16px rgba(0, 0, 0, .95), 0 0 2px rgba(0, 0, 0, .9);
+        }
+
+        #caption.on {
+            opacity: 1
+        }
+
+        #toast {
+            position: absolute;
+            left: 50%;
+            top: 19%;
+            transform: translate(-50%, 10px);
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: clamp(22px, 3vw, 34px);
+            letter-spacing: .3em;
+            text-transform: uppercase;
+            text-align: center;
+            color: #f2c069;
+            opacity: 0;
+            transition: opacity .7s ease, transform .7s ease;
+            text-shadow: 0 2px 18px rgba(0, 0, 0, .8);
+        }
+
+        #toast.on {
+            opacity: 1;
+            transform: translate(-50%, 0)
+        }
+
+        /* ---------- Title ---------- */
+        #title {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            text-align: center;
+            pointer-events: auto;
+            background: linear-gradient(180deg, rgba(3, 5, 9, .9), rgba(4, 6, 10, .62) 46%, rgba(8, 5, 3, .88));
+            transition: opacity 1.8s ease, visibility 0s linear 1.8s;
+        }
+
+        #title.gone {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none
+        }
+
+        .kicker {
+            font: 600 11px 'Segoe UI', system-ui, sans-serif;
+            letter-spacing: .5em;
+            color: #8b8577;
+            margin-bottom: 26px
+        }
+
+        #title h1 {
+            font-family: Georgia, 'Times New Roman', serif;
+            font-weight: 400;
+            font-size: clamp(54px, 9.5vw, 132px);
+            line-height: .95;
+            letter-spacing: .16em;
+            margin-left: .16em;
+            color: #e9e3d3;
+        }
+
+        #title .t2 {
+            display: block;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-weight: 600;
+            font-size: clamp(14px, 2vw, 23px);
+            letter-spacing: .62em;
+            margin-left: .62em;
+            margin-top: 16px;
+            color: #c99a54;
+        }
+
+        .rule {
+            width: min(420px, 60vw);
+            height: 1px;
+            margin: 28px auto;
+            background: linear-gradient(90deg, transparent, rgba(210, 160, 90, .8), transparent);
+        }
+
+        .sub {
+            font: 500 clamp(13px, 1.6vw, 17px) 'Segoe UI', system-ui, sans-serif;
+            letter-spacing: .56em;
+            margin-left: .56em;
+            color: #b7ad99
+        }
+
+        button.cta {
+            pointer-events: auto;
+            margin-top: 44px;
+            background: transparent;
+            cursor: pointer;
+            border: 1px solid rgba(220, 170, 100, .55);
+            color: #e6c98f;
+            text-transform: uppercase;
+            font: 600 13px 'Segoe UI', system-ui, sans-serif;
+            letter-spacing: .42em;
+            padding: 15px 44px 15px 52px;
+            transition: background .3s, border-color .3s, color .3s;
+        }
+
+        button.cta:hover {
+            background: rgba(230, 180, 110, .1);
+            border-color: #e6c98f;
+            color: #ffe9bd
+        }
+
+        button.cta:focus-visible {
+            outline: 2px solid #e6c98f;
+            outline-offset: 4px
+        }
+
+        .note {
+            margin-top: 30px;
+            font: 400 12px/1.7 'Segoe UI', system-ui, sans-serif;
+            letter-spacing: .08em;
+            color: #6f6a5e
+        }
+
+        .note code {
+            color: #a8977a;
+            font-size: 11.5px
+        }
+
+        /* ---------- Debug diagnostic panel ---------- */
+        #debug {
+            position: absolute;
+            top: 26px;
+            left: 26px;
+            width: min(362px, calc(100vw - 40px));
+            max-height: calc(100% - 60px);
+            overflow: auto;
+            outline: none;
+            background: rgba(7, 9, 13, .86);
+            border: 1px solid rgba(226, 168, 88, .28);
+            padding: 20px 22px 16px;
+            color: #cfc8b8;
+            font: 400 13px/1.65 'Segoe UI', system-ui, sans-serif;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(-14px);
+            transition: opacity .8s ease, transform .8s ease, visibility 0s linear .8s;
+        }
+
+        #debug.shown {
+            opacity: 1;
+            visibility: visible;
+            transform: none;
+            pointer-events: auto;
+            transition: opacity .8s ease, transform .8s ease;
+        }
+
+        #debug h2 {
+            font: 700 13px 'Segoe UI', system-ui, sans-serif;
+            letter-spacing: .22em;
+            color: #f0b45c;
+            margin-bottom: 10px
+        }
+
+        #debug .lead {
+            margin-bottom: 10px
+        }
+
+        #debug .mission {
+            border-left: 2px solid rgba(226, 168, 88, .4);
+            padding-left: 10px;
+            margin: 10px 0 12px;
+            color: #ddd5c2
+        }
+
+        #debug ol {
+            margin: 0 0 12px 18px
+        }
+
+        #debug li {
+            margin-bottom: 6px
+        }
+
+        #debug code {
+            font-size: 12px;
+            color: #f0c98c;
+            background: rgba(240, 190, 110, .08);
+            padding: 1px 5px;
+            border-radius: 3px;
+            border: 1px solid rgba(240, 190, 110, .15)
+        }
+
+        #debug .small {
+            margin: 0;
+            color: #6f6a5e;
+            font-size: 11.5px
+        }
+
+        #debug .pulse {
+            margin-top: 12px;
+            font-size: 11px;
+            letter-spacing: .2em;
+            text-transform: uppercase;
+            color: #8f8672;
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        #debug .pulse i {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #f0b45c;
+            animation: ping 1.6s ease-in-out infinite
+        }
+
+        @keyframes ping {
+
+            0%,
+            100% {
+                opacity: .25
+            }
+
+            50% {
+                opacity: 1
+            }
+        }
+
+        /* BYPASS button styling (temporary testing aid) */
+        #debug .bypassRow {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(226, 168, 88, .18);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap
+        }
+
+        button.cta.mini {
+            margin-top: 0;
+            padding: 8px 16px 8px 20px;
+            font-size: 11px;
+            letter-spacing: .28em;
+            border-color: rgba(226, 168, 88, .4);
+            color: #d9c193
+        }
+
+        button.cta.mini:hover {
+            border-color: #e6c98f;
+            color: #ffe9bd;
+            background: rgba(230, 180, 110, .08)
+        }
+
+        button.cta.mini:focus-visible {
+            outline: 2px solid #e6c98f;
+            outline-offset: 3px
+        }
+
+        #debug .bypassHint {
+            font-size: 11px;
+            color: #6f6a5e
+        }
+
+        /* ---------- End screen ---------- */
+        #end {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            text-align: center;
+            pointer-events: none;
+            opacity: 0;
+            visibility: hidden;
+            background: radial-gradient(ellipse at 50% 58%, rgba(10, 8, 6, .76), rgba(2, 3, 5, .92));
+            transition: opacity 2s ease, visibility 0s linear 2s;
+        }
+
+        #end.shown {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+            transition: opacity 2s ease
+        }
+
+        #end h2 {
+            font-family: Georgia, 'Times New Roman', serif;
+            font-weight: 400;
+            color: #e9e3d3;
+            font-size: clamp(36px, 5.5vw, 68px);
+            letter-spacing: .2em;
+            margin-left: .2em;
+        }
+
+        #end .kicker {
+            margin-bottom: 18px
+        }
+
+        #end p.sub {
+            margin-top: 20px
+        }
+
+        #end button.cta {
+            margin-top: 38px
+        }
+
+        #end .note {
+            margin-top: 22px
+        }
+
+        /* ---------- Reduced motion: calmer equivalents ---------- */
+        @media (prefers-reduced-motion: reduce) {
+            #camera {
+                animation: none
+            }
+
+            #shaker.go {
+                animation: none
+            }
+
+            #pusher {
+                transition-duration: .01s
+            }
+
+            #pusher.creep {
+                transition-duration: .01s
+            }
+
+            #pusher.toEnemy,
+            #pusher.toHero,
+            #pusher.in {
+                transform: none
+            }
+
+            #g-earm,
+            #g-ehead,
+            #g-lean {
+                transition: none
+            }
+
+            .smoke,
+            .plume {
+                animation: none
+            }
+
+            #clouds svg {
+                animation: none
+            }
+
+            .fhalo {
+                animation: none
+            }
+
+            .ember,
+            .ash {
+                animation: none;
+                opacity: .22
+            }
+
+            .stone {
+                animation: none
+            }
+
+            #g-hero,
+            #g-titan {
+                animation: none
+            }
+
+            #hero.reveal .arc {
+                animation: none;
+                opacity: .2
+            }
+
+            #flash.go {
+                animation-duration: .45s
+            }
+
+            .cosmic-energy.active .beam.halo {
+                animation: draw 1.2s ease-out forwards
+            }
+
+            .cosmic-energy.active .beam.core {
+                animation: draw 1.2s ease-out forwards
+            }
+
+            .cosmic-energy.active .beam.hot {
+                animation: none;
+                opacity: 0
+            }
+
+            .cosmic-energy.active .spark,
+            .cosmic-energy.active .mote {
+                animation: none;
+                opacity: 0
+            }
+
+            .cosmic-energy.active .bloom {
+                animation: bloomIn 1.2s ease-out 1.1s forwards
+            }
+
+            #enemy.dissolve #g-enemy {
+                animation: eDissolve 1.4s ease-in forwards
+            }
+
+            .dp {
+                animation-duration: 1.2s
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <main id="stage" aria-hidden="true">
+        <div id="camera">
+            <div id="pusher">
+                <div id="shaker">
+
+                    <div id="sky"></div>
+                    <div id="horizonGlow"></div>
+
+                    <!-- Storm clouds, underlit by the burning horizon -->
+                    <div id="clouds" class="layer">
+                        <svg viewBox="0 0 1600 900" aria-hidden="true">
+                            <defs>
+                                <filter id="cblur" x="-40%" y="-40%" width="180%" height="180%">
+                                    <feGaussianBlur stdDeviation="11" />
+                                </filter>
+                            </defs>
+                            <g filter="url(#cblur)">
+                                <g fill="#0a0d14" opacity=".9">
+                                    <ellipse cx="300" cy="120" rx="300" ry="88" />
+                                    <ellipse cx="900" cy="90" rx="360" ry="105" />
+                                    <ellipse cx="1430" cy="140" rx="270" ry="92" />
+                                    <ellipse cx="640" cy="215" rx="380" ry="70" opacity=".7" />
+                                    <ellipse cx="1200" cy="235" rx="330" ry="64" opacity=".65" />
+                                </g>
+                                <g fill="#5a3414" opacity=".38">
+                                    <ellipse cx="470" cy="330" rx="300" ry="46" />
+                                    <ellipse cx="1130" cy="310" rx="260" ry="42" />
+                                </g>
+                            </g>
+                        </svg>
+                    </div>
+
+                    <div id="warGlow"></div>
+
+                    <!-- Far ruins, burning ridge line -->
+                    <div id="layer-far" class="layer">
+                        <svg viewBox="0 0 1600 900" aria-hidden="true">
+                            <g fill="#1d2536">
+                                <path d="M96,742 L96,540 L128,522 L128,478 L150,492 L152,560 L188,560 L190,742 Z" />
+                                <path d="M296,742 L306,436 L318,404 L330,442 L338,742 Z" />
+                                <path d="M660,742 L664,600 L690,586 L692,742 Z" opacity=".85" />
+                                <path d="M1424,742 L1432,560 L1452,542 L1454,498 L1472,522 L1480,566 L1494,742 Z" />
+                                <path d="M1520,742 L1516,640 L1560,600 L1600,620 L1600,742 Z" />
+                            </g>
+                            <g fill="#171e2c">
+                                <path d="M500,742 L560,650 L610,660 L680,742 Z" />
+                                <path d="M768,742 L770,470 L776,470 L778,600 L800,604 L802,742 Z" />
+                                <path d="M860,742 L900,690 L940,700 L980,742 Z" />
+                                <path d="M1060,742 L1070,620 L1090,610 L1100,742 Z" />
+                                <path d="M330,620 Q420,556 520,594 L512,618 Q428,588 342,642 Z" />
+                                <path d="M348,626 L360,610 M392,610 L400,594 M448,600 L456,586" stroke="#242e42"
+                                    stroke-width="3" fill="none" />
+                            </g>
+                            <path
+                                d="M96,540 L128,522 L128,478 M306,436 L318,404 L330,442 M770,470 L776,470 M1432,560 L1452,542 L1454,498"
+                                stroke="#8a5a26" stroke-width="2" opacity=".35" fill="none" />
+                            <g fill="#ff9a45">
+                                <rect class="wdot" x="140" y="600" width="4" height="3" />
+                                <rect class="wdot" x="316" y="470" width="4" height="3" style="animation-delay:-1.2s" />
+                                <rect class="wdot" x="240" y="610" width="4" height="3" style="animation-delay:-2.4s" />
+                                <rect class="wdot" x="432" y="586" width="4" height="3" style="animation-delay:-.5s" />
+                                <rect class="wdot" x="760" y="600" width="4" height="3" style="animation-delay:-3s" />
+                                <rect class="wdot" x="980" y="572" width="4" height="3" style="animation-delay:-1.8s" />
+                                <rect class="wdot" x="1452" y="580" width="4" height="3"
+                                    style="animation-delay:-2.1s" />
+                                <rect class="wdot" x="1560" y="660" width="4" height="3" style="animation-delay:-.6s" />
+                            </g>
+                        </svg>
+                    </div>
+
+                    <div id="smokeBack" class="layer">
+                        <div class="smoke s1"></div>
+                        <div class="smoke s2"></div>
+                        <div class="plume p1"></div>
+                        <div class="plume p2"></div>
+                        <div class="plume p3"></div>
+                    </div>
+
+                    <!-- Ground plane with the mound the Titan stands on -->
+                    <div id="ground" class="layer">
+                        <svg viewBox="0 0 1600 900" aria-hidden="true">
+                            <defs>
+                                <linearGradient id="gGrad" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0" stop-color="#1b1a24" />
+                                    <stop offset=".35" stop-color="#0d0f16" />
+                                    <stop offset="1" stop-color="#06070b" />
+                                </linearGradient>
+                            </defs>
+                            <path fill="url(#gGrad)"
+                                d="M0,738 L90,726 L170,734 L260,720 L340,730 L430,722 L520,732 L610,724 L700,730 L790,720 L880,728 L960,722 L1040,726 L1100,700 L1180,652 L1245,640 L1320,660 L1400,706 L1480,722 L1600,730 L1600,900 L0,900 Z" />
+                            <path d="M1100,700 L1180,652 L1245,640 L1320,660" stroke="#7a4e22" stroke-width="2"
+                                opacity=".4" fill="none" />
+                            <path
+                                d="M60,800 L210,786 M320,830 L470,818 M700,806 L840,812 M980,840 L1120,828 M1250,760 L1330,772"
+                                stroke="#191e28" stroke-width="2" opacity=".7" fill="none" />
+                            <g>
+                                <path d="M540,742 l18,-16 24,4 8,14 z" fill="#12151d" />
+                                <path d="M540,726 l18,-16" stroke="#7a4e22" stroke-width="2" fill="none" opacity=".5" />
+                                <path d="M420,760 l14,-12 20,2 6,12 z" fill="#10131a" />
+                                <path d="M880,756 l20,-14 26,6 6,12 z" fill="#12151d" />
+                                <path d="M880,742 l20,-14" stroke="#7a4e22" stroke-width="2" fill="none"
+                                    opacity=".45" />
+                                <path d="M150,772 l16,-12 22,4 4,12 z" fill="#10131a" />
+                                <path d="M1040,780 l18,-14 24,4 6,14 z" fill="#12151d" />
+                            </g>
+                        </svg>
+                    </div>
+
+                    <!-- Mid wreckage -->
+                    <div id="layer-mid" class="layer">
+                        <svg viewBox="0 0 1600 900" aria-hidden="true">
+                            <path d="M600,742 Q660,636 790,626 Q880,622 936,690 L946,742 Z" fill="#10141c" />
+                            <path d="M622,716 Q676,646 790,634" stroke="#8a5a26" stroke-width="2.5" fill="none"
+                                opacity=".5" />
+                            <path d="M660,700 L668,660 M710,676 L714,644 M760,652 L762,636" stroke="#141a26"
+                                stroke-width="4" fill="none" />
+                            <path d="M1120,742 L1172,600 L1182,604 L1140,742 Z" fill="#0f131b" />
+                            <path d="M180,742 L236,688 L300,678 L352,742 Z" fill="#0f131b" />
+                            <path d="M250,700 L292,690" stroke="#71481f" stroke-width="2" opacity=".4" fill="none" />
+                            <path d="M380,742 L410,700 L444,712 L470,742 Z" fill="#0d1119" />
+                        </svg>
+                    </div>
+
+                    <div id="fires">
+                        <div class="fhalo h1"></div>
+                        <div class="fhalo h2"></div>
+                        <div class="fhalo h3"></div>
+                        <div class="fire f1"></div>
+                        <div class="fire f2"></div>
+                        <div class="fire f3"></div>
+                        <div class="frefl r1"></div>
+                        <div class="frefl r2"></div>
+                    </div>
+
+                    <!-- THE TITAN: massive armored figure, ornate gauntlet, empty stone sockets -->
+                    <div id="enemy">
+                        <svg viewBox="0 0 560 620" aria-hidden="true">
+                            <defs>
+                                <linearGradient id="tSkin" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0" stop-color="#66527f" />
+                                    <stop offset="1" stop-color="#332845" />
+                                </linearGradient>
+                                <linearGradient id="tSkinHi" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0" stop-color="#87709f" />
+                                    <stop offset="1" stop-color="#4a3b60" />
+                                </linearGradient>
+                                <linearGradient id="tArm" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0" stop-color="#54421f" />
+                                    <stop offset="1" stop-color="#211a0d" />
+                                </linearGradient>
+                                <linearGradient id="tArmHi" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0" stop-color="#776335" />
+                                    <stop offset="1" stop-color="#2e2414" />
+                                </linearGradient>
+                            </defs>
+                            <g id="g-enemy">
+                                <g id="g-titan">
+                                    <ellipse cx="280" cy="604" rx="172" ry="16" fill="#000" opacity=".55" />
+
+                                    <!-- legs -->
+                                    <path d="M210,470 L196,540 L186,596 L232,600 L242,540 L252,478 Z" fill="#171221" />
+                                    <path d="M340,472 L360,542 L372,598 L326,602 L316,542 L306,480 Z" fill="#141020" />
+                                    <path d="M196,540 L242,540 M316,542 L360,542" stroke="#241c30" stroke-width="3"
+                                        opacity=".6" fill="none" />
+                                    <path d="M182,592 L236,596 L240,606 L176,604 Z" fill="#0c0912" />
+                                    <path d="M322,596 L378,592 L384,606 L318,606 Z" fill="#0c0912" />
+
+                                    <!-- right arm, down at the side -->
+                                    <path
+                                        d="M380,268 Q412,288 420,332 L426,392 Q428,420 410,426 L390,420 Q394,362 382,322 Q372,292 354,280 Z"
+                                        fill="#171221" />
+                                    <path d="M398,408 Q424,404 430,430 Q428,450 402,450 Q384,446 388,422 Z"
+                                        fill="#241c30" />
+                                    <path d="M400,420 L424,418 M402,430 L424,428" stroke="#171221" stroke-width="2.5"
+                                        fill="none" opacity=".8" />
+
+                                    <!-- torso armor -->
+                                    <path
+                                        d="M186,460 L178,320 Q176,268 216,252 L344,252 Q386,268 384,322 L376,462 Q280,498 186,460 Z"
+                                        fill="url(#tArm)" />
+                                    <path d="M232,268 L330,268 L322,352 Q280,368 240,354 Z" fill="url(#tArmHi)"
+                                        opacity=".95" />
+                                    <path d="M280,270 L280,360 M240,300 L322,296 M236,330 L320,326" stroke="#1a1409"
+                                        stroke-width="2.5" fill="none" opacity=".8" />
+                                    <path d="M212,300 L226,318 L218,336" stroke="#0d0a06" stroke-width="2.5"
+                                        fill="none" />
+                                    <path d="M348,282 L338,300" stroke="#0d0a06" stroke-width="2.5" fill="none" />
+                                    <path d="M384,300 L368,312 L382,326 Z" fill="#0b0812" />
+                                    <circle class="tcrack" cx="221" cy="326" r="2.4" />
+                                    <path d="M186,456 L178,322 Q176,270 216,254" stroke="#d98a3f" stroke-width="3"
+                                        opacity=".5" fill="none" />
+                                    <path d="M198,452 L192,300" stroke="#d98a3f" stroke-width="2" opacity=".3"
+                                        fill="none" />
+
+                                    <!-- hip armor -->
+                                    <path d="M192,452 Q280,488 372,450 L378,488 Q280,524 186,490 Z"
+                                        fill="url(#tArmHi)" />
+                                    <path d="M198,470 L246,478 L238,516 L196,506 Z" fill="#241b10" />
+                                    <path d="M366,468 L318,476 L326,514 L368,504 Z" fill="#241b10" />
+
+                                    <!-- raised left arm with the gauntlet -->
+                                    <g id="g-earm">
+                                        <path
+                                            d="M156,286 Q128,250 122,208 L118,186 L152,178 L158,210 Q168,244 190,268 Z"
+                                            fill="url(#tSkin)" />
+                                        <path d="M108,196 Q112,150 130,112 L162,104 Q150,152 152,196 Q130,208 108,196 Z"
+                                            fill="url(#tSkin)" />
+                                        <path d="M122,208 Q118,150 130,112" stroke="#d98a3f" stroke-width="2.5"
+                                            opacity=".45" fill="none" />
+                                        <path d="M126,196 Q148,206 152,196" stroke="#3a2e4c" stroke-width="2"
+                                            fill="none" opacity=".7" />
+                                        <!-- ornate gauntlet -->
+                                        <path
+                                            d="M116,112 Q108,84 128,72 L162,66 Q184,74 182,102 L176,124 Q148,136 124,128 Z"
+                                            fill="url(#tArmHi)" />
+                                        <path d="M120,108 Q114,86 130,76" class="erim" />
+                                        <path d="M130,70 L124,28 L138,24 L146,66 Z" fill="#4a3a1c" />
+                                        <path d="M148,66 L146,18 L160,16 L164,64 Z" fill="#4a3a1c" />
+                                        <path d="M166,68 L170,26 L184,30 L180,72 Z" fill="#4a3a1c" />
+                                        <path d="M182,74 L192,40 L204,46 L196,80 Z" fill="#4a3a1c" />
+                                        <path d="M120,118 L96,104 L100,90 L124,102 Z" fill="#4a3a1c" />
+                                        <path d="M128,50 L140,46 M150,44 L152,20 M170,44 L176,34" stroke="#d9a83f"
+                                            stroke-width="1" opacity=".5" fill="none" />
+                                        <path d="M122,72 Q152,82 190,76 L192,88 Q152,94 122,86 Z" fill="#33281a" />
+                                        <circle cx="134" cy="76" r="5" fill="#080505" stroke="#d9a83f"
+                                            stroke-width="1.5" stroke-opacity=".7" />
+                                        <circle cx="154" cy="72" r="5.5" fill="#080505" stroke="#d9a83f"
+                                            stroke-width="1.5" stroke-opacity=".7" />
+                                        <circle cx="174" cy="74" r="5" fill="#080505" stroke="#d9a83f"
+                                            stroke-width="1.5" stroke-opacity=".7" />
+                                        <circle cx="190" cy="82" r="4.5" fill="#080505" stroke="#d9a83f"
+                                            stroke-width="1.5" stroke-opacity=".7" />
+                                        <circle cx="150" cy="100" r="8" fill="#080505" stroke="#d9a83f" stroke-width="2"
+                                            stroke-opacity=".75" />
+                                        <circle cx="108" cy="102" r="4.5" fill="#080505" stroke="#d9a83f"
+                                            stroke-width="1.5" stroke-opacity=".7" />
+                                        <circle cx="122" cy="120" r="1.5" fill="#d9a83f" opacity=".5" />
+                                        <circle cx="178" cy="116" r="1.5" fill="#d9a83f" opacity=".5" />
+                                        <path d="M118,132 Q148,144 180,128 L182,142 Q148,158 116,146 Z"
+                                            fill="#33281a" />
+                                        <path d="M128,72 L162,66" stroke="#d98a3f" stroke-width="2" opacity=".35"
+                                            fill="none" />
+                                    </g>
+
+                                    <!-- pauldrons -->
+                                    <path d="M150,258 Q160,206 220,200 L262,210 Q244,252 246,290 Q196,290 150,258 Z"
+                                        fill="url(#tArmHi)" />
+                                    <path d="M158,262 Q170,222 216,212" stroke="#d98a3f" stroke-width="2.5" opacity=".5"
+                                        fill="none" />
+                                    <path d="M158,268 Q200,284 244,286 L246,290 Q196,292 152,264 Z" fill="#120d18" />
+                                    <path d="M180,214 L192,196 L200,216 Z" fill="#3a2c16" />
+                                    <path d="M206,208 L216,190 L224,210 Z" fill="#3a2c16" />
+                                    <path d="M410,254 Q402,206 344,200 L304,212 Q320,252 318,290 Q368,288 410,254 Z"
+                                        fill="url(#tArm)" />
+                                    <path d="M402,252 Q396,214 346,206" stroke="#3a2c14" stroke-width="2" fill="none" />
+                                    <path d="M356,206 L366,190 L374,210 Z" fill="#2c2210" />
+
+                                    <!-- neck & head -->
+                                    <path d="M250,206 L310,206 L306,244 L254,244 Z" fill="#2c2338" />
+                                    <path d="M252,210 L262,240 M308,210 L298,240" stroke="#4a3b5c" stroke-width="4"
+                                        opacity=".6" fill="none" />
+                                    <g id="g-ehead">
+                                        <path
+                                            d="M226,148 Q224,96 262,84 Q268,82 284,84 Q322,94 322,146 Q322,176 306,192 Q282,204 258,198 Q232,188 226,162 Z"
+                                            fill="url(#tSkin)" />
+                                        <path
+                                            d="M238,120 Q246,98 272,92 Q300,96 310,118 Q296,106 272,104 Q250,106 238,120 Z"
+                                            fill="#87709f" opacity=".8" />
+                                        <path d="M300,100 L308,116 M262,94 L268,106" stroke="#4a3b60" stroke-width="1.5"
+                                            opacity=".6" fill="none" />
+                                        <path
+                                            d="M234,132 Q258,120 286,122 Q308,124 316,136 L312,146 Q284,132 256,136 Q240,140 236,144 Z"
+                                            fill="#241c30" />
+                                        <path d="M246,136 L264,138 L262,146 L248,144 Z" fill="#140e1c" />
+                                        <path d="M290,136 L306,134 L304,142 L292,144 Z" fill="#140e1c" />
+                                        <circle class="eye" cx="255" cy="141" r="1.8" />
+                                        <circle class="eye" cx="297" cy="139" r="1.8" />
+                                        <path d="M278,140 L272,158 L284,158 Z" fill="#463860" />
+                                        <path d="M278,140 L274,156" stroke="#241c30" stroke-width="1.5" fill="none" />
+                                        <path d="M250,152 L256,168 M306,150 L300,166" stroke="#241c30"
+                                            stroke-width="2.5" opacity=".7" fill="none" />
+                                        <path d="M262,172 L292,170" stroke="#1a1220" stroke-width="3" fill="none" />
+                                        <path d="M264,178 Q278,182 290,176" stroke="#241c30" stroke-width="2"
+                                            opacity=".6" fill="none" />
+                                        <path d="M258,168 L252,180 M296,166 L302,178" stroke="#241c30" stroke-width="2"
+                                            opacity=".6" fill="none" />
+                                        <path
+                                            d="M268,182 L266,198 M276,184 L275,202 M284,183 L284,200 M292,180 L292,196"
+                                            stroke="#241c30" stroke-width="2.5" opacity=".85" fill="none" />
+                                        <path d="M272,186 L271,200 M280,187 L280,202" stroke="#87709f" stroke-width="1"
+                                            opacity=".5" fill="none" />
+                                        <path d="M234,160 Q252,186 280,190" stroke="#1c1428" stroke-width="3"
+                                            opacity=".5" fill="none" />
+                                        <path d="M228,140 Q230,104 258,90" stroke="#d98a3f" stroke-width="2.5"
+                                            opacity=".4" fill="none" />
+                                    </g>
+                                </g>
+                            </g>
+                        </svg>
+                    </div>
+
+                    <!-- THE HERO: battered red-gold armor, open helmet, stone-charged gauntlet -->
+                    <div id="hero">
+                        <svg viewBox="0 0 500 470" aria-hidden="true">
+                            <defs>
+                                <filter id="hglow" x="-80%" y="-80%" width="260%" height="260%">
+                                    <feGaussianBlur stdDeviation="3.5" result="b" />
+                                    <feMerge>
+                                        <feMergeNode in="b" />
+                                        <feMergeNode in="SourceGraphic" />
+                                    </feMerge>
+                                </filter>
+                                <radialGradient id="reactor">
+                                    <stop offset="0" stop-color="#eaffff" />
+                                    <stop offset=".45" stop-color="#8fe3ff" />
+                                    <stop offset="1" stop-color="#8fe3ff" stop-opacity="0" />
+                                </radialGradient>
+                                <linearGradient id="hBody" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0" stop-color="#5f1e24" />
+                                    <stop offset="1" stop-color="#26090d" />
+                                </linearGradient>
+                                <linearGradient id="hBodyHi" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0" stop-color="#8a3038" />
+                                    <stop offset="1" stop-color="#3c1218" />
+                                </linearGradient>
+                                <linearGradient id="hGold" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0" stop-color="#a37c36" />
+                                    <stop offset="1" stop-color="#4a3818" />
+                                </linearGradient>
+                            </defs>
+                            <g id="g-hero">
+                                <g id="g-lean">
+                                    <ellipse cx="262" cy="452" rx="130" ry="14" fill="#000" opacity=".5" />
+
+                                    <!-- legs -->
+                                    <path d="M208,300 L196,368 L188,432 L216,436 L226,368 L232,306 Z"
+                                        fill="url(#hBody)" />
+                                    <path d="M200,352 L228,348 L226,368 L202,370 Z" fill="url(#hBodyHi)" opacity=".8" />
+                                    <path d="M186,428 L218,432 L220,448 L178,446 Z" fill="#1a0a0d" />
+                                    <path d="M292,304 L306,368 L316,432 L288,436 L278,368 L270,308 Z"
+                                        fill="url(#hBody)" />
+                                    <path d="M276,350 L304,354 L302,372 L276,370 Z" fill="url(#hBodyHi)" opacity=".8" />
+                                    <path d="M284,428 L318,432 L324,448 L282,448 Z" fill="#1a0a0d" />
+                                    <path d="M292,306 L306,368 L316,430" stroke="#d98a3f" stroke-width="2" opacity=".3"
+                                        fill="none" />
+
+                                    <!-- left arm, hanging back -->
+                                    <path
+                                        d="M198,208 Q178,224 172,254 L160,300 Q158,318 172,320 L186,318 L192,268 Q200,246 214,236 Z"
+                                        fill="url(#hBody)" />
+                                    <circle cx="170" cy="324" r="12" fill="#40141a" />
+                                    <path d="M214,236 Q200,246 192,268" stroke="#c98a3f" stroke-width="2" opacity=".35"
+                                        fill="none" />
+
+                                    <!-- torso -->
+                                    <path
+                                        d="M196,238 Q200,196 244,190 L276,190 Q320,196 324,238 L318,300 Q258,318 202,300 Z"
+                                        fill="url(#hBody)" />
+                                    <path d="M214,246 L306,238 L300,286 Q258,300 220,292 Z" fill="url(#hBodyHi)"
+                                        opacity=".9" />
+                                    <path d="M240,236 L286,232 L280,286 Q262,294 246,288 Z" fill="url(#hGold)" />
+                                    <polygon points="262,238 280,272 244,272" fill="url(#reactor)" />
+                                    <polygon points="262,248 273,268 251,268" fill="#eaffff" filter="url(#hglow)" />
+                                    <path d="M226,214 L240,226 M298,252 L286,262" stroke="#1a0508" stroke-width="2"
+                                        opacity=".7" fill="none" />
+                                    <ellipse cx="210" cy="214" rx="8" ry="5" fill="#12070a" opacity=".8" />
+                                    <path d="M324,238 L318,300" stroke="#d98a3f" stroke-width="2" opacity=".4"
+                                        fill="none" />
+                                    <path d="M204,300 L318,296 L314,314 Q260,326 208,316 Z" fill="#2a0c10" />
+                                    <rect x="254" y="302" width="16" height="10" fill="url(#hGold)" />
+
+                                    <!-- pauldrons -->
+                                    <path d="M198,242 Q186,214 208,200 L234,196 Q224,222 226,246 Z"
+                                        fill="url(#hBodyHi)" />
+                                    <path d="M326,240 Q340,212 316,198 L290,196 Q302,220 300,246 Z"
+                                        fill="url(#hBodyHi)" />
+                                    <path d="M326,240 Q338,214 316,200" stroke="#d98a3f" stroke-width="2" opacity=".5"
+                                        fill="none" />
+
+                                    <!-- neck & head, helmet open, stern face -->
+                                    <path d="M248,166 L276,166 L272,194 L250,194 Z" fill="#1c0a0d" />
+                                    <g id="g-head">
+                                        <path
+                                            d="M232,116 Q230,96 256,92 Q282,96 280,116 L278,146 Q276,164 256,168 Q236,164 234,146 Z"
+                                            fill="#c08a5a" />
+                                        <path
+                                            d="M232,112 Q234,92 256,88 Q280,92 281,112 Q270,100 256,100 Q242,100 232,112 Z"
+                                            fill="#241a12" />
+                                        <path d="M238,96 L244,88 L250,96 L256,86 L262,96 L268,88 L274,96"
+                                            stroke="#241a12" stroke-width="2" fill="none" stroke-linejoin="round" />
+                                        <path d="M244,118 L268,118" stroke="#3a2a20" stroke-width="3" opacity=".55"
+                                            stroke-linecap="round" fill="none" />
+                                        <path d="M243,122 L252,121 M261,121 L270,122" stroke="#1a120c"
+                                            stroke-width="2.5" stroke-linecap="round" fill="none" />
+                                        <path d="M242,116 L254,118 M270,116 L258,118" stroke="#241a12"
+                                            stroke-width="2.5" stroke-linecap="round" fill="none" />
+                                        <path d="M257,124 L255,134 L260,134" stroke="#8a5a38" stroke-width="1.5"
+                                            fill="none" />
+                                        <path d="M250,148 L263,148" stroke="#3a2018" stroke-width="2.4"
+                                            stroke-linecap="round" fill="none" />
+                                        <path d="M251,152 L262,152 L261,158 L252,158 Z" fill="#241a12" />
+                                        <path d="M252,158 L261,158 L260,166 L253,166 Z" fill="#241a12" />
+                                        <path d="M272,118 L276,142" stroke="#7d1a1a" stroke-width="2" opacity=".8"
+                                            fill="none" />
+                                        <path d="M230,110 Q228,88 256,84 Q284,88 283,110" stroke="#8a6a2e"
+                                            stroke-width="3" fill="none" />
+                                        <path d="M230,112 L234,140 M282,112 L278,140" stroke="#6b4e24" stroke-width="4"
+                                            stroke-linecap="round" fill="none" />
+                                        <rect x="226" y="116" width="6" height="10" fill="#8a6a2e" />
+                                        <rect x="280" y="116" width="6" height="10" fill="#8a6a2e" />
+                                    </g>
+
+                                    <!-- raised right arm with the nano-gauntlet and stones -->
+                                    <g id="g-arm">
+                                        <path
+                                            d="M306,210 Q336,196 362,164 L380,146 L396,160 L372,190 Q346,216 322,224 Z"
+                                            fill="url(#hBodyHi)" />
+                                        <path d="M362,176 L392,122 L412,130 L390,188 Q376,196 364,190 Z"
+                                            fill="url(#hBody)" />
+                                        <circle cx="374" cy="180" r="10" fill="#2a0c10" />
+                                        <path
+                                            d="M392,120 Q388,96 404,88 L428,86 Q444,94 442,116 L434,132 Q410,140 396,132 Z"
+                                            fill="url(#hGold)" />
+                                        <path d="M398,92 L404,58 L416,60 L412,94 Z" fill="#6b5426" stroke="#8a6a2e"
+                                            stroke-width=".8" />
+                                        <path d="M414,90 L424,56 L436,60 L428,94 Z" fill="#6b5426" stroke="#8a6a2e"
+                                            stroke-width=".8" />
+                                        <path d="M428,92 L442,62 L452,68 L440,98 Z" fill="#6b5426" stroke="#8a6a2e"
+                                            stroke-width=".8" />
+                                        <path d="M438,98 L456,76 L462,84 L448,106 Z" fill="#6b5426" stroke="#8a6a2e"
+                                            stroke-width=".8" />
+                                        <path d="M390,116 L368,100 L374,90 L394,102 Z" fill="#6b5426" stroke="#8a6a2e"
+                                            stroke-width=".8" />
+                                        <path d="M398,120 Q416,128 436,120" stroke="#d9a83f" stroke-width="1.5"
+                                            opacity=".6" fill="none" />
+                                        <g class="stone" style="--c:#a06bff">
+                                            <circle class="halo3" cx="404" cy="84" r="17" />
+                                            <circle class="halo2" cx="404" cy="84" r="11" />
+                                            <circle class="core2" cx="404" cy="84" r="4.6" />
+                                        </g>
+                                        <g class="stone" style="--c:#54c8ff;--d:.3s">
+                                            <circle class="halo3" cx="417" cy="80" r="17" />
+                                            <circle class="halo2" cx="417" cy="80" r="11" />
+                                            <circle class="core2" cx="417" cy="80" r="4.6" />
+                                        </g>
+                                        <g class="stone" style="--c:#ff4e5e;--d:.6s">
+                                            <circle class="halo3" cx="430" cy="83" r="18" />
+                                            <circle class="halo2" cx="430" cy="83" r="12" />
+                                            <circle class="core2" cx="430" cy="83" r="5" />
+                                        </g>
+                                        <g class="stone" style="--c:#ffa03c;--d:.9s">
+                                            <circle class="halo3" cx="441" cy="91" r="17" />
+                                            <circle class="halo2" cx="441" cy="91" r="11" />
+                                            <circle class="core2" cx="441" cy="91" r="4.6" />
+                                        </g>
+                                        <g class="stone" style="--c:#57e07a;--d:1.2s">
+                                            <circle class="halo3" cx="447" cy="101" r="17" />
+                                            <circle class="halo2" cx="447" cy="101" r="11" />
+                                            <circle class="core2" cx="447" cy="101" r="4.6" />
+                                        </g>
+                                        <g class="stone big" style="--c:#ffd24a;--d:.15s">
+                                            <circle class="halo3" cx="415" cy="106" r="23" />
+                                            <circle class="halo2" cx="415" cy="106" r="15" />
+                                            <circle class="core2" cx="415" cy="106" r="6.4" />
+                                        </g>
+                                        <circle id="shock" cx="424" cy="92" r="10" fill="none" stroke="#ffddb0"
+                                            stroke-width="4" />
+                                    </g>
+
+                                    <!-- energy arcs over the forearm (reveal beat) -->
+                                    <g id="g-arcs">
+                                        <path class="arc a1" d="M402,80 L384,106 L392,124 L374,148" />
+                                        <path class="arc a2" d="M430,82 L412,108 L422,128" />
+                                        <path class="arc a3" d="M446,94 L426,116 L434,138 L416,154" />
+                                        <path class="arc a4" d="M396,120 L386,136 L394,152" />
+                                    </g>
+                                </g>
+                            </g>
+                        </svg>
+                    </div>
+
+                    <div id="smokeFront" class="layer">
+                        <div class="smoke s3"></div>
+                    </div>
+                    <div id="ray" class="layer"></div>
+                    <div id="layer-fore" class="layer">
+                        <svg viewBox="0 0 1600 900" aria-hidden="true">
+                            <path d="M-20,900 L-20,792 Q120,756 250,818 Q370,864 410,900 Z" fill="#04060a" />
+                            <path d="M1160,900 Q1290,796 1430,826 Q1540,848 1620,900 Z" fill="#04060a" />
+                            <path d="M1198,910 L1292,756 L1304,762 L1214,910 Z" fill="#05070b" />
+                            <path d="M-10,910 L60,770 L74,776 L10,910 Z" fill="#05070b" />
+                            <path d="M470,910 L520,812 L546,820 L506,910 Z" fill="#05070b" />
+                        </svg>
+                    </div>
+
+                    <div id="embers"></div>
+                    <div id="ash"></div>
+
+                    <!-- THE broken element: everything of the primary pathway lives in here -->
+                    <div class="cosmic-energy" id="cosmicEnergy" aria-hidden="true">
+                        <svg viewBox="0 0 1600 900" aria-hidden="true">
+                            <defs>
+                                <linearGradient id="beamGrad" x1="535" y1="406" x2="1272" y2="372"
+                                    gradientUnits="userSpaceOnUse">
+                                    <stop offset="0" stop-color="#ffd27a" />
+                                    <stop offset=".45" stop-color="#ff9d3c" />
+                                    <stop offset="1" stop-color="#ffe9b0" />
+                                </linearGradient>
+                                <filter id="eblur" x="-30%" y="-30%" width="160%" height="160%">
+                                    <feGaussianBlur stdDeviation="10" />
+                                </filter>
+                            </defs>
+                            <path class="beam halo" pathLength="100" d="M535,406 C750,190 1010,640 1272,372" />
+                            <path class="beam core" pathLength="100" d="M535,406 C750,190 1010,640 1272,372" />
+                            <path class="beam hot" pathLength="100" d="M535,406 C750,190 1010,640 1272,372" />
+                        </svg>
+                        <div id="sparks"></div>
+                        <div class="bloom"></div>
+                    </div>
+
+                    <div id="dissolve"></div>
+                    <div id="flash"></div>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="vignette"></div>
+    <svg id="grain" aria-hidden="true">
+        <filter id="gfn">
+            <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" stitchTiles="stitch" />
+            <feColorMatrix type="saturate" values="0" />
+        </filter>
+        <rect width="100%" height="100%" filter="url(#gfn)" />
+    </svg>
+
+    <div id="ui">
+        <div id="hud" aria-live="polite"></div>
+        <div id="caption" aria-live="polite"></div>
+        <div id="toast">PATHWAY RESTORED</div>
+
+        <section id="debug" role="alert" tabindex="-1" aria-labelledby="dbgTitle">
+            <h2 id="dbgTitle">COSMIC ENERGY PATHWAY OFFLINE</h2>
+            <p class="lead">The snap succeeded — but the energy pathway is not being rendered.</p>
+            <p class="mission"><strong>MISSION</strong> — Inspect the <code>.cosmic-energy</code> element and correct
+                the CSS property that keeps it hidden. The game is paused; no timer will advance it.</p>
+            <ol>
+                <li>Open DevTools: <code>F12</code> or <code>Ctrl+Shift+I</code> (macOS: <code>Cmd+Option+I</code>).
+                </li>
+                <li>In the Elements panel, press <code>Ctrl+F</code> (macOS: <code>Cmd+F</code>) and search
+                    <code>cosmic-energy</code>.</li>
+                <li>Inspect its Styles / Computed rules.</li>
+                <li>Find the actual <code>display: none</code> declaration.</li>
+                <li>Disable or remove it — or change it to <code>display: block</code>.</li>
+                <li>Return here. The sequence resumes once the real computed style changes.</li>
+            </ol>
+            <p class="small">This challenge requires a regular desktop browser with Developer Tools access.</p>
+            <p class="pulse"><i></i>POLLING COMPUTED STYLE · 250&nbsp;MS</p>
+            <!-- BYPASS (temporary testing aid — remove this block for the final build) -->
+            <div class="bypassRow">
+                <button id="bypass" class="cta mini" type="button">Bypass check (testing)</button>
+                <span class="bypassHint">applies the fix and resumes</span>
+            </div>
+        </section>
+
+        <div id="title">
+            <div>
+                <p class="kicker">A CINEMATIC DEBUGGING EXPERIENCE</p>
+                <h1>INFINITY<span class="t2">THE FINAL SNAP</span></h1>
+                <div class="rule"></div>
+                <p class="sub">DEBUG THE UNIVERSE</p>
+                <div><button id="begin" class="cta">Begin</button></div>
+                <p class="note">Headphones optional · Developer Tools will be required later — press <code>F12</code>
+                    when the moment comes.</p>
+            </div>
+        </div>
+
+        <div id="end" role="dialog" aria-labelledby="endTitle">
+            <div>
+                <p class="kicker">SIGNAL RESTORED · REALITY HOLDS</p>
+                <h2 id="endTitle">MISSION COMPLETE</h2>
+                <p class="sub">You restored the cosmic energy pathway.</p>
+                <div><button id="restart" class="cta">Restart</button></div>
+                <p class="note">Restarting reloads the page — the fault returns with it.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            'use strict';
+            var $ = function (s) { return document.querySelector(s); };
+            var stage = $('#stage'), pusher = $('#pusher'), shaker = $('#shaker'), hero = $('#hero'),
+                enemy = $('#enemy'), cosmic = $('.cosmic-energy'), flash = $('#flash'), shock = $('#shock'),
+                hudEl = $('#hud'), capEl = $('#caption'), dbg = $('#debug'), toast = $('#toast'), endOv = $('#end'),
+                titleOv = $('#title'), diss = $('#dissolve');
+
+            /* Explicit state machine */
+            var S = { TITLE: 0, ESTABLISH: 1, RIVAL: 2, FAIL: 3, REVEAL: 4, PREP: 5, IMPACT: 6, DEBUG: 7, SUCCESS: 8, ENERGY: 9, DISSOLVE: 10, AFTERMATH: 11, COMPLETE: 12 };
+            var state = S.TITLE, timers = [], poll = null;
+            var RM = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+            function wait(ms, fn) { var id = setTimeout(fn, ms); timers.push(id); return id; }
+            function setState(s) { state = s; }
+            function hud(t) {
+                hudEl.textContent = t; hudEl.classList.remove('on');
+                void hudEl.offsetWidth; hudEl.classList.add('on');
+            }
+            function caption(t) { capEl.textContent = t; capEl.classList.add('on'); }
+            function captionOff() { capEl.classList.remove('on'); }
+
+            /* ---------------- Minimal synthesized audio (no assets) ---------------- */
+            var AC = null;
+            function ac() { if (AC === null) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { AC = false; } } return AC || null; }
+            function tone(o) {
+                var c = ac(); if (!c) return;
+                try {
+                    var t = c.currentTime + (o.at || 0), a = o.a || 0.02, d = o.dur || 1;
+                    var os = c.createOscillator(), g = c.createGain();
+                    os.type = o.type || 'sine'; os.frequency.setValueAtTime(o.f, t);
+                    if (o.f2) os.frequency.exponentialRampToValueAtTime(Math.max(20, o.f2), t + d);
+                    g.gain.setValueAtTime(0.0001, t);
+                    g.gain.exponentialRampToValueAtTime(o.v || 0.12, t + a);
+                    g.gain.exponentialRampToValueAtTime(0.0001, t + a + d);
+                    os.connect(g); g.connect(c.destination);
+                    os.start(t); os.stop(t + a + d + 0.05);
+                } catch (e) { }
+            }
+            function noiseBurst(dur, vol, at) {
+                var c = ac(); if (!c) return;
+                try {
+                    var n = Math.floor(c.sampleRate * dur), b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0);
+                    for (var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 1.6);
+                    var s = c.createBufferSource(); s.buffer = b;
+                    var f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 750;
+                    var g = c.createGain(); g.gain.value = vol;
+                    s.connect(f); f.connect(g); g.connect(c.destination);
+                    s.start(c.currentTime + (at || 0));
+                } catch (e) { }
+            }
+            function sfxBegin() { tone({ f: 52, f2: 104, dur: 3.6, a: 1.1, v: .07 }); tone({ f: 208, dur: 3.4, a: 1.4, v: .025, type: 'triangle' }); }
+            function sfxDrone() { tone({ f: 44, dur: 4.4, a: 1.4, v: .06 }); tone({ f: 88, f2: 66, dur: 4, a: 1.2, v: .03, type: 'triangle' }); }
+            function sfxFail() { noiseBurst(.06, .28); tone({ f: 1300, f2: 420, dur: .09, a: .004, v: .07, type: 'square' }); }
+            function sfxReveal() { [392, 523.25, 659.25].forEach(function (f, i) { tone({ f: f, dur: 2.8, a: .7, v: .028, at: i * .05 }); }); tone({ f: 156, f2: 312, dur: 3, a: 1, v: .035 }); }
+            function sfxSnap() { noiseBurst(.28, .55); tone({ f: 150, f2: 36, dur: 1.7, a: .012, v: .35 }); tone({ f: 560, f2: 70, dur: .5, a: .006, v: .09, type: 'sawtooth' }); }
+            function sfxFix() { [523.25, 659.25, 783.99, 1046.5].forEach(function (f, i) { tone({ f: f, dur: 1.5, a: .04, v: .05, at: i * .09 }); }); tone({ f: 130, f2: 262, dur: 2.6, a: .5, v: .04 }); }
+            function sfxDissolve() { noiseBurst(1.1, .1); tone({ f: 420, f2: 1150, dur: 2, a: .3, v: .025 }); }
+
+            /* ---------------- Capped ambient particles (created once) ---------------- */
+            function spawnAmbient() {
+                var mk = function (host, n, cls) {
+                    for (var i = 0; i < n; i++) {
+                        var p = document.createElement('i'); p.className = cls;
+                        p.style.setProperty('--x', (Math.random() * 100).toFixed(2) + '%');
+                        p.style.setProperty('--y', (52 + Math.random() * 44).toFixed(2) + '%');
+                        p.style.setProperty('--t', (7 + Math.random() * 11).toFixed(2) + 's');
+                        p.style.setProperty('--dl', (-Math.random() * 18).toFixed(2) + 's');
+                        p.style.setProperty('--sz', (1 + Math.random() * 2.2).toFixed(2) + 'px');
+                        p.style.setProperty('--dx', (Math.random() * 90 - 45).toFixed(0) + 'px');
+                        host.appendChild(p);
+                    }
+                };
+                mk($('#embers'), 18, 'ember'); mk($('#ash'), 12, 'ash');
+            }
+            /* Traveling sparks + one mote per stone, inside .cosmic-energy only */
+            function spawnEnergy() {
+                var host = $('#sparks'), i, s;
+                for (i = 0; i < 12; i++) {
+                    s = document.createElement('i'); s.className = 'spark';
+                    s.style.setProperty('--t', (1.3 + Math.random() * .7).toFixed(2) + 's');
+                    s.style.setProperty('--dl', (-i * .16).toFixed(2) + 's');
+                    host.appendChild(s);
+                }
+                var cols = ['#a06bff', '#54c8ff', '#ff4e5e', '#ffa03c', '#57e07a', '#ffd24a'];
+                for (i = 0; i < cols.length; i++) {
+                    s = document.createElement('i'); s.className = 'mote';
+                    s.style.setProperty('--c', cols[i]);
+                    s.style.setProperty('--t', (2.3 + i * .18).toFixed(2) + 's');
+                    s.style.setProperty('--dl', (-i * .5).toFixed(2) + 's');
+                    host.appendChild(s);
+                }
+            }
+            /* Dissolve burst at the Titan's chest, spawned only at disintegration time */
+            function burst() {
+                for (var i = 0; i < 26; i++) {
+                    var p = document.createElement('i'); p.className = 'dp';
+                    var a = Math.random() * Math.PI * 2, r = 14 + Math.random() * 54;
+                    p.style.left = (1272 + Math.cos(a) * r * .8).toFixed(0) + 'px';
+                    p.style.top = (372 + Math.sin(a) * r * .55).toFixed(0) + 'px';
+                    p.style.setProperty('--dx', (Math.cos(a) * 70 + Math.random() * 30 - 15).toFixed(0) + 'px');
+                    p.style.setProperty('--dy', (-(70 + Math.random() * 170)).toFixed(0) + 'px');
+                    p.style.setProperty('--t', (1.1 + Math.random() * 1.3).toFixed(2) + 's');
+                    p.style.setProperty('--sz', (2 + Math.random() * 2.4).toFixed(1) + 'px');
+                    p.style.animationDelay = (Math.random() * .45).toFixed(2) + 's';
+                    diss.appendChild(p);
+                }
+            }
+            function shake() {
+                if (RM) return;
+                shaker.classList.remove('go'); void shaker.offsetWidth; shaker.classList.add('go');
+            }
+
+            /* ---------------- Timeline ---------------- */
+            function begin() {
+                if (state !== S.TITLE) return;
+                var c = ac(); if (c && c.state === 'suspended') { try { c.resume(); } catch (e) { } }
+                sfxBegin();
+                setState(S.ESTABLISH);
+                titleOv.classList.add('gone'); titleOv.setAttribute('aria-hidden', 'true');
+                hud('somewhere on the field — the sky is burning out');
+                wait(2400, function () { if (state === S.ESTABLISH) hud('the dust has not settled in years'); });
+                /* Beat 1 — the Titan believes victory is certain */
+                wait(4800, function () {
+                    setState(S.RIVAL);
+                    pusher.classList.add('pan', 'toEnemy');
+                    hud('across the field — the Titan raises an empty gauntlet');
+                });
+                wait(5800, function () { if (state === S.RIVAL) { enemy.classList.add('raised'); sfxDrone(); } });
+                wait(7200, function () {
+                    if (state === S.RIVAL) { caption('“I am inevitable.”'); pusher.classList.add('creep'); }
+                });
+                wait(10200, rivalSnap);
+            }
+            function rivalSnap() {
+                if (state !== S.RIVAL) return;
+                setState(S.FAIL);
+                captionOff();
+                enemy.classList.add('snapE'); sfxFail();
+                wait(160, function () { enemy.classList.remove('snapE'); });
+                wait(900, function () {
+                    enemy.classList.remove('raised');
+                    hud('…nothing. the gauntlet is empty');
+                });
+                wait(2000, function () { enemy.classList.add('confused'); });
+                wait(4000, heroReveal);
+            }
+            /* Beat 2 — the stones answer to another hand */
+            function heroReveal() {
+                if (state !== S.FAIL) return;
+                setState(S.REVEAL);
+                pusher.classList.remove('toEnemy', 'creep'); pusher.classList.add('toHero');
+                wait(1400, function () {
+                    if (state !== S.REVEAL) return;
+                    hero.classList.add('focus', 'reveal', 'lean');   /* the lean begins */
+                    sfxReveal();
+                    hud('the stones found another hand');
+                });
+                wait(2600, function () {
+                    if (state === S.REVEAL) { caption('“And I… am… Iron Man.”'); pusher.classList.add('creep'); }
+                });
+                wait(6600, function () {
+                    if (state !== S.REVEAL) return;
+                    captionOff();
+                    setState(S.PREP);
+                    hero.classList.add('charging');
+                    pusher.classList.remove('pan', 'creep', 'toHero'); pusher.classList.add('in');
+                    hud('one snap remains');
+                });
+                wait(9400, doSnap);
+            }
+            function doSnap() {
+                setState(S.IMPACT); hero.classList.add('snapped', 'deep');
+                flash.classList.add('go'); shock.classList.add('go');
+                shake(); sfxSnap();
+                hud('the snap');
+                wait(1400, function () { if (state === S.IMPACT) hud('… nothing comes'); });
+                wait(3300, enterDebug);
+            }
+            function enterDebug() {
+                setState(S.DEBUG);
+                hud('energy pathway offline — awaiting correction');
+                dbg.classList.add('shown');
+                try { dbg.focus({ preventScroll: true }); } catch (e) { dbg.focus(); }
+                startPoll();
+            }
+            /* Poll the REAL rendering state; success is never assumed or simulated */
+            function stopPoll() { if (poll) { clearInterval(poll); poll = null; } }
+            function startPoll() {
+                stopPoll();
+                poll = setInterval(function () {
+                    if (state !== S.DEBUG) { stopPoll(); return; }
+                    var el = null;
+                    try { el = document.querySelector('.cosmic-energy'); } catch (e) { }
+                    if (!el || !el.isConnected) return;
+                    var disp = '';
+                    try { disp = getComputedStyle(el).display; } catch (e) { return; }
+                    if (disp === 'none') return;
+                    var r;
+                    try { r = el.getBoundingClientRect(); } catch (e) { return; }
+                    if (!(r.width > 0 && r.height > 0)) return;
+                    stopPoll();
+                    onFixVerified();
+                }, 250);
+            }
+            function onFixVerified() {
+                if (state !== S.DEBUG) return;            /* cannot fire twice */
+                setState(S.SUCCESS);
+                dbg.classList.remove('shown');
+                hud('pathway restored — energy propagating');
+                toast.classList.add('on'); sfxFix();
+                cosmic.classList.add('active');        /* animations only — never touches display */
+                stage.classList.add('energized');
+                wait(3200, startDisintegrate);
+            }
+            function startDisintegrate() {
+                if (state !== S.SUCCESS) return;
+                setState(S.DISSOLVE);
+                toast.classList.remove('on');
+                enemy.classList.add('dissolve');
+                burst(); sfxDissolve();
+                hud('the field falls silent');
+                wait(2700, aftermath);
+            }
+            function aftermath() {
+                if (state !== S.DISSOLVE) return;
+                setState(S.AFTERMATH);
+                stage.classList.add('calm');
+                hud('dawn, at last');
+                wait(3200, complete);
+            }
+            function complete() {
+                if (state !== S.AFTERMATH) return;
+                setState(S.COMPLETE);
+                endOv.classList.add('shown');
+                var b = $('#restart');
+                try { b.focus({ preventScroll: true }); } catch (e) { b.focus(); }
+            }
+
+            /* ---------------- BYPASS (temporary testing aid — remove for the final build) ----------------
+               Clicking applies an inline display:block to .cosmic-energy (overriding the stylesheet fault),
+               stops the computed-style poll, and resumes the timeline via the same verified path. */
+            function bypassFix() {
+                if (state !== S.DEBUG) return;
+                stopPoll();
+                try { cosmic.style.display = 'block'; } catch (e) { }
+                onFixVerified();
+            }
+            $('#bypass').addEventListener('click', bypassFix);
+
+            /* ---------------- Input, layout, boot ---------------- */
+            document.addEventListener('keydown', function (e) {
+                if (state === S.TITLE && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); begin(); }
+            });
+            addEventListener('mousemove', function (e) {
+                if (RM) return;
+                var x = (e.clientX / innerWidth) * 2 - 1, y = (e.clientY / innerHeight) * 2 - 1;
+                stage.style.setProperty('--px', x.toFixed(3));
+                stage.style.setProperty('--py', y.toFixed(3));
+            });
+            function fit() {
+                var s = Math.max(innerWidth / 1600, innerHeight / 900);
+                stage.style.setProperty('--s', s.toFixed(4));
+            }
+            addEventListener('resize', fit);
+
+            $('#begin').addEventListener('click', begin);
+            $('#restart').addEventListener('click', function () { location.reload(); });
+
+            spawnAmbient();
+            spawnEnergy();
+            fit();
+        })();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,3346 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CIVIL WAR — THE FINAL CLASH</title>
+
+    <style id="main-css">
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+            background: #04060a
+        }
+
+        body {
+            font-family: "Segoe UI", system-ui, Helvetica, Arial, sans-serif;
+            color: #c8d4e4;
+            -webkit-user-select: none;
+            user-select: none;
+            cursor: default
+        }
+
+        button {
+            font: inherit;
+            cursor: pointer
+        }
+
+        code {
+            font-family: Consolas, "SF Mono", Menlo, monospace
+        }
+
+        /* ============================================================
+   STAGE RIG — one viewport, one shake wrapper, one world.
+   The WORLD carries the entire camera transform:
+     transform: scale(K) translate(-x,-y)   with transform-origin:0 0
+   World point p lands at screen (center + K*(p - shot)). The shot
+   point is therefore ALWAYS exactly centered. No nesting, no
+   double-scaling, nothing to desync.
+   ============================================================ */
+        #app {
+            position: fixed;
+            inset: 0
+        }
+
+        #viewport {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            background: #04060a
+        }
+
+        #shake {
+            position: absolute;
+            inset: 0;
+            will-change: transform
+        }
+
+        #world {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 1600px;
+            height: 900px;
+            transform-origin: 0 0;
+            overflow: hidden;
+            background: #060a12;
+            will-change: transform
+        }
+
+        @keyframes cam-shake-s {
+
+            0%,
+            100% {
+                transform: translate(0, 0)
+            }
+
+            25% {
+                transform: translate(-6px, 3px)
+            }
+
+            50% {
+                transform: translate(5px, -4px)
+            }
+
+            75% {
+                transform: translate(-3px, 2px)
+            }
+        }
+
+        @keyframes cam-shake-m {
+
+            0%,
+            100% {
+                transform: translate(0, 0) rotate(0)
+            }
+
+            20% {
+                transform: translate(-14px, 8px) rotate(-.4deg)
+            }
+
+            45% {
+                transform: translate(11px, -10px) rotate(.35deg)
+            }
+
+            70% {
+                transform: translate(-8px, 5px) rotate(-.2deg)
+            }
+        }
+
+        @keyframes cam-shake-l {
+
+            0%,
+            100% {
+                transform: translate(0, 0) rotate(0)
+            }
+
+            15% {
+                transform: translate(-24px, 14px) rotate(-.8deg)
+            }
+
+            35% {
+                transform: translate(19px, -16px) rotate(.7deg)
+            }
+
+            55% {
+                transform: translate(-15px, 9px) rotate(-.5deg)
+            }
+
+            80% {
+                transform: translate(8px, -6px) rotate(.25deg)
+            }
+        }
+
+        #shake.shake-s {
+            animation: cam-shake-s .32s linear
+        }
+
+        #shake.shake-m {
+            animation: cam-shake-m .5s linear
+        }
+
+        #shake.shake-l {
+            animation: cam-shake-l .68s linear
+        }
+
+        /* ---------- environment ---------- */
+        #env {
+            position: absolute;
+            inset: 0
+        }
+
+        .wall {
+            position: absolute;
+            inset: 0 0 140px 0;
+            background:
+                repeating-linear-gradient(90deg, rgba(0, 0, 0, .34) 0 4px, transparent 4px 148px),
+                repeating-linear-gradient(0deg, rgba(140, 180, 230, .045) 0 3px, transparent 3px 190px),
+                linear-gradient(180deg, #0a0f18 0%, #111a28 42%, #0a1119 100%)
+        }
+
+        .wall::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(90deg, rgba(0, 0, 0, .6), transparent 18%, transparent 82%, rgba(0, 0, 0, .65)),
+                radial-gradient(1200px 500px at 46% 8%, rgba(120, 170, 235, .10), transparent 70%)
+        }
+
+        .silo {
+            position: absolute;
+            border-radius: 50% 50% 8px 8px/60px 60px 8px 8px;
+            background: linear-gradient(90deg, #0a0e15, #2b3a4e 30%, #41546c 46%, #22303f 70%, #080b11)
+        }
+
+        .silo.s1 {
+            left: 120px;
+            top: 130px;
+            width: 250px;
+            height: 640px
+        }
+
+        .silo.s2 {
+            left: 392px;
+            top: 230px;
+            width: 170px;
+            height: 540px;
+            opacity: .75
+        }
+
+        .silo::before {
+            content: "";
+            position: absolute;
+            left: 8%;
+            right: 8%;
+            top: 8px;
+            height: 20px;
+            border-radius: 50%;
+            background: radial-gradient(ellipse at 40% 30%, #4d5f78, #1b2534)
+        }
+
+        .silo::after {
+            content: "";
+            position: absolute;
+            left: 6%;
+            right: 6%;
+            top: 110px;
+            bottom: 210px;
+            background: repeating-linear-gradient(0deg, rgba(0, 0, 0, .35) 0 6px, transparent 6px 64px)
+        }
+
+        .pipes {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 96px;
+            height: 120px;
+            background:
+                linear-gradient(180deg, #1a2432, #39485e 30%, #121926),
+                repeating-linear-gradient(90deg, rgba(0, 0, 0, .4) 0 10px, transparent 10px 210px)
+        }
+
+        .pipes::after {
+            content: "";
+            position: absolute;
+            left: 56%;
+            top: 70px;
+            width: 260px;
+            height: 16px;
+            background: linear-gradient(180deg, #54687f, #232f40);
+            transform: rotate(4deg);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, .6)
+        }
+
+        .gantry {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            height: 110px;
+            background:
+                repeating-linear-gradient(90deg, transparent 0 86px, #101825 86px 96px),
+                linear-gradient(180deg, #0d141f, #05080d);
+            opacity: .9
+        }
+
+        .gantry::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(90deg, transparent 0 86px, #0b121d 0 96px);
+            transform: skewX(-24deg);
+            transform-origin: top;
+            opacity: .55
+        }
+
+        .hole {
+            position: absolute;
+            top: 0;
+            width: 150px;
+            height: 26px;
+            background: #000;
+            box-shadow: 0 0 26px 10px rgba(150, 200, 255, .12)
+        }
+
+        .hole.h1 {
+            left: 330px
+        }
+
+        .hole.h2 {
+            right: 250px;
+            width: 110px
+        }
+
+        .machine {
+            position: absolute;
+            border-radius: 10px;
+            background: linear-gradient(180deg, #232f40, #131b28 60%, #0a0f16);
+            box-shadow: 0 24px 40px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(160, 200, 255, .14)
+        }
+
+        .machine::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 10px;
+            background: repeating-linear-gradient(0deg, rgba(0, 0, 0, .35) 0 8px, transparent 8px 34px),
+                repeating-linear-gradient(90deg, rgba(0, 0, 0, .3) 0 6px, transparent 6px 60px)
+        }
+
+        .machine.m1 {
+            left: 44px;
+            top: 520px;
+            width: 250px;
+            height: 250px;
+            transform: rotate(-3deg) skewY(-2deg)
+        }
+
+        .machine.m2 {
+            right: 70px;
+            top: 480px;
+            width: 210px;
+            height: 290px;
+            transform: rotate(2deg)
+        }
+
+        .machine.m2::after {
+            content: "";
+            position: absolute;
+            left: 26px;
+            top: 34px;
+            width: 80px;
+            height: 44px;
+            border-radius: 4px;
+            background: #0d1a12;
+            box-shadow: inset 0 0 12px #23e06a44;
+            animation: mblink 5.5s steps(1) infinite
+        }
+
+        @keyframes mblink {
+
+            0%,
+            72% {
+                background: #0d1a12;
+                box-shadow: inset 0 0 4px #23e06a22
+            }
+
+            73%,
+            76% {
+                background: #12261a;
+                box-shadow: inset 0 0 14px #23e06a66
+            }
+
+            77%,
+            100% {
+                background: #0d1a12
+            }
+        }
+
+        .girder {
+            position: absolute;
+            left: 640px;
+            top: 690px;
+            width: 520px;
+            height: 26px;
+            border-radius: 4px;
+            background: linear-gradient(180deg, #3c4c62, #141b26 55%, #0a0f16);
+            transform: rotate(7deg);
+            box-shadow: 0 18px 30px rgba(0, 0, 0, .6)
+        }
+
+        .girder::before,
+        .girder::after {
+            content: "";
+            position: absolute;
+            top: -8px;
+            width: 10px;
+            height: 42px;
+            background: #2a3748
+        }
+
+        .girder::before {
+            left: 60px
+        }
+
+        .girder::after {
+            right: 80px
+        }
+
+        .crates {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 150px;
+            height: 110px;
+            pointer-events: none
+        }
+
+        .crates i {
+            position: absolute;
+            bottom: 0;
+            background: linear-gradient(180deg, #1c2735, #0c121c);
+            border-radius: 4px;
+            box-shadow: 0 14px 26px rgba(0, 0, 0, .5)
+        }
+
+        .crates i:nth-child(1) {
+            left: 70px;
+            width: 120px;
+            height: 78px;
+            transform: rotate(-6deg)
+        }
+
+        .crates i:nth-child(2) {
+            left: 210px;
+            width: 80px;
+            height: 52px;
+            transform: rotate(9deg)
+        }
+
+        .crates i:nth-child(3) {
+            left: 1330px;
+            width: 130px;
+            height: 86px;
+            transform: rotate(4deg)
+        }
+
+        .crates i:nth-child(4) {
+            left: 1470px;
+            width: 70px;
+            height: 48px;
+            transform: rotate(-8deg)
+        }
+
+        .crates i:nth-child(5) {
+            left: 930px;
+            width: 90px;
+            height: 44px;
+            transform: rotate(-14deg)
+        }
+
+        .fixture {
+            position: absolute;
+            left: 760px;
+            top: 96px;
+            width: 14px;
+            height: 120px;
+            transform-origin: top center;
+            background: linear-gradient(180deg, #232f40, #0d141f);
+            border-radius: 3px;
+            animation: swing 9s ease-in-out infinite alternate
+        }
+
+        @keyframes swing {
+            from {
+                transform: rotate(-2.5deg)
+            }
+
+            to {
+                transform: rotate(2.5deg)
+            }
+        }
+
+        .fixture::before {
+            content: "";
+            position: absolute;
+            left: -40px;
+            top: 118px;
+            width: 94px;
+            height: 240px;
+            background: radial-gradient(60% 50% at 50% 0, rgba(190, 220, 255, .20), transparent 70%);
+            clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%);
+            animation: fixflick 7s steps(1) infinite
+        }
+
+        .fixture::after {
+            content: "";
+            position: absolute;
+            left: -13px;
+            top: 112px;
+            width: 40px;
+            height: 22px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 50% 30%, #e9f4ff, #5d7488 60%, #222c38);
+            box-shadow: 0 0 26px 6px rgba(180, 215, 255, .35)
+        }
+
+        @keyframes fixflick {
+
+            0%,
+            84% {
+                opacity: 1
+            }
+
+            85%,
+            87% {
+                opacity: .25
+            }
+
+            88%,
+            91% {
+                opacity: 1
+            }
+
+            92%,
+            93% {
+                opacity: .4
+            }
+
+            94%,
+            100% {
+                opacity: 1
+            }
+        }
+
+        .floor {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 190px;
+            background:
+                linear-gradient(90deg, rgba(120, 170, 235, .05), transparent 30%, transparent 68%, rgba(120, 170, 235, .06)),
+                radial-gradient(900px 90px at 30% 100%, rgba(110, 160, 220, .10), transparent 70%),
+                radial-gradient(700px 80px at 74% 100%, rgba(110, 160, 220, .08), transparent 70%),
+                repeating-linear-gradient(90deg, rgba(0, 0, 0, .38) 0 4px, transparent 4px 240px),
+                linear-gradient(180deg, #18202e 0%, #0a0e16 46%, #05080d 100%)
+        }
+
+        .floor::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(0, 0, 0, .55), transparent 30%)
+        }
+
+        #lightshafts {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            mix-blend-mode: screen
+        }
+
+        .shaft {
+            position: absolute;
+            top: 0;
+            width: 150px;
+            height: 830px;
+            transform: skewX(-7deg);
+            filter: blur(7px);
+            background: linear-gradient(180deg, rgba(165, 205, 255, .24), rgba(150, 195, 255, .07) 55%, transparent 90%);
+            animation: shaftbreathe 8s ease-in-out infinite alternate
+        }
+
+        .shaft.s1 {
+            left: 300px
+        }
+
+        .shaft.s2 {
+            right: 210px;
+            width: 110px;
+            animation-delay: -4s
+        }
+
+        @keyframes shaftbreathe {
+            from {
+                opacity: .75
+            }
+
+            to {
+                opacity: 1
+            }
+        }
+
+        #snow {
+            position: absolute;
+            inset: 0;
+            overflow: hidden
+        }
+
+        #snow i {
+            position: absolute;
+            top: -8px;
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            background: #dceaff;
+            opacity: .55;
+            animation: snowfall linear infinite
+        }
+
+        @keyframes snowfall {
+            from {
+                transform: translate(0, -10px)
+            }
+
+            to {
+                transform: translate(var(--sw), 940px)
+            }
+        }
+
+        #world.aftermath #snow i {
+            animation-duration: 14s !important;
+            opacity: .32
+        }
+
+        #fog-back {
+            position: absolute;
+            inset: 0;
+            pointer-events: none
+        }
+
+        .smoke {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(30px);
+            transition: opacity 3s;
+            background: radial-gradient(circle, rgba(140, 165, 195, .16), rgba(120, 145, 175, .05) 60%, transparent 72%);
+            animation: smoke-drift ease-in-out infinite alternate
+        }
+
+        .smoke.k1 {
+            left: 80px;
+            top: 380px;
+            width: 620px;
+            height: 300px;
+            animation-duration: 30s
+        }
+
+        .smoke.k2 {
+            left: 700px;
+            top: 300px;
+            width: 760px;
+            height: 340px;
+            animation-duration: 37s;
+            animation-delay: -9s
+        }
+
+        .smoke.k3 {
+            left: 380px;
+            top: 560px;
+            width: 900px;
+            height: 260px;
+            animation-duration: 33s;
+            animation-delay: -18s
+        }
+
+        .smoke.k4 {
+            left: -140px;
+            top: 200px;
+            width: 520px;
+            height: 420px;
+            animation-duration: 41s;
+            animation-delay: -5s
+        }
+
+        .smoke.k5 {
+            left: 1050px;
+            top: 470px;
+            width: 640px;
+            height: 300px;
+            animation-duration: 28s;
+            animation-delay: -14s
+        }
+
+        @keyframes smoke-drift {
+            from {
+                transform: translate(0, 0) scale(1);
+                opacity: .55
+            }
+
+            to {
+                transform: translate(90px, -34px) scale(1.22);
+                opacity: 1
+            }
+        }
+
+        #world.aftermath .smoke {
+            animation: none;
+            opacity: .4
+        }
+
+        #dustmotes {
+            position: absolute;
+            inset: 0;
+            pointer-events: none
+        }
+
+        #dustmotes i {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            border-radius: 50%;
+            background: #bcd4f0;
+            opacity: .24;
+            animation: motedrift ease-in-out infinite alternate
+        }
+
+        @keyframes motedrift {
+            from {
+                transform: translate(0, 0)
+            }
+
+            to {
+                transform: translate(34px, -46px)
+            }
+        }
+
+        /* corner fog only — sized so it can never touch either character */
+        #fog-front {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden
+        }
+
+        #fog-front .fg {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(26px);
+            background: #05080d;
+            opacity: .6
+        }
+
+        #fog-front .fg.a {
+            left: -430px;
+            bottom: -260px;
+            width: 560px;
+            height: 320px
+        }
+
+        #fog-front .fg.b {
+            right: -430px;
+            bottom: -280px;
+            width: 600px;
+            height: 340px
+        }
+
+        #rep-light {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity .35s;
+            background: radial-gradient(1000px 600px at 58% 40%, rgba(120, 200, 255, .16), transparent 70%)
+        }
+
+        #rep-light.on {
+            opacity: 1
+        }
+
+        /* ---------- reflections (anchored at true foot line: Cap 794, IM 790) ---------- */
+        #reflections {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            filter: blur(6px);
+            opacity: .15
+        }
+
+        #cap-refl,
+        #im-refl {
+            position: absolute;
+            transform: scaleY(-1);
+            transition: opacity 1.2s
+        }
+
+        #cap-refl {
+            left: 320px;
+            top: 776px
+        }
+
+        #im-refl {
+            left: 1150px;
+            top: 772px
+        }
+
+        #cap-refl svg {
+            display: block;
+            width: 240px;
+            height: 560px
+        }
+
+        #im-refl svg {
+            display: block;
+            width: 260px;
+            height: 560px
+        }
+
+        #cap-refl,
+        #im-refl {
+            -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, .8), transparent 55%);
+            mask-image: linear-gradient(to top, rgba(0, 0, 0, .8), transparent 55%)
+        }
+
+        #cap-refl .pose-inner,
+        #im-refl .pose-inner {
+            transform: none !important
+        }
+
+        #im-refl .im-upper {
+            transform: none !important
+        }
+
+        #im-refl.im-down {
+            opacity: .25
+        }
+
+        #world.aftermath #im-refl {
+            opacity: 0
+        }
+
+        /* ============================================================
+   CHARACTERS — position:absolute ON THE ID SELECTORS.
+   (The old `.char{position:absolute}` rule matched nothing; the
+   elements carry class "chr". This was the root bug.)
+   ============================================================ */
+        #cap,
+        #im {
+            position: absolute
+        }
+
+        #cap {
+            left: 320px;
+            top: 252px;
+            width: 240px
+        }
+
+        #im {
+            left: 1150px;
+            top: 248px;
+            width: 260px
+        }
+
+        .chr svg {
+            display: block;
+            width: 100%;
+            height: auto;
+            overflow: visible
+        }
+
+        #cap svg {
+            filter: drop-shadow(0 20px 16px rgba(0, 0, 0, .5))
+        }
+
+        #im svg {
+            filter: drop-shadow(0 20px 16px rgba(0, 0, 0, .5)) drop-shadow(0 0 18px rgba(120, 60, 20, .12))
+        }
+
+        .chr .pose-inner {
+            transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.45s ease;
+            transform-origin: 50% 90%;
+        }
+
+        .chr .im-upper {
+            transform: none !important;
+            animation: none !important;
+        }
+
+        /* ── CAPTAIN AMERICA POSES (From Scratch using preview_flipped) ── */
+        .cap-idle .pose-inner,
+        .cap-stance .pose-inner {
+            transform: rotate(0deg) translate(0, 0);
+        }
+        .cap-guard .pose-inner {
+            transform: rotate(2deg) translate(4px, -2px);
+        }
+        .cap-block .pose-inner,
+        .cap-strain .pose-inner {
+            transform: rotate(4deg) translate(8px, -1px);
+        }
+        .cap-windup .pose-inner {
+            transform: rotate(-7deg) translate(-10px, -2px);
+        }
+        .cap-throw .pose-inner {
+            transform: rotate(8deg) translate(16px, -2px);
+        }
+        .cap-clash .pose-inner,
+        .cap-brace .pose-inner,
+        .cap-drive .pose-inner {
+            transform: rotate(5deg) translate(12px, -3px);
+        }
+        .cap-stand .pose-inner,
+        .cap-aftermath .pose-inner {
+            transform: rotate(0deg) translate(0, 0);
+        }
+
+        /* ── IRON MAN POSES (From Scratch using preview_flipped) ── */
+        .im-enter .pose-inner,
+        .im-idle .pose-inner,
+        .im-stance .pose-inner {
+            transform: rotate(0deg) translate(0, 0);
+            filter: drop-shadow(0 20px 16px rgba(0, 0, 0, .5));
+        }
+        .im-charge .pose-inner,
+        .im-charging .pose-inner {
+            transform: rotate(-4deg) translate(-6px, -2px);
+        }
+        .im-unibeam .pose-inner,
+        .im-aim .pose-inner,
+        .im-fire .pose-inner {
+            transform: rotate(-1deg) translate(-3px, 0);
+        }
+        .im-stagger .pose-inner,
+        .im-recover .pose-inner {
+            transform: rotate(10deg) translate(22px, -4px);
+        }
+        .im-lunge .pose-inner,
+        .im-lock .pose-inner,
+        .im-aggressive .pose-inner {
+            transform: rotate(-6deg) translate(-14px, -2px);
+        }
+        .im-down .pose-inner {
+            transform: translateY(72px) rotate(14deg);
+            filter: drop-shadow(0 8px 12px rgba(0,0,0,0.8)) brightness(0.65);
+        }
+        .im-revived .pose-inner {
+            transform: translateY(0) rotate(0deg);
+            filter: drop-shadow(0 20px 16px rgba(0, 0, 0, .5)) brightness(1.05);
+        }
+
+        .bob {
+            width: 100%;
+        }
+
+        @keyframes walkbob {
+            from {
+                transform: translateY(0);
+            }
+            to {
+                transform: translateY(-6px);
+            }
+        }
+
+        .cap-stride .bob {
+            animation: walkbob .34s ease-in-out infinite alternate;
+        }
+
+        .im-enter .bob {
+            animation: walkbob .3s ease-in-out infinite alternate;
+        }
+
+        /* ---- IRON MAN energy ---- */
+        .chr .jets {
+            opacity: 0;
+            transition: opacity .4s
+        }
+
+        .im-idle .jets,
+        .im-aim .jets {
+            opacity: 1
+        }
+
+        @keyframes jetflick {
+            from {
+                opacity: .65;
+                transform: scaleY(.9)
+            }
+
+            to {
+                opacity: 1;
+                transform: scaleY(1.12)
+            }
+        }
+
+        .chr .jets ellipse {
+            animation: jetflick .09s linear infinite alternate
+        }
+
+        .chr .palm-glow {
+            opacity: 0;
+            transform-box: fill-box;
+            transform-origin: center;
+            transform: scale(.25)
+        }
+
+        @keyframes palm-charge {
+            from {
+                opacity: .15;
+                transform: scale(.25)
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1.5)
+            }
+        }
+
+        @keyframes palm-charge-quick {
+            from {
+                opacity: .2;
+                transform: scale(.3)
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1.35)
+            }
+        }
+
+        @keyframes palm-buzz {
+            from {
+                opacity: .75
+            }
+
+            to {
+                opacity: 1
+            }
+        }
+
+        .im-charging .palm-glow {
+            animation: palm-charge 2.8s ease-out forwards
+        }
+
+        .im-quick .palm-glow {
+            animation: palm-charge-quick .55s ease-out forwards
+        }
+
+        .im-hot .palm-glow {
+            opacity: 1;
+            transform: scale(1.25);
+            animation: palm-buzz .12s linear infinite alternate
+        }
+
+        /* ── CHEST ARC REACTOR CHARGING & UNIBEAM ── */
+        @keyframes reactor-charge-surge {
+            0% {
+                transform: scale(1);
+                opacity: 0.65;
+            }
+            40% {
+                transform: scale(1.6);
+                opacity: 0.9;
+                filter: drop-shadow(0 0 16px #6fe0ff);
+            }
+            100% {
+                transform: scale(2.4);
+                opacity: 1;
+                filter: drop-shadow(0 0 28px #ffffff);
+            }
+        }
+
+        .im-charging .reactor-glow,
+        .reactor-charging .reactor-glow {
+            animation: reactor-charge-surge 2.4s ease-out forwards !important;
+            opacity: 1 !important;
+        }
+
+        .im-charging .reactor-core,
+        .reactor-charging .reactor-core {
+            filter: drop-shadow(0 0 12px #ffffff);
+        }
+
+        .reactor-unibeam .reactor-glow {
+            animation: palm-buzz .1s infinite alternate;
+            transform: scale(2.5);
+            opacity: 1 !important;
+            filter: drop-shadow(0 0 32px #9fe8ff);
+        }
+
+        .reactor-restored .reactor-glow {
+            animation: reactor-pulse 1.8s ease-in-out infinite alternate !important;
+            opacity: 0.95 !important;
+            transform: scale(1.35);
+            filter: drop-shadow(0 0 20px #68d8ff);
+        }
+
+        .reactor-restored .reactor-core {
+            opacity: 1 !important;
+            filter: drop-shadow(0 0 14px #ffffff);
+        }
+
+        @keyframes reactor-pulse {
+            from {
+                opacity: .4
+            }
+
+            to {
+                opacity: .62
+            }
+        }
+
+        .chr .reactor-glow {
+            animation: reactor-pulse 3s ease-in-out infinite alternate
+        }
+
+        .reactor-hot .reactor-glow {
+            animation: palm-buzz .2s infinite alternate;
+            opacity: .95
+        }
+
+        @keyframes reactor-die {
+
+            0%,
+            100% {
+                opacity: .16
+            }
+
+            12% {
+                opacity: .5
+            }
+
+            14% {
+                opacity: .1
+            }
+
+            45% {
+                opacity: .3
+            }
+
+            47% {
+                opacity: .08
+            }
+
+            80% {
+                opacity: .24
+            }
+        }
+
+        .reactor-die .reactor-glow {
+            animation: reactor-die 3.4s linear infinite
+        }
+
+        .reactor-die .reactor-core {
+            opacity: .55
+        }
+
+        @keyframes eye-flicker {
+
+            0%,
+            88% {
+                opacity: 1
+            }
+
+            89%,
+            92% {
+                opacity: .15
+            }
+
+            93%,
+            100% {
+                opacity: .8
+            }
+        }
+
+        .im-damaged .im-eye-r {
+            animation: eye-flicker 2.4s linear infinite
+        }
+
+        .chr .s-damage2 {
+            opacity: 0
+        }
+
+        .im-damaged .s-damage2 {
+            opacity: 1
+        }
+
+        /* ---------- FX ---------- */
+        #fx {
+            position: absolute;
+            inset: 0;
+            pointer-events: none
+        }
+
+        #cap-follow {
+            position: absolute;
+            left: 320px;
+            top: 252px;
+            width: 0;
+            height: 0
+        }
+
+        /* shield anchors = the drawn hand coordinates of each arm pose
+   (carry 118,252 · guard 196,212 · windup 50,186 · catch 199,182)
+   impact = Iron Man's chest at the moment of the hit: world
+   (1268,422) minus Cap's advanced element origin (366,252) */
+        #shield {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 130px;
+            height: 130px;
+            margin: -65px 0 0 -65px;
+            transform: translate(var(--sx, 118px), var(--sy, 252px)) rotate(var(--sr, 0deg));
+            transition: transform .55s cubic-bezier(.4, .8, .4, 1)
+        }
+
+        #shield svg {
+            display: block;
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 10px 12px rgba(0, 0, 0, .55))
+        }
+
+        #shield .ering {
+            opacity: 0;
+            transition: opacity .2s
+        }
+
+        #shield.energized .ering {
+            opacity: .9
+        }
+
+        #shield.at-side {
+            --sx: 118px;
+            --sy: 252px
+        }
+
+        #shield.at-carry {
+            --sx: 118px;
+            --sy: 252px
+        }
+
+        #shield.at-block {
+            --sx: 196px;
+            --sy: 212px
+        }
+
+        #shield.at-brace {
+            --sx: 196px;
+            --sy: 212px
+        }
+
+        #shield.at-windup {
+            --sx: 50px;
+            --sy: 186px
+        }
+
+        #shield.at-catch {
+            --sx: 199px;
+            --sy: 182px
+        }
+
+        #shield.at-rest {
+            --sx: 118px;
+            --sy: 252px
+        }
+
+        #shield.at-impact {
+            --sx: 889px;
+            --sy: 142px;
+            --sr: 90deg
+        }
+
+        @keyframes shield-flight {
+            0% {
+                transform: translate(50px, 186px) rotate(0deg)
+            }
+
+            15% {
+                transform: translate(150px, 70px) rotate(130deg)
+            }
+
+            55% {
+                transform: translate(520px, 60px) rotate(470deg)
+            }
+
+            100% {
+                transform: translate(889px, 142px) rotate(810deg)
+            }
+        }
+
+        #shield.flight {
+            animation: shield-flight 2.3s cubic-bezier(.55, .05, .45, 1) forwards
+        }
+
+        @keyframes shield-return {
+            0% {
+                transform: translate(889px, 142px) rotate(0deg)
+            }
+
+            45% {
+                transform: translate(700px, 260px) rotate(-170deg)
+            }
+
+            100% {
+                transform: translate(199px, 182px) rotate(-330deg)
+            }
+        }
+
+        #shield.return {
+            animation: shield-return .85s ease-out forwards
+        }
+
+        #shield.at-stuck {
+            --sx: 292px;
+            --sy: 142px;
+            --sr: 18deg;
+            transform: translate(292px, 142px) rotateY(-55deg) rotateZ(18deg) !important;
+            transition: none !important;
+            filter: drop-shadow(-6px 10px 14px rgba(0, 0, 0, 0.75)) !important;
+        }
+
+        @keyframes shield-final-throw {
+            0% {
+                transform: translate(196px, 212px) rotate(0deg);
+            }
+
+            25% {
+                transform: translate(225px, 175px) rotate(160deg);
+            }
+
+            60% {
+                transform: translate(265px, 150px) rotate(380deg);
+            }
+
+            100% {
+                transform: translate(292px, 142px) rotateY(-55deg) rotateZ(18deg);
+            }
+        }
+
+        #shield.final-throw {
+            animation: shield-final-throw .55s cubic-bezier(.22, .75, .35, 1) forwards;
+        }
+
+        @keyframes shield-swing {
+            0% {
+                transform: translate(196px, 212px) rotate(0deg);
+            }
+
+            100% {
+                transform: translate(292px, 142px) rotateY(-55deg) rotateZ(18deg);
+            }
+        }
+
+        #shield.swing {
+            animation: shield-final-throw .55s cubic-bezier(.22, .75, .35, 1) forwards;
+        }
+
+        @keyframes press-jit {
+            from {
+                transform: translate(0, 0)
+            }
+
+            to {
+                transform: translate(1.6px, -1.2px)
+            }
+        }
+
+        #shield-inner.press {
+            animation: press-jit .09s linear infinite alternate
+        }
+
+        #beam {
+            position: absolute;
+            height: 38px;
+            margin-top: -19px;
+            border-radius: 19px;
+            opacity: 0;
+            transform-origin: 0 50%;
+            background: linear-gradient(180deg, rgba(90, 190, 255, 0.2) 0%, rgba(175, 235, 255, 0.95) 25%, #ffffff 50%, rgba(175, 235, 255, 0.95) 75%, rgba(90, 190, 255, 0.2) 100%);
+            box-shadow: 0 0 35px rgba(110, 205, 255, 0.95), 0 0 70px rgba(70, 165, 255, 0.7);
+            filter: drop-shadow(0 0 14px #a8ecff);
+            pointer-events: none;
+        }
+
+        @keyframes beam-pulse {
+            from {
+                transform: rotate(var(--beam-a)) scaleY(0.75);
+                filter: drop-shadow(0 0 16px #7fd8ff);
+            }
+
+            to {
+                transform: rotate(var(--beam-a)) scaleY(1.35);
+                filter: drop-shadow(0 0 32px #cbf6ff);
+            }
+        }
+
+        #beam.firing {
+            opacity: 1;
+            animation: beam-pulse .13s linear infinite alternate
+        }
+
+        #beam-hit {
+            position: absolute;
+            width: 130px;
+            height: 130px;
+            margin: -65px 0 0 -65px;
+            border-radius: 50%;
+            opacity: 0;
+            background: radial-gradient(circle, #fff 0%, rgba(170, 225, 255, .85) 26%, rgba(120, 190, 255, .25) 55%, transparent 72%);
+            filter: blur(2px)
+        }
+
+        @keyframes hitpulse {
+            from {
+                transform: scale(.8);
+                opacity: .9
+            }
+
+            to {
+                transform: scale(1.2);
+                opacity: 1
+            }
+        }
+
+        #beam-hit.on {
+            opacity: 1;
+            animation: hitpulse .16s linear infinite alternate
+        }
+
+        #pre-impact {
+            position: absolute;
+            width: 96px;
+            height: 96px;
+            margin: -48px 0 0 -48px;
+            border-radius: 50%;
+            opacity: 0;
+            background: radial-gradient(circle, rgba(220, 245, 255, .9) 0%, rgba(140, 205, 255, .35) 40%, transparent 70%);
+            box-shadow: 0 0 22px 6px rgba(140, 205, 255, .5)
+        }
+
+        @keyframes crackle {
+            0% {
+                transform: scale(.7);
+                opacity: .55
+            }
+
+            25% {
+                transform: scale(1.15);
+                opacity: 1
+            }
+
+            50% {
+                transform: scale(.85);
+                opacity: .7
+            }
+
+            75% {
+                transform: scale(1.05);
+                opacity: .95
+            }
+
+            100% {
+                transform: scale(.75);
+                opacity: .6
+            }
+        }
+
+        #pre-impact.on {
+            opacity: 1;
+            animation: crackle .22s linear infinite
+        }
+
+        #light-burst {
+            position: absolute;
+            width: 340px;
+            height: 340px;
+            margin: -170px 0 0 -170px;
+            border-radius: 50%;
+            opacity: 0;
+            background: radial-gradient(circle, rgba(255, 255, 255, .95) 0%, rgba(180, 225, 255, .55) 30%, rgba(120, 190, 255, .18) 55%, transparent 75%)
+        }
+
+        @keyframes burst-go {
+            from {
+                transform: scale(.25);
+                opacity: 1
+            }
+
+            to {
+                transform: scale(1.55);
+                opacity: 0
+            }
+        }
+
+        #light-burst.go {
+            animation: burst-go .6s ease-out forwards
+        }
+
+        #sparks,
+        #dust {
+            position: absolute;
+            inset: 0
+        }
+
+        .spark {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: #ffd9a0;
+            box-shadow: 0 0 7px 2px rgba(255, 185, 90, .9);
+            animation: spark-fly .6s ease-out forwards
+        }
+
+        .spark.streak {
+            width: 16px;
+            height: 2px;
+            border-radius: 2px;
+            transform-origin: 0 50%
+        }
+
+        @keyframes spark-fly {
+            from {
+                transform: translate(0, 0) scale(1) rotate(var(--rot, 0rad));
+                opacity: 1
+            }
+
+            to {
+                transform: translate(var(--tx), var(--ty)) scale(.25) rotate(var(--rot, 0rad));
+                opacity: 0
+            }
+        }
+
+        .dustp {
+            position: absolute;
+            width: 60px;
+            height: 44px;
+            margin: -30px 0 0 -22px;
+            border-radius: 50%;
+            opacity: 0;
+            background: radial-gradient(circle, rgba(150, 160, 175, .4), rgba(120, 130, 145, .12) 60%, transparent 75%);
+            filter: blur(3px);
+            animation: puff-rise 1.1s ease-out forwards
+        }
+
+        @keyframes puff-rise {
+            from {
+                transform: translateY(0) scale(.5);
+                opacity: .7
+            }
+
+            to {
+                transform: translateY(-56px) scale(1.5);
+                opacity: 0
+            }
+        }
+
+        #wisp {
+            position: absolute;
+            width: 26px;
+            height: 26px;
+            margin: -13px 0 0 -13px;
+            border-radius: 50%;
+            opacity: 0;
+            filter: blur(5px);
+            background: radial-gradient(circle, rgba(160, 170, 185, .5), transparent 70%)
+        }
+
+        #wisp.on {
+            opacity: 1;
+            animation: wisp-rise 2.6s linear infinite
+        }
+
+        @keyframes wisp-rise {
+            from {
+                transform: translate(0, 0) scale(.6);
+                opacity: .55
+            }
+
+            to {
+                transform: translate(16px, -70px) scale(1.5);
+                opacity: 0
+            }
+        }
+
+        #flash-full {
+            position: fixed;
+            inset: 0;
+            background: #eaf4ff;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 9
+        }
+
+        @keyframes flash-go {
+            0% {
+                opacity: 0
+            }
+
+            18% {
+                opacity: var(--fi, .6)
+            }
+
+            100% {
+                opacity: 0
+            }
+        }
+
+        #flash-full.go {
+            animation: flash-go .5s ease-out
+        }
+
+        /* ---------- viewport UI ---------- */
+        #vignette {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 4;
+            background: radial-gradient(ellipse at 50% 46%, transparent 52%, rgba(0, 0, 0, .5) 100%),
+                linear-gradient(180deg, rgba(0, 0, 0, .4), transparent 18%, transparent 84%, rgba(0, 0, 0, .5))
+        }
+
+        #letterbox-t,
+        #letterbox-b {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 6.5vh;
+            background: #000;
+            z-index: 5
+        }
+
+        #letterbox-t {
+            top: 0
+        }
+
+        #letterbox-b {
+            bottom: 0
+        }
+
+        #slate {
+            position: absolute;
+            top: calc(6.5vh + 14px);
+            left: 22px;
+            z-index: 7;
+            font-family: Consolas, Menlo, monospace;
+            font-size: 11px;
+            letter-spacing: .18em;
+            color: #7e93ad;
+            opacity: .85
+        }
+
+        #slate::before {
+            content: "● ";
+            color: #b3202e;
+            font-size: 8px
+        }
+
+        #caption {
+            position: absolute;
+            left: 50%;
+            bottom: calc(6.5vh + 26px);
+            transform: translateX(-50%);
+            z-index: 6;
+            max-width: 80vw;
+            text-align: center;
+            font-size: clamp(14px, 1.6vw, 21px);
+            letter-spacing: .06em;
+            color: #d7e1ee;
+            text-shadow: 0 2px 10px #000, 0 0 24px rgba(80, 140, 220, .25);
+            opacity: 0;
+            transition: opacity .45s
+        }
+
+        #caption.on {
+            opacity: 1
+        }
+
+        #caption .who {
+            font-weight: 700;
+            letter-spacing: .14em;
+            margin-right: .5em
+        }
+
+        #caption .who.STARK {
+            color: #e6b45f
+        }
+
+        #caption .who.CAP {
+            color: #9fc4ff
+        }
+
+        #prompt {
+            position: absolute;
+            left: 50%;
+            bottom: calc(6.5vh + 78px);
+            transform: translate(-50%, 8px);
+            z-index: 6;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 20px;
+            border-radius: 40px;
+            background: rgba(8, 14, 24, .78);
+            border: 1px solid rgba(140, 180, 235, .35);
+            backdrop-filter: blur(4px);
+            opacity: 0;
+            pointer-events: none;
+            transition: .25s
+        }
+
+        #prompt.on {
+            opacity: 1;
+            transform: translate(-50%, 0);
+            pointer-events: auto;
+            cursor: pointer
+        }
+
+        #prompt .p-key {
+            font-family: Consolas, Menlo, monospace;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: #1a2740;
+            border: 1px solid #4a6a9e;
+            color: #cfe2ff;
+            letter-spacing: .1em
+        }
+
+        #prompt .p-label {
+            font-size: 14px;
+            letter-spacing: .2em;
+            color: #dfe9f6
+        }
+
+        @keyframes prompt-pulse {
+            from {
+                border-color: rgba(140, 180, 235, .35)
+            }
+
+            to {
+                border-color: rgba(190, 225, 255, .85)
+            }
+        }
+
+        #prompt.on {
+            animation: prompt-pulse .9s ease-in-out infinite alternate
+        }
+
+        #prompt .p-bar {
+            position: absolute;
+            left: 14px;
+            right: 14px;
+            bottom: 3px;
+            height: 2px;
+            border-radius: 2px;
+            overflow: hidden
+        }
+
+        #prompt .p-bar::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+            background: #8fc2ff;
+            transform-origin: left
+        }
+
+        @keyframes drain {
+            from {
+                transform: scaleX(1)
+            }
+
+            to {
+                transform: scaleX(0)
+            }
+        }
+
+        #flourish {
+            position: absolute;
+            left: 50%;
+            bottom: calc(6.5vh + 132px);
+            transform: translateX(-50%);
+            z-index: 6;
+            font-size: 13px;
+            letter-spacing: .34em;
+            color: #b8d4f6;
+            opacity: 0;
+            font-family: Consolas, Menlo, monospace
+        }
+
+        @keyframes fl-show {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, 8px)
+            }
+
+            18% {
+                opacity: 1;
+                transform: translate(-50%, 0)
+            }
+
+            80% {
+                opacity: 1
+            }
+
+            100% {
+                opacity: 0
+            }
+        }
+
+        #flourish.go {
+            animation: fl-show 1.25s ease-out forwards
+        }
+
+        /* ---------- diagnostic overlay: HTML DEBUGGING CHALLENGE ---------- */
+        #debug-overlay {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%) scale(0.95);
+            z-index: 1000;
+            width: min(560px, 92vw);
+            background: rgba(8, 12, 20, 0.94);
+            border: 2px solid rgba(220, 50, 50, 0.65);
+            box-shadow: 0 0 35px rgba(220, 40, 40, 0.35), 0 20px 60px rgba(0, 0, 0, 0.85);
+            border-radius: 12px;
+            backdrop-filter: blur(12px);
+            padding: 22px 24px 20px;
+            font-family: Consolas, "SF Mono", Menlo, monospace;
+            color: #d6e2f0;
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+        }
+
+        #debug-overlay.on {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+            pointer-events: auto;
+        }
+
+        #debug-overlay .d-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13.5px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            color: #ff5252;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        #debug-overlay .d-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ff3333;
+            box-shadow: 0 0 12px #ff2222;
+            animation: diag-blink 0.8s steps(1) infinite;
+        }
+
+        @keyframes diag-blink {
+            0%, 60% { opacity: 1 }
+            61%, 100% { opacity: 0.25 }
+        }
+
+        #debug-overlay .d-sub {
+            font-size: 12px;
+            color: #9ab0c8;
+            line-height: 1.55;
+            margin-bottom: 12px;
+            font-family: "Segoe UI", system-ui, sans-serif;
+        }
+
+        #debug-overlay .d-sub code {
+            color: #ffb4a2;
+            background: rgba(255, 60, 60, 0.12);
+            padding: 2px 5px;
+            border-radius: 4px;
+        }
+
+        #debug-overlay .d-instruction {
+            font-size: 12px;
+            color: #64b5f6;
+            background: rgba(33, 150, 243, 0.1);
+            border-left: 3px solid #2196f3;
+            padding: 8px 12px;
+            margin-bottom: 14px;
+            border-radius: 0 6px 6px 0;
+            font-family: "Segoe UI", system-ui, sans-serif;
+        }
+
+        #debug-overlay .d-code-box {
+            background: #04070e;
+            border: 1px solid rgba(100, 140, 190, 0.25);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        #debug-overlay .d-code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #0d1524;
+            padding: 6px 12px;
+            font-size: 11px;
+            color: #7b94b2;
+            letter-spacing: 0.08em;
+            border-bottom: 1px solid rgba(100, 140, 190, 0.15);
+        }
+
+        #debug-overlay .d-tag-err {
+            color: #ff5252;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        #code-input {
+            width: 100%;
+            background: transparent;
+            color: #e0f2fe;
+            border: none;
+            padding: 12px;
+            font-family: Consolas, "SF Mono", Menlo, monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            resize: vertical;
+            outline: none;
+            tab-size: 2;
+        }
+
+        #code-input:focus {
+            background: rgba(30, 50, 80, 0.2);
+        }
+
+        #debug-status {
+            min-height: 22px;
+            font-size: 11.5px;
+            line-height: 1.45;
+            margin-bottom: 14px;
+            transition: color 0.2s;
+        }
+
+        #debug-status.err {
+            color: #ff6b6b;
+        }
+
+        #debug-status.good {
+            color: #4ade80;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+        }
+
+        #debug-status.hint {
+            color: #94a3b8;
+        }
+
+        .d-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        #repair-btn {
+            flex: 1;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 12.5px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            background: linear-gradient(180deg, #1d4ed8, #1e40af);
+            color: #ffffff;
+            border: 1px solid #3b82f6;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+            transition: all 0.2s ease;
+        }
+
+        #repair-btn:hover {
+            background: linear-gradient(180deg, #2563eb, #1d4ed8);
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.55);
+            transform: translateY(-1px);
+        }
+
+        #repair-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #bypass-btn {
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 12.5px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            background: linear-gradient(180deg, #d97706, #b45309);
+            color: #ffffff;
+            border: 1px solid #f59e0b;
+            box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+            transition: all 0.2s ease;
+        }
+
+        #bypass-btn:hover {
+            background: linear-gradient(180deg, #f59e0b, #d97706);
+            box-shadow: 0 4px 20px rgba(245, 158, 11, 0.55);
+            transform: translateY(-1px);
+        }
+
+        #bypass-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #reset-code-btn {
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 11.5px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #94a3b8;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            transition: background 0.2s;
+        }
+
+        #reset-code-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #f1f5f9;
+        }
+
+        /* ---------- title / complete / start ---------- */
+        #title-card {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding-bottom: 10vh;
+            z-index: 11;
+            pointer-events: none;
+            opacity: 0
+        }
+
+        #title-card.on {
+            animation: title-in 2.4s ease-out forwards
+        }
+
+        @keyframes title-in {
+            0% {
+                opacity: 0
+            }
+
+            100% {
+                opacity: 1
+            }
+        }
+
+        #title-card .t1 {
+            font-size: clamp(15px, 1.7vw, 22px);
+            letter-spacing: .85em;
+            color: #c9b47c;
+            margin-bottom: 14px;
+            padding-left: .85em
+        }
+
+        #title-card .t2 {
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: clamp(38px, 6vw, 84px);
+            color: #e9eff7;
+            letter-spacing: .22em;
+            padding-left: .22em;
+            text-shadow: 0 4px 40px rgba(90, 140, 220, .4)
+        }
+
+        #title-card .rule {
+            width: min(420px, 60vw);
+            height: 1px;
+            margin-top: 26px;
+            background: linear-gradient(90deg, transparent, #8fa8c8, transparent)
+        }
+
+        #complete {
+            position: fixed;
+            left: 50%;
+            bottom: calc(6.5vh + 40px);
+            transform: translate(-50%, 20px);
+            z-index: 12;
+            width: min(520px, 92vw);
+            background: rgba(7, 11, 18, .9);
+            border: 1px solid rgba(140, 180, 235, .3);
+            border-radius: 12px;
+            backdrop-filter: blur(8px);
+            padding: 26px 30px;
+            opacity: 0;
+            pointer-events: none;
+            transition: .5s
+        }
+
+        #complete.on {
+            opacity: 1;
+            transform: translate(-50%, 0);
+            pointer-events: auto
+        }
+
+        #complete h2 {
+            font-family: Georgia, serif;
+            font-weight: 400;
+            letter-spacing: .3em;
+            font-size: 19px;
+            color: #e9eff7;
+            margin-bottom: 18px
+        }
+
+        #complete .st {
+            display: flex;
+            gap: 14px;
+            font-size: 12.5px;
+            line-height: 1.7;
+            font-family: Consolas, Menlo, monospace;
+            margin-bottom: 6px
+        }
+
+        #complete .st span {
+            flex: 0 0 92px;
+            color: #7e93ad
+        }
+
+        #complete .st b {
+            font-weight: 400;
+            color: #cfe0f2
+        }
+
+        #complete .st b.good {
+            color: #7fd8a0
+        }
+
+        #complete .st b.warn {
+            color: #f0b05a
+        }
+
+        #restart-btn {
+            margin-top: 18px;
+            width: 100%;
+            padding: 13px 0;
+            border-radius: 8px;
+            letter-spacing: .32em;
+            font-size: 13px;
+            background: #101b2e;
+            color: #d7e6fa;
+            border: 1px solid #4a6a9e;
+            transition: .2s
+        }
+
+        #restart-btn:hover {
+            background: #18283f;
+            box-shadow: 0 0 18px rgba(120, 170, 240, .25)
+        }
+
+        #start {
+            position: fixed;
+            inset: 0;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(1200px 700px at 50% 30%, #0c1420, #04060a 75%);
+            transition: opacity .7s
+        }
+
+        #start.gone {
+            opacity: 0;
+            pointer-events: none
+        }
+
+        #start .s-box {
+            max-width: 640px;
+            padding: 40px;
+            text-align: center
+        }
+
+        #start .k {
+            font-size: 12px;
+            letter-spacing: .5em;
+            color: #7e93ad;
+            margin-bottom: 22px
+        }
+
+        #start h1 {
+            font-family: Georgia, serif;
+            font-weight: 400;
+            font-size: clamp(34px, 5vw, 64px);
+            color: #e9eff7;
+            letter-spacing: .18em
+        }
+
+        #start h1 em {
+            display: block;
+            font-style: normal;
+            font-size: .42em;
+            letter-spacing: .5em;
+            color: #c9b47c;
+            margin-top: 12px
+        }
+
+        #start .sub {
+            margin: 22px 0 30px;
+            font-size: 14px;
+            letter-spacing: .14em;
+            color: #a9bccf
+        }
+
+        #start .rules {
+            display: inline-block;
+            text-align: left;
+            font-size: 12.5px;
+            line-height: 2;
+            color: #8fa4bb;
+            border-top: 1px solid #223048;
+            border-bottom: 1px solid #223048;
+            padding: 16px 26px;
+            margin-bottom: 32px
+        }
+
+        #start .rules b {
+            color: #d7e4f6;
+            font-weight: 600
+        }
+
+        #start .rules i {
+            color: #f0b05a;
+            font-style: normal
+        }
+
+        #start-btn {
+            padding: 15px 52px;
+            border-radius: 8px;
+            font-size: 14px;
+            letter-spacing: .4em;
+            background: #13233c;
+            color: #e9f1fb;
+            border: 1px solid #4a6a9e;
+            transition: .25s
+        }
+
+        #start-btn:hover {
+            background: #1c3152;
+            box-shadow: 0 0 26px rgba(120, 170, 240, .35);
+            transform: translateY(-1px)
+        }
+
+        #start .foot {
+            margin-top: 26px;
+            font-size: 10.5px;
+            letter-spacing: .24em;
+            color: #5b6d84
+        }
+
+        #fader {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 30;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity .8s
+        }
+
+        #fader.on {
+            opacity: 1
+        }
+
+        #fader.snap {
+            transition: none
+        }
+
+        #mute {
+            position: fixed;
+            top: calc(6.5vh + 10px);
+            right: 20px;
+            z-index: 8;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(8, 14, 24, .6);
+            border: 1px solid rgba(140, 180, 235, .3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: .2s
+        }
+
+        #mute:hover {
+            border-color: rgba(190, 225, 255, .7)
+        }
+
+        #mute svg {
+            width: 17px;
+            height: 17px;
+            fill: none;
+            stroke: #9fb8d8;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round
+        }
+
+        #mute .m-x {
+            display: none
+        }
+
+        #mute.muted .m-waves {
+            display: none
+        }
+
+        #mute.muted .m-x {
+            display: block
+        }
+
+        @media (prefers-reduced-motion:reduce) {
+
+            #shake.shake-s,
+            #shake.shake-m,
+            #shake.shake-l {
+                animation: none !important
+            }
+
+            .smoke {
+                animation: none !important
+            }
+
+            #world {
+                transition-duration: .15s !important
+            }
+        }
+    </style>
+
+    <!-- DEBUG-CHALLENGE TAG 1/3 — the correctly defined keyframes (restorable) -->
+    <style id="keyframes-css">
+        @keyframes shield-impact {
+            from {
+                transform: scale(0.3);
+                opacity: 0.4;
+            }
+
+            to {
+                transform: scale(2.5);
+                opacity: 0;
+            }
+        }
+    </style>
+
+    <!-- DEBUG-CHALLENGE TAG 2/3 — base styles; no animation declared here -->
+    <style id="impact-css">
+        .shield-impact {
+            position: absolute;
+            width: 230px;
+            height: 230px;
+            margin: -115px 0 0 -115px;
+            border-radius: 50%;
+            border: 4px solid rgba(190, 225, 255, 0.95);
+            box-shadow: 0 0 24px rgba(120, 180, 255, 0.75),
+                inset 0 0 34px rgba(140, 200, 255, 0.55);
+            background: radial-gradient(circle,
+                    rgba(210, 240, 255, 0.28) 0%,
+                    rgba(120, 180, 255, 0.12) 46%,
+                    rgba(120, 180, 255, 0) 72%);
+            transform: scale(0.3);
+            opacity: 0.4;
+            display: none;
+            pointer-events: none;
+        }
+
+        #fx.impact-live .shield-impact {
+            display: block;
+        }
+    </style>
+
+    <!-- DEBUG-CHALLENGE TAG 3/3 — THE BUG: references "shieldImpact",
+     but the keyframes are named "shield-impact". Repair in DevTools. -->
+    <style id="bug-css">
+        /* ── SHIELD IMPACT FX ────────────────────────────────────────
+   Element  : .shield-impact        (base styles: #impact-css)
+   Keyframes: "shield-impact"       (defined in #keyframes-css)
+   ─────────────────────────────────────────────────────────── */
+        .shield-impact {
+            animation: shield-impact 800ms ease-out forwards;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <div id="viewport">
+            <div id="shake">
+                <div id="world">
+
+                    <div id="env">
+                        <div class="wall"></div>
+                        <div class="silo s1"></div>
+                        <div class="silo s2"></div>
+                        <div class="pipes"></div>
+                        <div class="gantry"></div>
+                        <div class="hole h1"></div>
+                        <div class="hole h2"></div>
+                        <div class="machine m1"></div>
+                        <div class="machine m2"></div>
+                        <div class="girder"></div>
+                        <div class="crates"><i></i><i></i><i></i><i></i><i></i></div>
+                        <div class="fixture"></div>
+                        <div class="floor"></div>
+                    </div>
+                    <div id="lightshafts">
+                        <div class="shaft s1"></div>
+                        <div class="shaft s2"></div>
+                        <div id="snow"></div>
+                    </div>
+                    <div id="fog-back">
+                        <div class="smoke k1"></div>
+                        <div class="smoke k2"></div>
+                        <div class="smoke k3"></div>
+                        <div class="smoke k4"></div>
+                        <div class="smoke k5"></div>
+                    </div>
+                    <div id="dustmotes"></div>
+
+                    <div id="reflections">
+                        <div id="cap-refl"></div>
+                        <div id="im-refl"></div>
+                    </div>
+
+                    <!-- ================= CAPTAIN AMERICA ================= -->
+                    <div id="cap" class="chr cap-idle">
+                        <div id="cap-move">
+                            <div class="pose-inner">
+                                <div class="bob">
+                                    <svg viewBox="0 0 240 560" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                                        <image href="assets/cap_clean.png" xlink:href="assets/cap_clean.png" width="240" height="560" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ================= IRON MAN ================= -->
+                    <div id="im" class="chr im-enter">
+                        <div id="im-move">
+                            <div class="pose-inner">
+                                <div class="bob">
+                                    <svg viewBox="0 0 260 560" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                                        <defs>
+                                            <radialGradient id="gI-core">
+                                                <stop offset="0" stop-color="#ffffff" />
+                                                <stop offset=".4" stop-color="#9fe8ff" />
+                                                <stop offset="1" stop-color="#1e6f9e" />
+                                            </radialGradient>
+                                            <filter id="fi3" x="-80%" y="-80%" width="260%" height="260%">
+                                                <feGaussianBlur stdDeviation="2.5" />
+                                            </filter>
+                                            <filter id="fi4" x="-80%" y="-80%" width="260%" height="260%">
+                                                <feGaussianBlur stdDeviation="4" />
+                                            </filter>
+                                            <filter id="fi8" x="-80%" y="-80%" width="260%" height="260%">
+                                                <feGaussianBlur stdDeviation="8" />
+                                            </filter>
+                                        </defs>
+                                        <image href="assets/im_clean.png" xlink:href="assets/im_clean.png" width="260" height="560" />
+                                        <ellipse class="reactor-glow" cx="105" cy="146" rx="14" ry="17" fill="#7fd8ff" opacity=".65" filter="url(#fi8)" />
+                                        <ellipse class="reactor-glow" cx="105" cy="146" rx="8" ry="10" fill="#a8ecff" opacity=".85" filter="url(#fi4)" />
+                                        <ellipse class="reactor-core" cx="105" cy="146" rx="4.8" ry="6.2" fill="url(#gI-core)" />
+                                        <circle class="palm-glow" cx="155" cy="245" r="14" fill="url(#gI-core)" filter="url(#fi8)" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FX -->
+                    <div id="fx">
+                        <div id="rep-light"></div>
+                        <div id="beam"></div>
+                        <div id="beam-hit"></div>
+                        <div id="cap-follow">
+                            <div id="shield">
+                                <div id="shield-inner">
+                                    <svg viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+                                        <defs>
+                                            <radialGradient id="gS-rim" cx=".38" cy=".32" r=".9">
+                                                <stop offset="0" stop-color="#e6ecf4" />
+                                                <stop offset=".55" stop-color="#98a5b5" />
+                                                <stop offset="1" stop-color="#4c5665" />
+                                            </radialGradient>
+                                            <radialGradient id="gS-red" cx=".38" cy=".32" r=".95">
+                                                <stop offset="0" stop-color="#c23040" />
+                                                <stop offset=".6" stop-color="#8c1622" />
+                                                <stop offset="1" stop-color="#4d0a12" />
+                                            </radialGradient>
+                                            <radialGradient id="gS-silv" cx=".38" cy=".32" r=".95">
+                                                <stop offset="0" stop-color="#ffffff" />
+                                                <stop offset=".6" stop-color="#c3ccd8" />
+                                                <stop offset="1" stop-color="#77828f" />
+                                            </radialGradient>
+                                            <radialGradient id="gS-blue" cx=".38" cy=".32" r=".95">
+                                                <stop offset="0" stop-color="#2c4c8e" />
+                                                <stop offset=".6" stop-color="#14265c" />
+                                                <stop offset="1" stop-color="#070e2a" />
+                                            </radialGradient>
+                                            <filter id="fs3" x="-40%" y="-40%" width="180%" height="180%">
+                                                <feGaussianBlur stdDeviation="3" />
+                                            </filter>
+                                        </defs>
+                                        <circle cx="70" cy="70" r="68" fill="url(#gS-rim)" stroke="#232a34"
+                                            stroke-width="2" />
+                                        <circle cx="70" cy="70" r="61" fill="url(#gS-red)" />
+                                        <circle cx="70" cy="70" r="48" fill="url(#gS-silv)" />
+                                        <circle cx="70" cy="70" r="35" fill="url(#gS-red)" />
+                                        <circle cx="70" cy="70" r="23" fill="url(#gS-blue)" />
+                                        <path fill="#f4f7fb" stroke="#0a1020" stroke-width="1"
+                                            d="M70,51 L74.1,62.3 L86.2,62.8 L76.7,70.2 L80,81.8 L70,75 L60,81.8 L63.3,70.2 L53.8,62.8 L65.9,62.3 Z" />
+                                        <ellipse cx="52" cy="46" rx="24" ry="12" fill="#fff" opacity=".16"
+                                            filter="url(#fs3)" transform="rotate(-24 52 46)" />
+                                        <path d="M28,88 A46,46 0 0 0 44,110" stroke="#fff" stroke-width="1.6"
+                                            fill="none" opacity=".3" />
+                                        <path d="M96,36 A50,50 0 0 1 112,66" stroke="#000" stroke-width="2" fill="none"
+                                            opacity=".22" />
+                                        <circle class="ering" cx="70" cy="70" r="57" fill="none" stroke="#bfe9ff"
+                                            stroke-width="3.5" opacity="0" filter="url(#fs3)" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="pre-impact"></div>
+                        <div id="shield-impact" class="shield-impact"></div>
+                        <div id="light-burst"></div>
+                        <div id="sparks"></div>
+                        <div id="dust"></div>
+                        <div id="wisp"></div>
+                    </div>
+
+                    <div id="fog-front">
+                        <div class="fg a"></div>
+                        <div class="fg b"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="vignette"></div>
+            <div id="letterbox-t"></div>
+            <div id="letterbox-b"></div>
+            <div id="slate">SCENE 01 · ESTABLISHING</div>
+            <div id="caption"></div>
+            <div id="prompt"><span class="p-key">SPACE</span><span class="p-label">RAISE SHIELD</span>
+                <span class="p-bar"></span>
+            </div>
+            <div id="flourish"></div>
+            <div id="flash-full"></div>
+        </div>
+
+        <button id="mute" title="Toggle sound">
+            <svg viewBox="0 0 24 24">
+                <path d="M4 9v6h4l5 4V5L8 9H4z" />
+                <path class="m-waves" d="M16 9a4 4 0 0 1 0 6M18.5 7a7 7 0 0 1 0 10" />
+                <path class="m-x" d="M16 9l6 6M22 9l-6 6" />
+            </svg>
+        </button>
+
+        <div id="debug-overlay">
+            <div class="d-head"><span class="d-dot"></span>SYSTEM FAILURE: TONY STARK — VITAL FUNCTIONS OFFLINE</div>
+            <div class="d-sub">
+                Critical error in armor life-support subroutine <code>&lt;recovery_core.html&gt;</code>.
+                A malformed HTML tag has halted defibrillation and arc reactor restart.
+            </div>
+            <div class="d-instruction">
+                <b>TASK:</b> Correct the mismatched HTML tags below to restore Tony Stark's life support.
+            </div>
+            <div class="d-code-box">
+                <div class="d-code-header">
+                    <span>ARMOR RECOVERY INTERFACE</span>
+                    <span class="d-tag-err">HTML SYNTAX ERROR DETECTED</span>
+                </div>
+                <textarea id="code-input" spellcheck="false" rows="3">&lt;div class="reactor-status"&gt;
+  &lt;p&gt;ARC REACTOR: OFFLINE&lt;/div&gt;</textarea>
+            </div>
+            <div id="debug-status" class="d-status hint">
+                HINT: The &lt;p&gt; element is never closed before &lt;/div&gt;. Add the missing &lt;/p&gt; closing tag.
+            </div>
+            <div class="d-actions">
+                <button id="repair-btn">⚡ INJECT CODE FIX</button>
+                <button id="bypass-btn" class="btn-bypass" title="Fix code and bypass challenge for testing">⚡ AUTO FIX (BYPASS)</button>
+                <button id="reset-code-btn">RESET CODE</button>
+            </div>
+        </div>
+
+        <div id="title-card">
+            <div class="t1">CIVIL WAR</div>
+            <div class="t2">THE FINAL CLASH</div>
+            <div class="rule"></div>
+        </div>
+
+        <div id="complete">
+            <h2>SEQUENCE COMPLETE</h2>
+            <div class="st"><span>RESULT</span><b id="st-result">—</b></div>
+            <div class="st"><span>RUNTIME</span><b id="st-time">—</b></div>
+            <div class="st"><span>INTERACTIONS</span><b id="st-inter">—</b></div>
+            <button id="restart-btn">PLAY AGAIN</button>
+        </div>
+
+        <div id="start">
+            <div class="s-box">
+                <div class="k">A PLAYABLE BROWSER CINEMATIC</div>
+                <h1>CIVIL WAR<em>THE FINAL CLASH</em></h1>
+                <div class="sub">SIBERIA · DAMAGED HYDRA FACILITY · TWO FRIENDS · ONE BROKEN STYLESHEET</div>
+                <div class="rules">
+                    ▸ Watch the intense confrontation unfold — <b>SPACE</b> / click when prompted (block · throw · brace)<br>
+                    ▸ Iron Man attacks with devastating chest-originating <b>Arc Reactor Unibeams</b><br>
+                    ▸ Experience dynamic character visuals with distinct action poses throughout the fight<br>
+                    ▸ After Iron Man is defeated, solve the critical <b>HTML bug</b> to revive Tony Stark and restore his vital functions!
+                </div>
+                <div><button id="start-btn">▶&nbsp; BEGIN SEQUENCE</button></div>
+                <div class="foot">HTML · CSS · VANILLA JAVASCRIPT — NO LIBRARIES · SOUND ON RECOMMENDED</div>
+            </div>
+        </div>
+
+        <div id="fader"></div>
+    </div>
+
+    <script>
+        "use strict";
+        (function () {
+
+            const ENABLE_TEST_BYPASS = true;
+
+            const byId = id => document.getElementById(id);
+
+            /* =====================================================================
+               MASTER COORDINATE TABLE (1600×900 world) — all derived values
+               ---------------------------------------------------------------------
+               #cap  left 320 top 252 w 240  → advances: 0 → 46 → 240 → 500
+               #im   left 1150 top 248 w 260 → offsets: +480 (offscreen) → 0 → −250 → −110
+               Hand anchors (viewBox → shield --sx/--sy):
+                 carry 118,252 · guard/block/brace 196,212 · windup 50,186 · catch 199,182
+               IM chest in im-aggressive pose (rotate −6° about (130,280)):
+                 viewBox (118.5,173.6) → world (1268,422)  ← shield impact point
+               IM lunge palm: viewBox(34,199) under translateX(−100) rotate(−12°)
+                 → (−80.7,220.8) → world (1069.3+imDx, 468.8); with imDx=−250 → (825,469)
+               Cap braced shield surface: 320+240+196+65 = 821  → clash contact ≈ 820
+               IM kneeling chest after im-fall: world (1248,528) ← finishing swing target
+               ===================================================================== */
+            const P_PALM_HOVER = { x: 1277, y: 507 };   // IM aim palm while hovering
+            const P_SHIELD_S2 = { x: 510, y: 465 };   // Cap blocking shield, scene 2
+            const P_SHIELD_MB = { x: 556, y: 465 };   // blocking shield after +46 advance
+            const P_IM_CHEST = { x: 1255, y: 394 };   // IM chest arc reactor (impact)
+            const P_CLASH = { x: 820, y: 465 };   // shield-surface/palm contact
+            const P_SWING_HIT = { x: 1145, y: 394 };    // finishing blow on Iron Man chest arc reactor
+
+            const CAP_ADV_THROW = 46, CAP_ADV_CLASH = 240, CAP_ADV_FINAL = 500;
+            const IM_IN = 480, IM_ADV_CLASH = -250, IM_FINAL = -110;
+
+            const S = {
+                phase: 'BOOT', playing: false, time: 0, runId: 0,
+                prompt: null,
+                debugResolved: false, resolvedBy: null, fixPending: false,
+                stats: { block: '—', throw: '—', brace: '—' },
+                flags: { blocked: false, thrown: false, braced: false, arrived: false, caught: false }
+            };
+
+            const shakeEl = byId('shake'), world = byId('world'),
+                capEl = byId('cap'), imEl = byId('im'),
+                capMove = byId('cap-move'), imMove = byId('im-move'),
+                capFollow = byId('cap-follow'), capRefl = byId('cap-refl'), imRefl = byId('im-refl'),
+                shield = byId('shield'), shieldInner = byId('shield-inner'),
+                beam = byId('beam'), beamHit = byId('beam-hit'), preImp = byId('pre-impact'),
+                impactEl = byId('shield-impact'), burstEl = byId('light-burst'),
+                sparksHost = byId('sparks'), dustHost = byId('dust'), wisp = byId('wisp'),
+                fx = byId('fx'), flashEl = byId('flash-full'), captionEl = byId('caption'),
+                promptEl = byId('prompt'), pLabel = promptEl.querySelector('.p-label'),
+                pBar = promptEl.querySelector('.p-bar'), flourishEl = byId('flourish'),
+                slateEl = byId('slate'), overlayEl = byId('debug-overlay'),
+                titleEl = byId('title-card'),
+                completeEl = byId('complete'), startEl = byId('start'), faderEl = byId('fader');
+
+            const ORIG = {
+                keyframes: byId('keyframes-css').textContent,
+                impact: byId('impact-css').textContent,
+                bug: byId('bug-css').textContent
+            };
+
+            /* ---------------------------------------------------------------------
+               AUDIO
+               --------------------------------------------------------------------- */
+            const A = (() => {
+                let ac = null, master = null, nbuf = null, muted = false;
+                function noise(sec) {
+                    const b = ac.createBuffer(1, ac.sampleRate * sec, ac.sampleRate), d = b.getChannelData(0);
+                    let last = 0;
+                    for (let i = 0; i < d.length; i++) { const w = Math.random() * 2 - 1; last = (last + 0.02 * w) / 1.02; d[i] = last * 3.2; }
+                    return b;
+                }
+                function init() {
+                    if (ac) return;
+                    try {
+                        ac = new (window.AudioContext || window.webkitAudioContext)();
+                        master = ac.createGain(); master.gain.value = .85; master.connect(ac.destination);
+                        nbuf = noise(3);
+                        const src = ac.createBufferSource(); src.buffer = nbuf; src.loop = true;
+                        const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 150;
+                        const g = ac.createGain(); g.gain.value = .05;
+                        src.connect(f); f.connect(g); g.connect(master); src.start();
+                    } catch (e) { ac = null; }
+                }
+                function env(g, t0, a, peak, d) {
+                    g.gain.setValueAtTime(0.0001, t0);
+                    g.gain.exponentialRampToValueAtTime(Math.max(0.001, peak), t0 + a);
+                    g.gain.exponentialRampToValueAtTime(0.0001, t0 + a + d);
+                }
+                function osc(type, f0, f1, dur, peak) {
+                    if (!ac) return;
+                    const t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
+                    o.type = type; o.frequency.setValueAtTime(f0, t);
+                    o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur);
+                    env(g, t, .012, peak, dur);
+                    o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + .15);
+                }
+                function noiseHit(dur, peak, type, freq, q) {
+                    if (!ac) return;
+                    const t = ac.currentTime, s = ac.createBufferSource(); s.buffer = nbuf; s.loop = true;
+                    const f = ac.createBiquadFilter(); f.type = type || 'bandpass'; f.frequency.value = freq || 1000; f.Q.value = q || .8;
+                    const g = ac.createGain(); env(g, t, .008, peak, dur);
+                    s.connect(f); f.connect(g); g.connect(master); s.start(t); s.stop(t + dur + .15);
+                }
+                return {
+                    init,
+                    toggleMute() { muted = !muted; if (master) master.gain.value = muted ? 0 : .85; return muted; },
+                    charge(d) { osc('sawtooth', 90, 760, d, .08); osc('sine', 300, 1900, d, .04); },
+                    fire() { noiseHit(.55, .28, 'highpass', 900); osc('square', 300, 70, .45, .15); },
+                    beam(d) { noiseHit(d, .11, 'bandpass', 420, 2); osc('sawtooth', 120, 92, d, .055); },
+                    zap() { noiseHit(.4, .16, 'highpass', 1400); osc('square', 700, 120, .35, .08); },
+                    boom(k) {
+                        osc('sine', 130, 36, .6, .45 * k); noiseHit(.5, .3 * k, 'lowpass', 380);
+                        setTimeout(() => osc('sine', 95, 34, .4, .25 * k), 70);
+                    },
+                    reboot() {
+                        [220, 330, 440, 660, 880].forEach((f, i) => {
+                            setTimeout(() => osc('sine', f, f * 1.05, 0.28, 0.08), i * 110);
+                        });
+                        noiseHit(0.4, 0.08, 'bandpass', 350, 1.8);
+                    },
+                    clank() {
+                        [540, 860, 1350, 2200].forEach((f, i) => osc('triangle', f, f * .9, .12 + .02 * i, .045));
+                        noiseHit(.06, .1, 'highpass', 3000);
+                    },
+                    whoosh() { noiseHit(.7, .13, 'bandpass', 900, 1.4); },
+                    dash() { noiseHit(.35, .1, 'bandpass', 600, 1); },
+                    catch() { osc('triangle', 700, 600, .1, .04); noiseHit(.05, .07, 'highpass', 2600); },
+                    servo() { noiseHit(.6, .05, 'bandpass', 220, 3); }
+                };
+            })();
+
+            /* ---------------------------------------------------------------------
+               CAMERA — single transform on #world.
+               world.style.transform = scale(K) translate(-x,-y)  (origin 0 0)
+               → world point p appears at screen (center + K*(p − shot)).
+               The shot point is mathematically always dead-center.
+               --------------------------------------------------------------------- */
+            let stageScale = 1, curShot = { x: 800, y: 470, s: 1.02 };
+            const SHOTS = {
+                wide: [800, 470, 1.02, 1400],
+                widePush: [800, 470, 1.10, 10500],
+                medium: [810, 495, 1.32, 1200],
+                mediumTwo: [790, 495, 1.30, 1200],
+                closeShield: [460, 450, 1.85, 900],
+                closeRepl: [1160, 330, 1.80, 900],
+                impactZone: [830, 450, 1.30, 1000],
+                impactChest: [1250, 405, 1.65, 450],
+                clashLock: [820, 465, 1.55, 300],
+                closeRepl2: [1030, 440, 1.50, 900],
+                finalWide: [1000, 500, 1.10, 2600],
+                aftermath: [990, 480, 1.15, 4200]
+            };
+            function applyCam(ms) {
+                const K = curShot.s * stageScale;
+                world.style.transition = ms ? `transform ${ms}ms cubic-bezier(.4,.1,.3,1)` : 'none';
+                world.style.transform = `scale(${K}) translate(${-curShot.x}px,${-curShot.y}px)`;
+            }
+            function setShot(name, opts) {
+                opts = opts || {};
+                const d = SHOTS[name]; if (!d) return;
+                curShot = { x: d[0], y: d[1], s: d[2] };
+                applyCam(opts.cut ? 0 : (opts.dur !== undefined ? opts.dur : d[3]));
+            }
+            function fitStage() {
+                stageScale = Math.max(innerWidth / 1600, innerHeight / 900);
+                applyCam(0);
+            }
+            addEventListener('resize', fitStage);
+
+            function shake(cls) {
+                shakeEl.classList.remove('shake-s', 'shake-m', 'shake-l');
+                void shakeEl.offsetWidth;
+                shakeEl.classList.add(cls);
+                setTimeout(() => shakeEl.classList.remove(cls), 800);
+            }
+
+            /* ---------------------------------------------------------------------
+               HELPERS
+               --------------------------------------------------------------------- */
+            function later(fn, ms) { const id = S.runId; return setTimeout(() => { if (id === S.runId) fn(); }, ms); }
+            let capToken = 0;
+            function caption(text, dur, who) {
+                const my = ++capToken;
+                captionEl.innerHTML = who ? `<span class="who ${who}">${who}:</span>${text}` : text;
+                captionEl.classList.add('on');
+                later(() => { if (my === capToken) captionEl.classList.remove('on'); }, dur * 1000);
+            }
+            function slate(t) { slateEl.textContent = t; }
+            function flourish(text) {
+                flourishEl.textContent = text;
+                flourishEl.classList.remove('go'); void flourishEl.offsetWidth;
+                flourishEl.classList.add('go');
+            }
+            function setPose(el, list, cls) {
+                list.forEach(p => el.classList.remove(p));
+                if (cls) el.classList.add(cls);
+            }
+            /* ── AUTHENTIC CHARACTERS ONLY (preview_flipped) ──
+               Captain America and Iron Man use ONLY the pristine master sprites
+               from preview_flipped. All character poses and actions are driven
+               cleanly from scratch via CSS transforms and spatial mechanics. */
+            const CAP_POSES = ['cap-idle', 'cap-block', 'cap-strain', 'cap-stance', 'cap-stride', 'cap-windup',
+                'cap-throw', 'cap-catch', 'cap-brace', 'cap-clash', 'cap-drive', 'cap-swing', 'cap-stand', 'cap-guard', 'cap-aftermath'];
+            const IM_POSES = ['im-enter', 'im-idle', 'im-aim', 'im-stagger', 'im-recover', 'im-aggressive',
+                'im-charge', 'im-charging', 'im-unibeam', 'im-lunge', 'im-lock', 'im-driven', 'im-down', 'im-revived'];
+            const cap = p => setPose(capEl, CAP_POSES, p);
+            const im = p => setPose(imEl, IM_POSES, p);
+
+            /* absolute moves; reflections keep their scaleY(-1) flip */
+            let capX = 0, imX = IM_IN;
+            function moveCapTo(v, dur) {
+                capX = v;
+                const t = `transform ${dur}ms cubic-bezier(.4,.6,.4,1)`;
+                [capMove, capFollow].forEach(e => { e.style.transition = t; e.style.transform = `translateX(${v}px)`; });
+                capRefl.style.transition = t;
+                capRefl.style.transform = `translateX(${v}px) scaleY(-1)`;
+            }
+            function moveImTo(v, dur) {
+                imX = v;
+                const t = `transform ${dur}ms cubic-bezier(.4,.6,.4,1)`;
+                imMove.style.transition = t; imMove.style.transform = `translateX(${v}px)`;
+                imRefl.style.transition = t; imRefl.style.transform = `translateX(${v}px) scaleY(-1)`;
+            }
+            function sparks(x, y, n, opt) {
+                opt = opt || {};
+                for (let i = 0; i < n; i++) {
+                    const s = document.createElement('i');
+                    s.className = 'spark' + (Math.random() < .4 ? ' streak' : '');
+                    const a = ((opt.angle !== undefined ? opt.angle : Math.random() * 360)) * Math.PI / 180;
+                    const d = (opt.dist || (70 + Math.random() * 170)) * (.5 + Math.random() * .7);
+                    const dx = Math.cos(a) * d, dy = Math.sin(a) * d * .7 + (opt.gravity !== undefined ? opt.gravity : 60);
+                    s.style.left = x + 'px'; s.style.top = y + 'px';
+                    s.style.setProperty('--tx', dx.toFixed(1) + 'px');
+                    s.style.setProperty('--ty', dy.toFixed(1) + 'px');
+                    s.style.setProperty('--rot', (Math.atan2(dy, dx)) + 'rad');
+                    s.style.animationDuration = (.45 + Math.random() * .35) + 's';
+                    sparksHost.appendChild(s);
+                    s.addEventListener('animationend', () => s.remove());
+                }
+            }
+            function dust(x, y, n) {
+                for (let i = 0; i < n; i++) {
+                    const d = document.createElement('i'); d.className = 'dustp';
+                    d.style.left = (x + (Math.random() * 80 - 40)) + 'px';
+                    d.style.top = (y + (Math.random() * 20 - 10)) + 'px';
+                    d.style.animationDelay = (Math.random() * .2) + 's';
+                    dustHost.appendChild(d);
+                    d.addEventListener('animationend', () => d.remove());
+                }
+            }
+            function burst(x, y) {
+                burstEl.style.left = x + 'px'; burstEl.style.top = y + 'px';
+                burstEl.classList.remove('go'); void burstEl.offsetWidth; burstEl.classList.add('go');
+            }
+            function flashFull(v) {
+                flashEl.style.setProperty('--fi', v);
+                flashEl.classList.remove('go'); void flashEl.offsetWidth; flashEl.classList.add('go');
+            }
+            /* ── CHEST ARC REACTOR UNIBEAM ATTACK ── */
+            function fireUnibeam(target, dur) {
+                // Chest reactor origin: dynamic world coordinate aligned with Iron Man position
+                const chest = { x: 1255 + imX, y: 394 };
+                const dx = target.x - chest.x, dy = target.y - chest.y;
+                const dist = Math.hypot(dx, dy);
+                const angleDeg = Math.atan2(dy, dx) * 180 / Math.PI;
+
+                beam.style.left = chest.x + 'px';
+                beam.style.top = chest.y + 'px';
+                beam.style.width = dist + 'px';
+                beam.style.setProperty('--beam-a', angleDeg + 'deg');
+                beamHit.style.left = target.x + 'px'; beamHit.style.top = target.y + 'px';
+
+                imEl.classList.remove('reactor-charging');
+                imEl.classList.add('reactor-unibeam');
+                im('im-unibeam');
+
+                beam.classList.add('firing'); beamHit.classList.add('on');
+                byId('rep-light').classList.add('on');
+                shield.classList.add('energized');
+                A.fire(); A.beam(dur);
+                sparks(target.x, target.y, 16, { dist: 140 });
+                shake('shake-m');
+            }
+
+            function unibeamOff() {
+                beam.classList.remove('firing'); beamHit.classList.remove('on');
+                imEl.classList.remove('reactor-unibeam');
+                byId('rep-light').classList.remove('on');
+                shield.classList.remove('energized');
+            }
+            function sparkDrip(i) {
+                if (i <= 0) return;
+                sparks(P_CLASH.x - 6, P_CLASH.y + 6, 2, { dist: 90 });
+                later(() => sparkDrip(i - 1), 320);
+            }
+            /* swap shield state without the CSS transition (prevents a
+               720° back-spin when leaving a fill-forwards flight animation) */
+            function snapShield(cls) {
+                shield.style.transition = 'none';
+                shield.classList.remove('flight', 'return', 'swing', 'final-throw');
+                if (cls) shield.classList.add(cls);
+                void shield.offsetWidth;
+                shield.style.transition = '';
+            }
+
+            /* ---------------------------------------------------------------------
+               PROMPTS
+               --------------------------------------------------------------------- */
+            function showPrompt(action, label, windowSec) {
+                S.prompt = { action, resolved: false };
+                pLabel.textContent = label;
+                promptEl.classList.add('on');
+                pBar.style.animation = 'none'; void pBar.offsetWidth;
+                pBar.style.animation = `drain ${windowSec}s linear forwards`;
+            }
+            function hidePrompt() { promptEl.classList.remove('on'); }
+            function resolvePrompt(byPlayer) {
+                const p = S.prompt;
+                if (!p || p.resolved) return;
+                p.resolved = true; hidePrompt();
+                const labels = { BLOCK: ['SHIELD UP', 'block'], THROW: ['SHIELD AWAY', 'throw'], BRACE: ['BRACED', 'brace'] };
+                const L = labels[p.action] || ['', ''];
+                flourish(L[0]); S.stats[L[1]] = byPlayer ? 'MANUAL' : 'AUTO';
+                if (byPlayer) {
+                    if (p.action === 'BLOCK') doBlock();
+                    if (p.action === 'THROW') doThrow();
+                    if (p.action === 'BRACE') doBrace();
+                }
+            }
+            function playerInput() {
+                if (S.prompt && !S.prompt.resolved) resolvePrompt(true);
+            }
+            addEventListener('keydown', e => {
+                if (e.code === 'Space' || e.code === 'Enter') {
+                    if (e.target.tagName === 'BUTTON') return;
+                    e.preventDefault(); playerInput();
+                }
+            });
+            byId('viewport').addEventListener('pointerdown', playerInput);
+            promptEl.addEventListener('pointerdown', e => { e.stopPropagation(); playerInput(); });
+
+            /* ---------------------------------------------------------------------
+               STORY ACTIONS
+               --------------------------------------------------------------------- */
+            function doBlock() {
+                if (S.flags.blocked) return; S.flags.blocked = true;
+                cap('cap-block'); shield.classList.add('at-block');
+            }
+            function doThrow() {
+                if (S.flags.thrown) return; S.flags.thrown = true;
+                cap('cap-throw'); shield.classList.remove('at-windup');
+                shield.classList.add('flight'); A.whoosh();
+            }
+            function doBrace() {
+                if (S.flags.braced) return; S.flags.braced = true;
+                cap('cap-brace'); shield.classList.add('at-brace');
+            }
+            function impactArrived() {
+                if (S.flags.arrived) return; S.flags.arrived = true;
+                snapShield('at-impact');
+                shieldInner.classList.add('press');
+                preImp.style.left = P_IM_CHEST.x + 'px'; preImp.style.top = P_IM_CHEST.y + 'px';
+                impactEl.style.left = P_IM_CHEST.x + 'px'; impactEl.style.top = P_IM_CHEST.y + 'px';
+                preImp.classList.add('on');
+                A.clank(); sparks(P_IM_CHEST.x - 6, P_IM_CHEST.y - 4, 8, { dist: 90 });
+                setShot('impactChest'); shake('shake-m');
+                later(() => {
+                    preImp.classList.remove('on');
+                    fx.classList.add('impact-live');
+                    flashFull(.4); burst(P_IM_CHEST.x, P_IM_CHEST.y);
+                    sparks(P_IM_CHEST.x, P_IM_CHEST.y, 18);
+                    shake('shake-m'); A.boom(1); A.clank();
+                    im('im-stagger'); shieldInner.classList.remove('press');
+                    dust(1200, 790, 5);
+                    later(() => {
+                        shield.classList.remove('at-impact');
+                        shield.classList.add('return');
+                        A.whoosh();
+                        setShot('mediumTwo');
+                    }, 500);
+                }, 350);
+            }
+            function shieldCaught() {
+                if (S.flags.caught) return; S.flags.caught = true;
+                snapShield('at-catch');
+                cap('cap-catch'); A.catch();
+            }
+            shield.addEventListener('animationend', e => {
+                if (e.animationName === 'shield-flight') impactArrived();
+                if (e.animationName === 'shield-return') shieldCaught();
+            });
+
+            /* ---------------------------------------------------------------------
+               HTML DEBUGGING CHALLENGE & TONY STARK REVIVAL
+               --------------------------------------------------------------------- */
+            const codeInput = byId('code-input'),
+                repairBtn = byId('repair-btn'),
+                bypassBtn = byId('bypass-btn'),
+                resetCodeBtn = byId('reset-code-btn'),
+                debugStatus = byId('debug-status');
+
+            const INITIAL_HTML_BUG = '<div class="reactor-status">\n  <p>ARC REACTOR: OFFLINE</div>';
+            const FIXED_HTML_CODE = '<div class="reactor-status">\n  <p>ARC REACTOR: OFFLINE</p>\n</div>';
+
+            function validateHtmlCode(input) {
+                const trimmed = (input || '').trim();
+                if (!trimmed) {
+                    return { ok: false, msg: 'ERROR: Code cannot be empty. Please enter the corrected markup.' };
+                }
+                const hasClosingP = /<\s*\/\s*p\s*>/i.test(trimmed);
+                const hasOpeningP = /<\s*p\b[^>]*>/i.test(trimmed);
+                const hasClosingDiv = /<\s*\/\s*div\s*>/i.test(trimmed);
+                const hasOpeningDiv = /<\s*div\b[^>]*>/i.test(trimmed);
+
+                if (!hasClosingP) {
+                    return { ok: false, msg: 'SYNTAX ERROR: The <p> tag is missing its closing </p> tag!' };
+                }
+                if (!hasOpeningP || !hasClosingDiv || !hasOpeningDiv) {
+                    return { ok: false, msg: 'SYNTAX ERROR: Missing required <div> or <p> tags.' };
+                }
+                const pClosePos = trimmed.search(/<\s*\/\s*p\s*>/i);
+                const divClosePos = trimmed.search(/<\s*\/\s*div\s*>/i);
+                if (pClosePos > divClosePos) {
+                    return { ok: false, msg: 'HIERARCHY ERROR: </p> must close before </div>!' };
+                }
+                return { ok: true, msg: 'HTML ERROR FIXED — VITAL FUNCTIONS RESTORED' };
+            }
+
+            function checkHtmlFix() {
+                if (S.debugResolved) return;
+                const code = codeInput.value;
+                const res = validateHtmlCode(code);
+                if (!res.ok) {
+                    debugStatus.textContent = res.msg;
+                    debugStatus.className = 'd-status err';
+                    shake('shake-s');
+                    return;
+                }
+                // Validated fix!
+                S.debugResolved = true;
+                S.resolvedBy = 'fix';
+                debugStatus.textContent = res.msg;
+                debugStatus.className = 'd-status good';
+                repairBtn.disabled = true;
+                if (bypassBtn) bypassBtn.disabled = true;
+                codeInput.disabled = true;
+                A.reboot();
+
+                later(() => {
+                    hideOverlay();
+                    reviveTony();
+                }, 1300);
+            }
+
+            function enterDebugPause() {
+                S.phase = 'DEBUG_PAUSE';
+                S.playing = false;
+                slate('DIAGNOSTIC · SYSTEM FAILURE');
+                later(showOverlay, 400);
+                console.log('%cSYSTEM FAILURE: TONY STARK — VITAL FUNCTIONS OFFLINE. Awaiting HTML bug correction…', 'color:#ff5252; font-weight:bold;');
+            }
+
+            function showOverlay() {
+                overlayEl.classList.add('on');
+                codeInput.focus();
+            }
+
+            function hideOverlay() {
+                overlayEl.classList.remove('on');
+            }
+
+            function reviveTony() {
+                S.phase = 'REVIVED';
+                slate('SCENE 05 · RESTORATION');
+
+                // 1. Restore reactor indicators
+                imEl.classList.remove('reactor-die');
+                imEl.classList.add('reactor-restored');
+                burst(P_IM_CHEST.x, P_IM_CHEST.y + 40);
+                sparks(P_IM_CHEST.x, P_IM_CHEST.y + 40, 16, { dist: 90 });
+                A.boom(0.6);
+
+                // 2. Transition Tony from defeated into revived pose
+                im('im-revived');
+
+                // 3. Display recovery announcement
+                caption('TONY STARK — VITAL FUNCTIONS RESTORED', 4.0);
+                flourish('VITAL FUNCTIONS RESTORED');
+
+                // 4. Transition camera to final composition showing Cap and Tony
+                later(() => {
+                    setShot('finalWide', { dur: 2600 });
+                    titleEl.classList.add('on');
+                }, 1400);
+
+                // 5. Completion screen with PLAY AGAIN button
+                later(finish, 4200);
+            }
+
+            /* ---------------------------------------------------------------------
+               SHORTENED CINEMATIC TIMELINE (~26 seconds active fight)
+               --------------------------------------------------------------------- */
+            const CUES = [
+                /* SCENE 1 — ESTABLISHING & FACE-OFF (0–7s) */
+                [0.05, () => {
+                    S.phase = 'INTRO'; setShot('wide');
+                    cap('cap-idle'); im('im-enter');
+                    moveImTo(0, 3200); A.servo();
+                }],
+                [1.00, () => caption('SIBERIA — ABANDONED HYDRA FACILITY', 2.2)],
+                [3.20, () => { setShot('medium'); im('im-idle'); caption('Stand down, Steve.', 2.0, 'STARK'); }],
+                [5.20, () => { cap('cap-guard'); caption("Can't do that, Tony.", 1.8, 'CAP'); }],
+
+                /* SCENE 2 — CHEST UNIBEAM ATTACK & SHIELD BLOCK (7–13s) */
+                [7.00, () => {
+                    S.phase = 'UNIBEAM_ATTACK'; slate('SCENE 02 · CHEST UNIBEAM');
+                    im('im-charge'); imEl.classList.add('reactor-charging'); A.charge(2.4);
+                    setShot('closeRepl');
+                    showPrompt('BLOCK', 'RAISE YOUR SHIELD', 2.8);
+                }],
+                [9.80, () => {
+                    if (!S.flags.blocked) { resolvePrompt(false); doBlock(); }
+                    cap('cap-block');
+                    fireUnibeam(P_SHIELD_S2, 2.4); flashFull(.3);
+                }],
+                [12.20, () => {
+                    unibeamOff(); im('im-recover'); cap('cap-guard');
+                    setShot('medium');
+                }],
+
+                /* SCENE 3 — SHIELD COUNTERATTACK (13–19s) */
+                [13.50, () => {
+                    S.phase = 'SHIELD_THROW'; slate('SCENE 03 · SHIELD COUNTER');
+                    cap('cap-stride'); moveCapTo(CAP_ADV_THROW, 1400);
+                    shield.classList.remove('at-block'); shield.classList.add('at-windup');
+                    cap('cap-windup');
+                    showPrompt('THROW', 'THROW THE SHIELD', 2.4);
+                }],
+                [15.90, () => {
+                    if (!S.flags.thrown) { resolvePrompt(false); doThrow(); }
+                }],
+
+                /* SCENE 4 — FINAL CLASH & IRON MAN DEFEATED (19–26.5s) */
+                [19.80, () => {
+                    S.phase = 'FINAL_CLASH'; slate('SCENE 04 · FINAL CONFRONTATION');
+                    cap('cap-stride'); moveCapTo(CAP_ADV_CLASH, 1600);
+                    im('im-lunge'); moveImTo(IM_ADV_CLASH, 1600);
+                    showPrompt('BRACE', 'BRACE THE IMPACT', 2.0);
+                }],
+                [21.80, () => {
+                    if (!S.flags.braced) { resolvePrompt(false); doBrace(); }
+                    flashFull(.7); burst(P_CLASH.x, P_CLASH.y);
+                    sparks(P_CLASH.x, P_CLASH.y, 22); shake('shake-l');
+                    A.boom(1.2); A.clank();
+                    moveCapTo(CAP_ADV_FINAL, 1200); moveImTo(IM_FINAL, 1200);
+                    snapShield('at-stuck');
+                }],
+                [23.20, () => {
+                    imEl.classList.add('reactor-die');
+                    sparks(P_SWING_HIT.x, P_SWING_HIT.y, 26);
+                    wisp.style.left = (P_SWING_HIT.x + 10) + 'px'; wisp.style.top = P_SWING_HIT.y + 'px'; wisp.classList.add('on');
+                    shake('shake-m');
+                }],
+                [24.40, () => {
+                    im('im-down'); cap('cap-stand');
+                    setShot('finalWide', { dur: 2000 });
+                    caption('SYSTEM WARNING: Tony Stark vital functions offline.', 2.5);
+                }],
+                [26.50, () => {
+                    enterDebugPause();
+                }]
+            ];
+
+            function finish() {
+                S.phase = 'COMPLETE'; S.playing = false;
+                const r = byId('st-result');
+                r.textContent = 'HTML REPAIR VERIFIED — ARC REACTOR & LIFE SUPPORT RESTORED';
+                r.className = 'good';
+                byId('st-time').textContent = S.time.toFixed(1) + 's active combat';
+                byId('st-inter').textContent = `BLOCK ${S.stats.block} · THROW ${S.stats.throw} · BRACE ${S.stats.brace}`;
+                completeEl.classList.add('on');
+                console.log('SEQUENCE COMPLETE —', r.textContent);
+            }
+
+            /* ---------------------------------------------------------------------
+               RESET / RESTART
+               --------------------------------------------------------------------- */
+            function resetAll() {
+                S.runId++; cueIdx = 0; capToken++;
+                Object.assign(S, {
+                    phase: 'INTRO', playing: false, time: 0, prompt: null,
+                    debugResolved: false, resolvedBy: null, fixPending: false,
+                    flags: { blocked: false, thrown: false, braced: false, arrived: false, caught: false },
+                    stats: { block: '—', throw: '—', brace: '—' }
+                });
+
+                cap('cap-idle'); im('im-enter');
+                capEl.classList.remove('cap-quiet');
+                imEl.className = 'chr im-enter';
+                moveCapTo(0, 0); moveImTo(IM_IN, 0);
+
+                shield.className = ''; shield.style.transform = ''; shieldInner.classList.remove('press');
+
+                fx.classList.remove('impact-live');
+                beam.classList.remove('firing'); beamHit.classList.remove('on');
+                preImp.classList.remove('on'); preImp.removeAttribute('style');
+                burstEl.classList.remove('go');
+                sparksHost.innerHTML = ''; dustHost.innerHTML = '';
+                wisp.classList.remove('on'); wisp.removeAttribute('style');
+                byId('rep-light').classList.remove('on');
+                flashEl.classList.remove('go');
+                try { impactEl.getAnimations().forEach(a => a.cancel()); } catch (e) { }
+                impactEl.removeAttribute('style');
+                impactEl.className = 'shield-impact';
+
+                codeInput.value = INITIAL_HTML_BUG;
+                codeInput.disabled = false;
+                repairBtn.disabled = false;
+                if (bypassBtn) bypassBtn.disabled = false;
+                debugStatus.textContent = 'HINT: The <p> element is never closed before </div>. Add the missing </p> closing tag.';
+                debugStatus.className = 'd-status hint';
+
+                captionEl.classList.remove('on'); hidePrompt();
+                overlayEl.classList.remove('on');
+                titleEl.classList.remove('on'); completeEl.classList.remove('on');
+                world.classList.remove('aftermath');
+                slate('SCENE 01 · ESTABLISHING');
+                setShot('wide', { cut: true, dur: 0 });
+            }
+
+            repairBtn.addEventListener('click', checkHtmlFix);
+            if (bypassBtn) {
+                bypassBtn.addEventListener('click', () => {
+                    if (S.debugResolved) return;
+                    codeInput.value = FIXED_HTML_CODE;
+                    checkHtmlFix();
+                });
+            }
+            resetCodeBtn.addEventListener('click', () => {
+                codeInput.value = INITIAL_HTML_BUG;
+                debugStatus.textContent = 'HINT: The <p> element is never closed before </div>. Add the missing </p> closing tag.';
+                debugStatus.className = 'd-status hint';
+                codeInput.focus();
+            });
+            codeInput.addEventListener('keydown', e => {
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    checkHtmlFix();
+                }
+            });
+            window.addEventListener('keydown', e => {
+                if ((e.key === 'b' || e.key === 'B') && overlayEl.classList.contains('on') && !S.debugResolved) {
+                    codeInput.value = FIXED_HTML_CODE;
+                    checkHtmlFix();
+                }
+            });
+            let cueIdx = 0, lastT = performance.now();
+            function loop(now) {
+                const dt = Math.min(.1, (now - lastT) / 1000); lastT = now;
+                if (S.playing) {
+                    S.time += dt;
+                    while (cueIdx < CUES.length && CUES[cueIdx][0] <= S.time) {
+                        const c = CUES[cueIdx++];
+                        try { c[1](); } catch (err) { console.warn('cue failed @' + c[0] + 's:', err); }
+                    }
+                }
+                requestAnimationFrame(loop);
+            }
+
+            function buildAmbient() {
+                const snow = byId('snow');
+                for (let i = 0; i < 26; i++) {
+                    const f = document.createElement('i');
+                    f.style.left = (150 + Math.random() * 1300) + 'px';
+                    f.style.setProperty('--sw', (Math.random() * 70 - 35) + 'px');
+                    f.style.animationDuration = (6 + Math.random() * 7) + 's';
+                    f.style.animationDelay = (-Math.random() * 10) + 's';
+                    snow.appendChild(f);
+                }
+                const motes = byId('dustmotes');
+                for (let i = 0; i < 12; i++) {
+                    const m = document.createElement('i');
+                    m.style.left = (100 + Math.random() * 1400) + 'px';
+                    m.style.top = (120 + Math.random() * 640) + 'px';
+                    m.style.animationDuration = (6 + Math.random() * 8) + 's';
+                    m.style.animationDelay = (-Math.random() * 8) + 's';
+                    motes.appendChild(m);
+                }
+                (function ambientSpark() {
+                    setTimeout(() => {
+                        sparks(960 + Math.random() * 80, 130 + Math.random() * 40, 2, { dist: 50, gravity: 40 });
+                        ambientSpark();
+                    }, 4000 + Math.random() * 6000);
+                })();
+            }
+
+            function makeReflection(svgSel, host) {
+                const src = byId(svgSel).querySelector('svg');
+                const c = src.cloneNode(true);
+                c.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
+                c.removeAttribute('id');
+                host.appendChild(c);
+            }
+            function mirrorClass(from, to) {
+                new MutationObserver(() => { to.className = from.className; })
+                    .observe(from, { attributes: true, attributeFilter: ['class'] });
+                to.className = from.className;
+            }
+
+            function beginSequence() {
+                A.init();
+                if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+                startEl.classList.add('gone');
+                faderEl.classList.add('snap'); faderEl.classList.add('on');
+                void faderEl.offsetWidth;
+                faderEl.classList.remove('snap');
+                resetAll();
+                requestAnimationFrame(() => requestAnimationFrame(() => {
+                    faderEl.classList.remove('on');
+                    S.playing = true; S.phase = 'INTRO';
+                    console.log('%cCIVIL WAR — THE FINAL CLASH · sequence started', 'color:#9fc4ff');
+                    /* geometry self-check — verify both characters are on screen */
+                    try {
+                        const r1 = capEl.getBoundingClientRect(), r2 = imEl.getBoundingClientRect();
+                        console.log(`cap on-screen: ${r1.left < innerWidth && r1.right > 0} (${Math.round(r1.left)},${Math.round(r1.top)},${Math.round(r1.width)}×${Math.round(r1.height)})`,
+                            `| im on-screen: ${r2.left < innerWidth && r2.right > 0} (${Math.round(r2.left)},${Math.round(r2.top)},${Math.round(r2.width)}×${Math.round(r2.height)})`);
+                    } catch (e) { }
+                }));
+            }
+
+            byId('start-btn').addEventListener('click', beginSequence);
+            byId('restart-btn').addEventListener('click', () => {
+                console.log('RESTART — restoring the deliberately broken animation declaration');
+                completeEl.classList.remove('on');
+                beginSequence();
+            });
+            byId('mute').addEventListener('click', function () {
+                this.classList.toggle('muted', A.toggleMute());
+            });
+
+            makeReflection('cap', capRefl);
+            makeReflection('im', imRefl);
+            mirrorClass(capEl, capRefl);
+            mirrorClass(imEl, imRefl);
+            buildAmbient();
+            fitStage();
+            resetAll();
+            requestAnimationFrame(loop);
+
+        })();
+    </script>
+</body>
+
+</html>
